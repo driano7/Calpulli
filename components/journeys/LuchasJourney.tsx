@@ -24,6 +24,7 @@ import { EditorialHero } from './EditorialHero'
 import { EditorialMoment } from './EditorialMoment'
 import { DetailToggle } from './DetailToggle'
 import { Reveal } from './Reveal'
+import { LuchaArenaSchedule } from './LuchaArenaSchedule'
 import { MOMENT_TREATMENTS } from './motionConfig'
 import SupportBanner from '@/components/SupportBanner'
 
@@ -208,6 +209,13 @@ export function LuchasJourney() {
                       )}
                     </div>
                   </button>
+
+                  {/* Horarios de las próximas 7 funciones para esta arena */}
+                  <LuchaArenaSchedule
+                    arena={v.id === 'arena-mexico' ? 'mexico' : 'coliseo'}
+                    arenaName={variantLabel(v, v.nombre_es, v.nombre_en)}
+                    isEs={isEs}
+                  />
                 </Reveal>
               )
             })}

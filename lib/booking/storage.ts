@@ -25,8 +25,6 @@ export function getBookingsByUser(userId: string): Booking[] {
     .filter((b) => b.userId === userId)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 }
-  return typeof userId === 'string' && userId.startsWith('guest_')
-}
 
 export function getBookingsByExperienceAndDate(experienceId: string, date: string): Booking[] {
   const bookings = getStoredBookings()

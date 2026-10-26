@@ -1,0 +1,195 @@
+================================================================================
+AMAXING / CALPULLI CDMX — CAMBIOS EN JOURNEYS (LUCHAS + UI GLASS DARK)
+================================================================================
+Fecha: 2026-10-26
+Autor: agente de implementación
+Alcance: Journey "Luchas" + componente UI Glass Dark
+
+--------------------------------------------------------------------------------
+1. CONEXIÓN DEL JOURNEY DE LUCHAS A EVENTOS REALES (PUNTO 1)
+--------------------------------------------------------------------------------
+
+Objetivo: mostrar debajo de cada variante de arena (Arena México y Arena Coliseo)
+los días y horarios de las próximas 7 funciones, alimentados por el scraper de
+lucha que ya corre cada 3 días (vercel.json cron: "0 6 */3 * *").
+
+Archivos CREADOS:
+- components/journeys/LuchaArenaSchedule.tsx
+  * Componente cliente ('use client').
+  * Llama a GET /api/lucha/events?arena=<mexico|coliseo>&from=<hoy>&to=<hoy+7dias>.
+  * La API lee de la tabla lucha_events en Turso (poblada por el scraper).
+  * Si la API devuelve 0 eventos o falla, usa un fallback estático con los
+    horarios recurrentes conocidos del scraper:
+      Arena México: martes 19:30, viernes 20:30, domingo 17:00
+      Arena Coliseo: jueves 19:00, sábado 19:30
+  * Cada evento muestra: fecha, hora y enlace "Ver boletos" a cmll.com/tickets.
+  * El panel se envuelve en GlassDark (variant="subtle") para estilo consistente.
+
+Archivos MODIFICADOS:
+- components/journeys/LuchasJourney.tsx
+  * Importa LuchaArenaSchedule.
+  * Debajo de cada tarjeta de variante (arena-mexico y arena-coliseo), dentro
+    del <Reveal> pero fuera del <button> selector, renderiza
+    <LuchaArenaSchedule arena={...} arenaName={...} isEs={...} />.
+  * Así cada visitante ve, bajo la opción que elija, los próximos 7 días y
+    horarios de esa arena específica, con enlace a boletos oficiales.
+
+APIs involucradas:
+- /api/lucha/events  (pages/api/lucha/events.ts)
+  Parámetros: arena (mexico|coliseo), from (YYYY-MM-DD), to (YYYY-MM-DD).
+  Devuelve { events: LuchaEvent[] }.
+  También existe ?byWeek=true para agrupar por semana y arena.
+- /api/cron/lucha-scraper  (pages/api/cron/lucha-scraper.ts)
+  Endpoint protegido por CRON_SECRET que ejecuta el scraper cada 3 días.
+
+¿La API funciona?
+- Técnicamente SÍ: el endpoint existe, lee de Turso y el scraper escribe en
+  lucha_events (initLuchaEventsTable + upsertLuchaEvent).
+- El scraping LIVE de cmll.com no está inicializado (Playwright queda en null),
+  por lo que el scraper usa el fallback estático getStaticEvents(). Eso es
+  suficiente para mostrar horarios recurrentes reales de CMLL.
+- Si el scraper nunca se ha ejecutado en producción, la tabla estará vacía y
+  el componente mostrará el fallback estático (los mismos horarios conocidos).
+- No es necesario buscar otras APIs: la fuente es CMLL (cmll.com) y los datos
+  se guardan en Turso. Si se quiere scraping live real, habría que inicializar
+  Playwright en scripts/scrapers/lucha-scraper.ts (línea 8: let browser = null).
+
+--------------------------------------------------------------------------------
+2. COMPONENTE UI GLASS DARK (PUNTO 2)
+--------------------------------------------------------------------------------
+
+Archivo CREADO:
+- components/ui/GlassDark.tsx
+  * Componente reutilizable con 3 variantes:
+      - subtle: bg-zinc-900/40 + border-white/10 + backdrop-blur-sm
+      - strong: bg-zinc-900/70 + border-white/20 + backdrop-blur-md
+      - panel:  bg-slate-950/80 + border-white/15 + backdrop-blur-xl + shadow-2xl
+  * Props: children, className, variant ('subtle'|'strong'|'panel'), style.
+  * Se usa en LuchaArenaSchedule (variant="subtle") para el panel de horarios.
+
+Uso recomendado para el resto del sitio (pendiente):
+- Navbar, cards de journey/tour, modales, dropdowns, hero overlays.
+- Ejemplo: <GlassDark variant="panel" className="p-6">...</GlassDark>
+
+--------------------------------------------------------------------------------
+3. ESTADO DE LA TRADUCCIÓN DE JOURNEYS (YA ESTABA HECHO)
+--------------------------------------------------------------------------------
+
+No se hizo traducción nueva porque ya estaba implementada:
+- lib/locale.ts + lib/hooks/useLanguage.js: detección en/es, contexto, t().
+- dictionaries/en.json y es.json: diccionarios de UI.
+- data/journeysData.js: pickLocalized() / pickLocalizedList().
+- data/journeys/luchas.js: todos los textos con sufijos _es / _en.
+- components/journeys/LuchasJourney.tsx: usa isEs y elige _es / _en por momento,
+  paso, variante, fuente, etc.
+- pages/journeys/[slug].js: usa pickLocalized para journeys genéricos.
+
+--------------------------------------------------------------------------------
+4. VERIFICACIÓN DE INFORMACIÓN DE TODOS LOS JOURNEYS PARA LLMs
+--------------------------------------------------------------------------------
+
+El registro maestro está en data/journeysData.js (JOURNEYS[]) con 6 journeys.
+Cada uno tiene su propio archivo de contenido en data/journeys/*.js y su
+componente de presentación en components/journeys/*.tsx.
+
+Lista completa y estado de contenido consumible por LLMs:
+
+1. LUCHAS (slug: luchas) — data/journeys/luchas.js
+   ESTADO: COMPLETO y bilingüe (es/en).
+   - 2 variantes: arena-mexico (Arena México) y arena-coliseo (Arena Coliseo).
+   - 6 momentos por variante (12 total), cada uno con title, lead, steps (title,
+     body, observe), image, pending notas.
+   - NUCLEO editorial compartido (cartelera, ritual, reglas, salida).
+   - Fotos verificadas (Wikimedia Commons, con CREDITS.md).
+   - Fuentes oficiales: CMLL, Ticketmaster, Blue Demon Jr., mercados, Wikipedia,
+     Palacio de Bellas Artes.
+   - verified_on: 2026-10-21. Precio referencia: 100 MXN.
+   - Ahora incluye horarios de próximas 7 funciones vía API /api/lucha/events.
+   - Component: components/journeys/LuchasJourney.tsx (dedicado).
+
+2. CHAPULTEPEC (slug: chapultepec) — data/journeys/chapultepec.js
+   ESTADO: CONTENIDO EDITORIAL DESARROLLADO.
+   - Fotos verificadas (Wikimedia Commons, CREDITS.md).
+   - Rigor histórico documentado: estados 'documentado' / 'tradicion' /
+     'curiosidad' por bloque.
+   - No afirma horarios garantizados; advierte verificar con operador.
+   - Component: components/journeys/ChapultepecJourney.tsx.
+
+3. CENTRO HISTÓRICO (slug: centro) — data/journeys/centro.js
+   ESTADO: CONTENIDO EDITORIAL DESARROLLADO.
+   - Fotos verificadas (Wikimedia Commons, CREDITS.md).
+   - Ubicaciones ilustrativas/orientativas (no coordenadas exactas).
+   - Rigor histórico: 'documentado' / 'interpretacion' / 'pendiente'.
+   - No promete duración garantizada ni disponibilidad de mesas.
+   - Component: components/journeys/CentroJourney.tsx.
+
+4. ROMA-CONDESA (slug: roma) — data/journeys/roma.js
+   ESTADO: CONTENIDO EDITORIAL DESARROLLADO.
+   - 5 momentos: La Romita, Roma, Álvaro Obregón, Hipódromo, Parque México.
+   - Itinerario validado por fundador; cabe en 3.5 horas.
+   - Fotos verificadas (Wikimedia Commons, CREDITS.md).
+   - No usa la película "Roma" como puente editorial.
+   - Component: components/journeys/RomaJourney.tsx.
+
+5. JAMAICA (slug: jamaica) — data/journeys/jamaica.js
+   ESTADO: CONTENIDO EDITORIAL DESARROLLADO.
+   - 6 momentos (M01 a M06, cierre participativo JamaicaBouquet).
+   - Fotos verificadas (Wikimedia Commons, incluye archivo 1957/1962).
+   - No inventa testimonios ni nombres de comerciantes.
+   - Taller M06 pendiente de coordinación con florista (no reservable).
+   - Component: components/journeys/JamaicaJourney.tsx.
+
+6. ANTROPOLOGÍA (slug: antropologia) — data/journeys/antropologia.js
+   ESTADO: BASE DE MOVIMIENTO (contenido pendiente).
+   - Estructura de momentos y orden de visita acordada.
+   - Fotos verificadas (Wikimedia Commons, CREDITS.md).
+   - Guion narrativo completo PENDIENTE; solo observaciones físicas escritas.
+   - Cada bloque separa: observación física, fuentes a consultar, interpretación
+     narrativa (pendiente).
+   - Component: components/journeys/AntropologiaJourney.tsx.
+
+Registro maestro: data/journeysData.js
+- JOURNEYS[] con: id, slug, experience, title_es, title_en, subtitle_es,
+  subtitle_en, intro_es, intro_en, heroImage, accents, price, moments: [].
+- pickLocalized(es, en, isEs) y pickLocalizedList(es, en, isEs) para consumo
+  bilingüe por LLMs y frontend.
+- pages/journeys/[slug].js renderiza cada journey según su `experience`.
+
+Resumen para LLMs: todo el contenido editorial está en data/journeys/*.js con
+pares _es/_en explícitos. Los componentes leen isEs y eligen el idioma.
+Faltan: guion narrativo completo de Antropología y verificación física de
+algunos horarios operativos (marcados como pending, no inventados).
+
+--------------------------------------------------------------------------------
+5. PENDIENTES PARA DESPLEGAR EN VERCEL (PUNTO 3)
+--------------------------------------------------------------------------------
+
+- next build: YA PASA (verificado). Solo advertencias de autoprefixer
+  (color-adjust -> print-color-adjust), no errores.
+- Se corrigió error preexistente en lib/booking/storage.ts (return huérfano
+  fuera de función en líneas 28-29) que bloqueaba la compilación.
+- Variables de entorno: el usuario indica que ya están configuradas en la
+  plataforma (TURSO_URL, TURSO_API_KEY, CRON_SECRET, NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY, NEWS_API_KEY, GEMINI_API_KEY/OPENROUTER_API_KEY).
+- vercel.json: ya tiene el cron configurado
+  { path: "/api/cron/lucha-scraper", schedule: "0 6 */3 * *" }
+  (cada 3 días a las 06:00 UTC).
+
+CRON_SECRET en Vercel:
+- Ir al dashboard de Vercel -> Proyecto Amaxing -> Settings -> Environment
+  Variables.
+- Agregar variable: CRON_SECRET = <mismo valor que usaban en GitHub Actions>.
+- Esta variable protege el endpoint /api/cron/lucha-scraper (requiere header
+  Authorization: Bearer <CRON_SECRET>).
+- En Vercel, los Cron Jobs se configuran en vercel.json (ya listo) y se
+  disparan automáticamente según el schedule.
+
+Pasos para desplegar:
+1. git add . && git commit -m "feat: conectar horarios de luchas al journey + glass dark UI + fix build"
+2. git push origin master
+3. Vercel detecta el push, ejecuta next build y despliega automáticamente.
+4. Verificar en Vercel Dashboard > Cron Jobs que el scraper esté activo.
+
+================================================================================
+FIN DEL DOCUMENTO
+================================================================================
