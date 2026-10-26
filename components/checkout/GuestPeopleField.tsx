@@ -226,16 +226,16 @@ export function GuestPeopleField({
                       aria-pressed={person.id === responsibleId}
                       title={
                         isEs
-                          ? 'Quien responde por esta reserva'
-                          : 'The person responsible for this booking'
+                          ? 'Marca a esta persona como responsable de la reserva'
+                          : 'Mark this person as responsible for the booking'
                       }
-                      className={`rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
+                      className={`rounded-full p-1 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
                         person.id === responsibleId
-                          ? 'text-orange-500'
-                          : 'text-zinc-300 hover:text-orange-400 dark:text-zinc-600'
+                          ? 'bg-orange-100 text-orange-600 shadow-sm dark:bg-orange-900/30 dark:text-orange-300'
+                          : 'bg-white/50 text-zinc-400 hover:bg-orange-50 hover:text-orange-600 dark:bg-zinc-800/30 dark:text-zinc-500 dark:hover:bg-orange-500/10 dark:hover:text-orange-400'
                       }`}
                     >
-                      <Star className="h-3.5 w-3.5" />
+                      <Star className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
