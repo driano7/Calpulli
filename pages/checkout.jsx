@@ -1063,6 +1063,21 @@ export default function CheckoutPage() {
                     ? 'Moneda: MXN (Precios mostrados en MXN)'
                     : 'Currency: MXN — prices shown in MXN'}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => clearCart()}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                >
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                  {locale === 'es' ? 'Vaciar carrito' : 'Clear cart'}
+                </button>
               </div>
             </div>
 

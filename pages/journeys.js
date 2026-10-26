@@ -48,10 +48,12 @@ function JourneyPreview({ journey, title, isEs }) {
 export default function JourneysIndex() {
   const { currentLanguage, t } = useLanguage()
   const isEs = currentLanguage === 'es'
-  const { addItem } = useCartStore()
+  const { addItem, clearCart } = useCartStore()
   const router = useRouter()
 
   const handleReserve = (journey) => {
+    // Limpiar carrito primero: solo quieres este journey, nada más
+    clearCart()
     const title = pickLocalized(journey.title_es, journey.title_en, isEs)
     addItem({
       experienceId: journey.id,
