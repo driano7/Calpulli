@@ -25,6 +25,8 @@ export default function BookingsPage() {
   // --- Búsqueda de reservas para usuarios autenticados ---
   const [activities, setActivities] = useState([])
   const [isLoadingActivities, setIsLoadingActivities] = useState(false)
+  const [activityDropdownOpen, setActivityDropdownOpen] = useState(false)
+  const [selectedActivity, setSelectedActivity] = useState(null)
   const [searchFilters, setSearchFilters] = useState({
     activityId: '',
     date: '',
@@ -285,25 +287,89 @@ export default function BookingsPage() {
             </h3>
 
             <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-4">
-              {/* Dropdown de actividad */}
-              <div>
+              {/* Dropdown de actividad con foto + título */}
+              <div
+                className="relative w-full"
+                onClick={(e) => {
+                  if (!e.target.closest('.dropdown-list')) {
+                    setActivityDropdownOpen(!activityDropdownOpen)
+                  }
+                }}
+              >
                 <label className="mb-2 block text-sm font-medium text-zinc-600 dark:text-zinc-300">
                   {isEs ? 'Tipo de actividad' : 'Activity type'}
                 </label>
-                <select
-                  value={searchFilters.activityId}
-                  onChange={(e) =>
-                    setSearchFilters({ ...searchFilters, activityId: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-white/10 dark:bg-zinc-900 dark:text-white"
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-3 rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 transition-all focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-white/10 dark:bg-zinc-900 dark:text-white"
                 >
-                  <option value="">{isEs ? 'Todas las actividades' : 'All activities'}</option>
-                  {activities.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.title}
-                    </option>
-                  ))}
-                </select>
+                  {selectedActivity ? (
+                    <>
+                      <img
+                        src={selectedActivity.imageUrl}
+                        alt={selectedActivity.title}
+                        className="h-8 w-8 rounded-md border border-zinc-100 object-cover dark:border-white/10"
+                      />
+                      <span>{selectedActivity.title}</span>
+                    </>
+                  ) : (
+                    <span className="text-zinc-400">
+                      {isEs ? 'Todas las actividades' : 'All activities'}
+                    </span>
+                  )}
+                  <svg
+                    className={`ml-auto h-4 w-4 text-zinc-400 transition-transform ${
+                      activityDropdownOpen ? 'rotate-180' : ''
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                {activityDropdownOpen && (
+                  <div className="dropdown-list absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg dark:border-white/10 dark:bg-zinc-900">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchFilters({ ...searchFilters, activityId: '' })
+                        setSelectedActivity(null)
+                        setActivityDropdownOpen(false)
+                      }}
+                      className="flex w-full items-center gap-3 px-3 py-2.5 text-sm text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    >
+                      <span className="text-zinc-400">
+                        {isEs ? 'Todas las actividades' : 'All activities'}
+                      </span>
+                    </button>
+                    {activities.map((a) => (
+                      <button
+                        key={a.id}
+                        type="button"
+                        onClick={() => {
+                          setSearchFilters({ ...searchFilters, activityId: a.id })
+                          setSelectedActivity(a)
+                          setActivityDropdownOpen(false)
+                        }}
+                        className="flex w-full items-center gap-3 border-b border-zinc-100 px-3 py-2.5 text-sm text-zinc-900 last:border-0 hover:bg-zinc-50 dark:border-white/5 dark:text-white dark:hover:bg-zinc-800"
+                      >
+                        <img
+                          src={a.imageUrl}
+                          alt={a.title}
+                          className="h-8 w-8 flex-shrink-0 rounded-md border border-zinc-100 object-cover dark:border-white/10"
+                        />
+                        <span>{a.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Fecha */}
