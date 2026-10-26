@@ -6,70 +6,41 @@ Autor: agente de implementación
 Alcance: Journey "Luchas" + componente UI Glass Dark
 
 --------------------------------------------------------------------------------
-1. CONEXIÓN DEL JOURNEY DE LUCHAS A EVENTOS REALES (PUNTO 1)
+1. AJUSTES DEL JOURNEY DE LUCHAS (PUNTO 1)
 --------------------------------------------------------------------------------
 
-Objetivo: mostrar debajo de cada variante de arena (Arena México y Arena Coliseo)
-los días y horarios de las próximas 7 funciones, alimentados por el scraper de
-lucha que ya corre cada 3 días (vercel.json cron: "0 6 */3 * *").
-
-Archivos CREADOS:
-- components/journeys/LuchaArenaSchedule.tsx
-  * Componente cliente ('use client').
-  * Llama a GET /api/lucha/events?arena=<mexico|coliseo>&from=<hoy>&to=<hoy+7dias>.
-  * La API lee de la tabla lucha_events en Turso (poblada por el scraper).
-  * Si la API devuelve 0 eventos o falla, usa un fallback estático con los
-    horarios recurrentes conocidos del scraper:
-      Arena México: martes 19:30, viernes 20:30, domingo 17:00
-      Arena Coliseo: jueves 19:00, sábado 19:30
-  * Cada evento muestra: fecha, hora y enlace "Ver boletos" a cmll.com/tickets.
-  * El panel se envuelve en GlassDark (variant="subtle") para estilo consistente.
+- SE QUITÓ el módulo de "Próximas funciones" (LuchaArenaSchedule.tsx) y su
+  enlace "Ver boletos". Ya no se muestra debajo de cada variante.
+- En el chip/variante de cada arena (Arena México y Arena Coliseo), el campo
+  "Funciones" ahora muestra los días y horarios en NEGRITA y SUBRAYADOS con el
+  color del journey (terracota #C1440E), por ejemplo:
+    Martes 19:30, Viernes 20:30, Domingo 17:00
+- El formato de fecha muestra el día de la semana (martes, miércoles, etc.)
+  seguido de la hora.
 
 Archivos MODIFICADOS:
 - components/journeys/LuchasJourney.tsx
-  * Importa LuchaArenaSchedule.
-  * Debajo de cada tarjeta de variante (arena-mexico y arena-coliseo), dentro
-    del <Reveal> pero fuera del <button> selector, renderiza
-    <LuchaArenaSchedule arena={...} arenaName={...} isEs={...} />.
-  * Así cada visitante ve, bajo la opción que elija, los próximos 7 días y
-    horarios de esa arena específica, con enlace a boletos oficiales.
+  * Se eliminó el import y render de LuchaArenaSchedule.
+  * El <dd> de "Funciones" se divide por comas y cada parte se renderiza con
+    font-bold, underline y textDecorationColor terracota.
+- components/journeys/LuchaArenaSchedule.tsx: ELIMINADO.
 
-APIs involucradas:
+APIs involucradas (ya existían, no se usa en el journey por ahora):
 - /api/lucha/events  (pages/api/lucha/events.ts)
-  Parámetros: arena (mexico|coliseo), from (YYYY-MM-DD), to (YYYY-MM-DD).
-  Devuelve { events: LuchaEvent[] }.
-  También existe ?byWeek=true para agrupar por semana y arena.
 - /api/cron/lucha-scraper  (pages/api/cron/lucha-scraper.ts)
-  Endpoint protegido por CRON_SECRET que ejecuta el scraper cada 3 días.
-
-¿La API funciona?
-- Técnicamente SÍ: el endpoint existe, lee de Turso y el scraper escribe en
-  lucha_events (initLuchaEventsTable + upsertLuchaEvent).
-- El scraping LIVE de cmll.com no está inicializado (Playwright queda en null),
-  por lo que el scraper usa el fallback estático getStaticEvents(). Eso es
-  suficiente para mostrar horarios recurrentes reales de CMLL.
-- Si el scraper nunca se ha ejecutado en producción, la tabla estará vacía y
-  el componente mostrará el fallback estático (los mismos horarios conocidos).
-- No es necesario buscar otras APIs: la fuente es CMLL (cmll.com) y los datos
-  se guardan en Turso. Si se quiere scraping live real, habría que inicializar
-  Playwright en scripts/scrapers/lucha-scraper.ts (línea 8: let browser = null).
 
 --------------------------------------------------------------------------------
 2. COMPONENTE UI GLASS DARK (PUNTO 2)
 --------------------------------------------------------------------------------
 
-Archivo CREADO:
+Archivo MODIFICADO:
 - components/ui/GlassDark.tsx
-  * Componente reutilizable con 3 variantes:
-      - subtle: bg-zinc-900/40 + border-white/10 + backdrop-blur-sm
-      - strong: bg-zinc-900/70 + border-white/20 + backdrop-blur-md
-      - panel:  bg-slate-950/80 + border-white/15 + backdrop-blur-xl + shadow-2xl
-  * Props: children, className, variant ('subtle'|'strong'|'panel'), style.
-  * Se usa en LuchaArenaSchedule (variant="subtle") para el panel de horarios.
-
-Uso recomendado para el resto del sitio (pendiente):
-- Navbar, cards de journey/tour, modales, dropdowns, hero overlays.
-- Ejemplo: <GlassDark variant="panel" className="p-6">...</GlassDark>
+  * Ahora se adapta al modo claro Y oscuro:
+      - Modo claro: bg-white/70/85/90 + border-zinc-200/300 + backdrop-blur
+                    (similar al header del sitio en modo claro).
+      - Modo oscuro: bg-zinc-900/40-70 / slate-950/80 + border-white/10-20.
+  * 3 variantes: subtle, strong, panel.
+  * Props: children, className, variant, style.
 
 --------------------------------------------------------------------------------
 3. ESTADO DE LA TRADUCCIÓN DE JOURNEYS (YA ESTABA HECHO)
