@@ -1,313 +1,129 @@
 ================================================================================
-AMAXING / CALPULLI CDMX — CAMBIOS EN JOURNEYS, LOCAL PICKS Y BLOGS DE EMERGENCIA
-================================================================================
-Fecha: 2026-10-26
-Autor: agente de implementación
-Alcance: Journey "Luchas", Glass Dark UI, animación textos local picks, blogs emergencia
-
---------------------------------------------------------------------------------
-1. AJUSTES DEL JOURNEY DE LUCHAS (PUNTO 1)
---------------------------------------------------------------------------------
-
-- SE QUITÓ el módulo de "Próximas funciones" (LuchaArenaSchedule.tsx) y su
-  enlace "Ver boletos". Ya no se muestra debajo de cada variante.
-- En el chip/variante de cada arena (Arena México y Arena Coliseo), el campo
-  "Funciones" ahora muestra los días y horarios en NEGRITA y SUBRAYADOS con el
-  color del journey (terracota #C1440E), por ejemplo:
-    Martes 19:30, Viernes 20:30, Domingo 17:00
-- El formato de fecha muestra el día de la semana (martes, miércoles, etc.)
-  seguido de la hora.
-
-Archivos MODIFICADOS:
-- components/journeys/LuchasJourney.tsx
-  * Se eliminó el import y render de LuchaArenaSchedule.
-  * El <dd> de "Funciones" se divide por comas y cada parte se renderiza con
-    font-bold, underline y textDecorationColor terracota.
-- components/journeys/LuchaArenaSchedule.tsx: ELIMINADO.
-
-APIs involucradas (ya existían, no se usa en el journey por ahora):
-- /api/lucha/events  (pages/api/lucha/events.ts)
-- /api/cron/lucha-scraper  (pages/api/cron/lucha-scraper.ts)
-
---------------------------------------------------------------------------------
-2. COMPONENTE UI GLASS DARK (PUNTO 2)
---------------------------------------------------------------------------------
-
-Archivo MODIFICADO:
-- components/ui/GlassDark.tsx
-  * Ahora se adapta al modo claro Y oscuro:
-      - Modo claro: bg-white/70/85/90 + border-zinc-200/300 + backdrop-blur
-                    (similar al header del sitio en modo claro).
-      - Modo oscuro: bg-zinc-900/40-70 / slate-950/80 + border-white/10-20.
-  * 3 variantes: subtle, strong, panel.
-  * Props: children, className, variant, style.
-
---------------------------------------------------------------------------------
-3. ANIMACIÓN DE TEXTOS EN LOCAL PICKS (TIPO JOURNEYS)
---------------------------------------------------------------------------------
-
-Objetivo: que los textos de los local picks (ejemplo: Día de Muertos) se animen
-como los textos de los journeys — cada párrafo, título y bullet point aparece
-progresivamente al hacer scroll, en lugar de aparecer todo de golpe.
-
-Archivos MODIFICADOS:
-- components/ProseReveal.jsx
-  * Ahora usa animación tipo Journey (fade-up) para cada hijo directo del MDX
-    (h1, h2, h3, p, ul, ol, blockquote) en lugar de estilos inline manuales.
-  * Los bullet points de listas (ul/ol > li) aparecen uno a uno con stagger.
-  * Respeta prefers-reduced-motion (contenido visible sin animación).
-  * Re-anima al volver a entrar al viewport (scroll arriba/abajo).
-- pages/local/[slug].js
-  * Se importa Reveal de '@/components/journeys/Reveal'.
-  * El MDXLayoutRenderer se envuelve en <Reveal once={false}> para fade-in
-    del bloque completo al entrar al viewport.
-
-Resultado: al leer un local pick (como Día de Muertos), los títulos, párrafos
-y listas aparecen con la misma animación escalonada y fluida que los journeys.
-
---------------------------------------------------------------------------------
-4. ESTADO DE LA TRADUCCIÓN DE JOURNEYS (YA ESTABA HECHO)
---------------------------------------------------------------------------------
-
-No se hizo traducción nueva porque ya estaba implementada:
-- lib/locale.ts + lib/hooks/useLanguage.js: detección en/es, contexto, t().
-- dictionaries/en.json y es.json: diccionarios de UI.
-- data/journeysData.js: pickLocalized() / pickLocalizedList().
-- data/journeys/luchas.js: todos los textos con sufijos _es / _en.
-- components/journeys/LuchasJourney.tsx: usa isEs y elige _es / _en por momento,
-  paso, variante, fuente, etc.
-- pages/journeys/[slug].js: usa pickLocalized para journeys genéricos.
-
---------------------------------------------------------------------------------
-5. VERIFICACIÓN DE INFORMACIÓN DE TODOS LOS JOURNEYS PARA LLMs
---------------------------------------------------------------------------------
-
-El registro maestro está en data/journeysData.js (JOURNEYS[]) con 6 journeys.
-Cada uno tiene su propio archivo de contenido en data/journeys/*.js y su
-componente de presentación en components/journeys/*.tsx.
-
-Lista completa y estado de contenido consumible por LLMs:
-
-1. LUCHAS (slug: luchas) — data/journeys/luchas.js
-   ESTADO: COMPLETO y bilingüe (es/en).
-   - 2 variantes: arena-mexico (Arena México) y arena-coliseo (Arena Coliseo).
-   - 6 momentos por variante (12 total), cada uno con title, lead, steps (title,
-     body, observe), image, pending notas.
-   - NUCLEO editorial compartido (cartelera, ritual, reglas, salida).
-   - Fotos verificadas (Wikimedia Commons, con CREDITS.md).
-   - Fuentes oficiales: CMLL, Ticketmaster, Blue Demon Jr., mercados, Wikipedia,
-     Palacio de Bellas Artes.
-   - verified_on: 2026-10-21. Precio referencia: 100 MXN.
-   - Component: components/journeys/LuchasJourney.tsx (dedicado).
-
-2. CHAPULTEPEC (slug: chapultepec) — data/journeys/chapultepec.js
-   ESTADO: CONTENIDO EDITORIAL DESARROLLADO.
-   - Fotos verificadas (Wikimedia Commons, CREDITS.md).
-   - Rigor histórico documentado: estados 'documentado' / 'tradicion' /
-     'curiosidad' por bloque.
-   - No afirma horarios garantizados; advierte verificar con operador.
-   - Component: components/journeys/ChapultepecJourney.tsx.
-
-3. CENTRO HISTÓRICO (slug: centro) — data/journeys/centro.js
-   ESTADO: CONTENIDO EDITORIAL DESARROLLADO.
-   - Fotos verificadas (Wikimedia Commons, CREDITS.md).
-   - Ubicaciones ilustrativas/orientativas (no coordenadas exactas).
-   - Rigor histórico: 'documentado' / 'interpretacion' / 'pendiente'.
-   - No promete duración garantizada ni disponibilidad de mesas.
-   - Component: components/journeys/CentroJourney.tsx.
-
-4. ROMA-CONDESA (slug: roma) — data/journeys/roma.js
-   ESTADO: CONTENIDO EDITORIAL DESARROLLADO.
-   - 5 momentos: La Romita, Roma, Álvaro Obregón, Hipódromo, Parque México.
-   - Itinerario validado por fundador; cabe en 3.5 horas.
-   - Fotos verificadas (Wikimedia Commons, CREDITS.md).
-   - No usa la película "Roma" como puente editorial.
-   - Component: components/journeys/RomaJourney.tsx.
-
-5. JAMAICA (slug: jamaica) — data/journeys/jamaica.js
-   ESTADO: CONTENIDO EDITORIAL DESARROLLADO.
-   - 6 momentos (M01 a M06, cierre participativo JamaicaBouquet).
-   - Fotos verificadas (Wikimedia Commons, incluye archivo 1957/1962).
-   - No inventa testimonios ni nombres de comerciantes.
-   - Taller M06 pendiente de coordinación con florista (no reservable).
-   - Component: components/journeys/JamaicaJourney.tsx.
-
-6. ANTROPOLOGÍA (slug: antropologia) — data/journeys/antropologia.js
-   ESTADO: BASE DE MOVIMIENTO (contenido pendiente).
-   - Estructura de momentos y orden de visita acordada.
-   - Fotos verificadas (Wikimedia Commons, CREDITS.md).
-   - Guion narrativo completo PENDIENTE; solo observaciones físicas escritas.
-   - Cada bloque separa: observación física, fuentes a consultar, interpretación
-     narrativa (pendiente).
-   - Component: components/journeys/AntropologiaJourney.tsx.
-
-Registro maestro: data/journeysData.js
-- JOURNEYS[] con: id, slug, experience, title_es, title_en, subtitle_es,
-  subtitle_en, intro_es, intro_en, heroImage, accents, price, moments: [].
-- pickLocalized(es, en, isEs) y pickLocalizedList(es, en, isEs) para consumo
-  bilingüe por LLMs y frontend.
-- pages/journeys/[slug].js renderiza cada journey según su `experience`.
-
-Resumen para LLMs: todo el contenido editorial está en data/journeys/*.js con
-pares _es/_en explícitos. Los componentes leen isEs y eligen el idioma.
-Faltan: guion narrativo completo de Antropología y verificación física de
-algunos horarios operativos (marcados como pending, no inventados).
-
---------------------------------------------------------------------------------
-6. BLOGS DE EMERGENCIA ACTUALIZADOS (INFO PARA LLMs)
---------------------------------------------------------------------------------
-
-Se actualizaron los blogs de emergencia que tenían información de 2022 (hace 4
-años) a fecha 2026, con contenido revisado y enlaces verificados.
-
-Archivos ACTUALIZADOS:
-- data/blog/Info/dangerous.mdx (es) — Zonas con más precaución en CDMX 2026
-- data/blog/Info/zonasRojas.mdx (es) — Mismo contenido en español
-- data/blog/Info/turistas.mdx (es) — Información turística oficial CDMX 2026
-- data/blog/Info/tourist.mdx (en) — Same content in English
-
-Archivos YA ACTUALIZADOS (2026, sin cambios):
-- data/blog/Info/terremotos.mdx (es) — Qué hacer en caso de sismo
-- data/blog/Info/earthquakes.mdx (en) — What to do in an Earthquake
-- data/blog/Info/policias.mdx (es) — Policías que pueden ayudarte
-- data/blog/Info/policies.mdx (en) — Police can help you
-- data/blog/Info/phones.mdx (en) — Emergency phones
-- data/blog/Info/telefonos.mdx (es) — Teléfonos de emergencia
-
-INFO DE EMERGENCIA CONSOLIDADA PARA CONSUMO POR LLMs:
-
-TELÉFONOS DE EMERGENCIA CDMX (2026):
-- Emergencias (911): policía, bomberos, ambulancia — número único, gratuito, 24/7
-- Policía Turística WhatsApp: +52 55 4891 1116 — ayuda bilingüe, comparte ubicación
-- Locatel CDMX: *0311 o 55 5658 1111 — información, objetos perdidos, contacto familiar
-- Protección Civil CDMX: 55 5683 2222 — encharcamientos, caída de árboles, riesgos
-- Denuncia Anónima: 089
-- Asuntos Internos SSC (abuso policial): 55 5208 7445
-- Embajada EE. UU.: 55 5080 2000
-
-QUÉ HACER EN CASO DE SISMO (2026):
-Antes:
-1. Ubica objetos que puedan caer y asegúralos.
-2. Ubica zonas seguras en tu alojamiento (columnas estructurales, mesas sólidas).
-3. Ten a mano: botiquín, lámpara, radio de pilas, power bank, agua, copia de pasaporte.
-4. Acuerda punto de reunión fuera del edificio.
-5. Aprende la salida segura más cercana.
-
-Durante:
-1. Mantén la calma, no corras.
-2. Atiende primero a niños, personas con discapacidad y mayores.
-3. Aléjate de ventanas, vidrios, puertas exteriores y fachadas.
-4. En edificio: NO uses elevador; quédate cerca de una columna.
-5. En lugar concurrido: camina hacia salidas de evacuación, no corras.
-6. Si manejas: detente y quédate dentro del vehículo.
-7. Si estás arriba del 4º piso: no intentes bajar mientras tiembla.
-
-Después:
-1. Espera 10-20 minutos antes de reingresar (réplicas).
-2. Revisa daños; si huele a gas, cierra gas y luz y ventila.
-3. Si se va la luz, usa lámparas de pilas — no velas, no cerillos, no fumar.
-4. Coopera con autoridades; ten teléfonos de emergencia a mano.
-
-POLICÍA TURÍSTICA CDMX (2026):
-- Dónde encontrarlos: Centro Histórico, Paseo de la Reforma, Coyoacán, Xochimilco, Polanco
-- Horario: 24/7 por turnos
-- Idiomas: inglés, francés, italiano, náhuatl, totonaco, y algunos alemán/japonés/mandarín
-- App "Mi Policía": botón de emergencia, comparte GPS, WhatsApp +52 55 4891 1116
-- Si te cobran de más o te roban: levantan reporte, te acompañan al Ministerio Público
-
-ZONAS CON MÁS PRECAUCIÓN (2026):
-- Tepito y La Lagunilla: mercados famosos, más carteristas y robos; ve en grupo.
-- Centro Histórico (periferia nocturna): evita calles poco iluminadas después de las 10 pm.
-- Iztapalapa (zonas periféricas): evita colonias alejadas del Metro.
-- Gustavo A. Madero (periferia): evita áreas alejadas del metro Indios Verdes por la noche.
-- Mercado de Sonora y cercanías: cuidado con pertenencias en zonas concurridas.
-
---------------------------------------------------------------------------------
-7. PENDIENTES PARA DESPLEGAR EN VERCEL
---------------------------------------------------------------------------------
-
-- next build: YA PASA (verificado).
-- Variables de entorno: el usuario indica que ya están configuradas en la
-  plataforma (TURSO_URL, TURSO_API_KEY, CRON_SECRET, etc.).
-- vercel.json: ya tiene el cron configurado
-  { path: "/api/cron/lucha-scraper", schedule: "0 6 */3 * *" }
-
-CRON_SECRET en Vercel:
-- Ir al dashboard de Vercel -> Proyecto Amaxing -> Settings -> Environment
-  Variables.
-- Agregar variable: CRON_SECRET = <mismo valor que usaban en GitHub Actions>.
-
-Pasos para desplegar:
-1. git add . && git commit -m "feat: animación textos local picks + blogs emergencia 2026"
-2. git push origin master
-3. Vercel detecta el push, ejecuta next build y despliega automáticamente.
-4. Verificar en Vercel Dashboard > Cron Jobs que el scraper esté activo.
-
-================================================================================
-FIN DEL DOCUMENTO
+AMAXING / CALPULLI CDMX — INFORMACIÓN PARA LLMS Y CONSUMO DE CONTENIDO
 ================================================================================
 
--------------------------------------------------------------------------------
-8. BUSCADOR DE RESERVAS PARA USUARIOS AUTENTICADOS
--------------------------------------------------------------------------------
+Este archivo describe qué ofrece el sitio, cómo consumirlo y qué información
+está disponible para que un LLM pueda responder preguntas sobre Amaxing y la
+CDMX sin inventar datos.
 
-Cuando el usuario inicia sesión en /bookings, se muestra un formulario de
-búsqueda para localizar sus propias reservaciones en la base de datos (Turso).
+--------------------------------------------------------------------------------
+1. QUÉ ES CALPULLI CDMX
+--------------------------------------------------------------------------------
 
-Archivos CREADOS:
-- pages/api/bookings/search.ts
-  * Endpoint GET protegido por sesión (getSession).
-  * Query params: experienceId, date, name, from, to.
-  * Reglas de negocio:
-      - Solo se pueden consultar reservas dentro de ±1 mes desde hoy.
-      - Si se pide fuera de ese rango, devuelve error 400 con mensaje claro.
-      - Filtra por actividad, fecha, nombre de cliente o acompañantes.
-- pages/api/activities.ts
-  * Endpoint GET que devuelve tours + journeys unificados con foto principal,
-    título (es/en), precio, moneda y tipo (tour|journey).
-  * Se usa para poblar el dropdown del buscador.
+Plataforma de turismo local en la Ciudad de México. Ofrece tours guiados,
+journeys editoriales culturales, guías interactivas, mapas de barrio, local
+picks mensuales y reservas con ticket QR. Todo bilingüe (español / inglés).
 
-Archivos MODIFICADOS:
-- pages/bookings.jsx
-  * Usuario autenticado: muestra formulario de búsqueda con 3 filtros:
-      1. Dropdown de actividad (custom, muestra foto principal + título de cada
-         opción; al seleccionar se muestra la foto elegida como valor activo).
-      2. Selector de fecha (type="date", con min/max de ±1 mes desde hoy).
-      3. Campo de texto para nombre (cliente o acompañante).
-  * Botón "Buscar reservación" llama a /api/bookings/search con los filtros.
-  * Muestra mensaje de rango de fechas (±1 mes desde hoy).
-  * Si no se han aplicado filtros, lista todas las reservas del usuario.
-  * Resultados se renderizan con las mismas tarjetas (imagen, título, fecha,
-    hora, precio, estado, botón "Ver Ticket").
-  * Usuario sin sesión (invitado): sigue viendo sus reservas de localStorage
-    con el buscador de texto simple existente.
+Sitio principal: https://donovan-amx.vercel.app
 
-Regla de negocio clave:
-- No se pueden consultar reservas con más de 1 mes de antelación hacia atrás
-  ni hacia adelante desde hoy. El frontend lo restringe con min/max en el input
-  de fecha, y el backend lo valida y rechaza con error 400 si se salta.
+--------------------------------------------------------------------------------
+2. CONTENIDO DISPONIBLE PARA LLMS
+--------------------------------------------------------------------------------
 
--------------------------------------------------------------------------------
-9. PENDIENTES PARA DESPLEGAR EN VERCEL
--------------------------------------------------------------------------------
+A. TOURS (/tours)
+   - 12 tours comerciales con checkout (reservables).
+   - Cada uno tiene: título, tagline, descripción, puntos de encuentro,
+     itinerario, destacados, precio, duración, máximo de personas, categoría.
+   - Ejemplos: comida callejera Centro Histórico, mezcal y pulque, Coyoacán,
+     Xochimilco, museos, etc.
+   - Datos en: data/toursData.js
 
-- next build: YA PASA (verificado).
-- Variables de entorno: el usuario indica que ya están configuradas en la
-  plataforma (TURSO_URL, TURSO_API_KEY, CRON_SECRET, NEXT_PUBLIC_SUPABASE_URL,
-  NEXT_PUBLIC_SUPABASE_ANON_KEY, NEWS_API_KEY, GEMINI_API_KEY/OPENROUTER_API_KEY).
-- vercel.json: ya tiene el cron configurado
-  { path: "/api/cron/lucha-scraper", schedule: "0 6 */3 * *" }
+B. JOURNEYS EDITORIALES (/journeys)
+   - 6 caminatas culturales NO reservables (contenido para leer y recorrer):
+     1. Luchas — Lucha Libre en Arena México y Arena Coliseo.
+     2. Centro Histórico — El futuro se pintó aquí.
+     3. Chapultepec — De los Dioses a Emperadores.
+     4. Roma-Condesa — La ciudad que se puso de moda.
+     5. Jamaica — Mirar más allá de las flores.
+     6. Antropología — Museo Nacional de Antropología.
+   - Cada journey tiene título, subtítulo, introducción, momentos, pasos,
+     observaciones, fotos verificadas (Wikimedia Commons) y fuentes.
+   - Datos en: data/journeys/*.js y data/journeysData.js
 
-CRON_SECRET en Vercel:
-- Ir al dashboard de Vercel -> Proyecto Amaxing -> Settings -> Environment
-  Variables.
-- Agregar variable: CRON_SECRET = <mismo valor que usaban en GitHub Actions>.
+C. GUÍAS INTERACTIVAS (/guides)
+   - 5 recorridos autoguiados: Condesa, Centro, Chapultepec II, Chimalistac, UNAM.
+   - Cada uno tiene título, resumen, imagen, color de acento y MDX con contenido.
+   - Datos en: data/selfGuidesData.js y data/guides/*.mdx
 
-Pasos para desplegar:
-1. git add . && git commit -m "<mensaje>"
-2. git push origin master
-3. Vercel detecta el push, ejecuta next build y despliega automáticamente.
-4. Verificar en Vercel Dashboard > Cron Jobs que el scraper esté activo.
+D. MAPAS (/maps)
+   - 5 mapas curados de la CDMX: comida tradicional, zonas con precaución,
+     vida nocturna, joyas escondidas, top atracciones.
+   - Cada mapa tiene título, descripción, embed de My Maps y highlights.
+   - Datos en: data/cdmxMapsData.js y data/maps/*.mdx
+
+E. LOCAL PICKS (/local)
+   - Guía mensual curada por chilangos para visitantes de 2-7 días.
+   - 3 festividades fijadas todo el año (rosa mexicano, con chincheta):
+     Año Nuevo, 16 de Septiembre, Día de Muertos.
+   - 6 picks que rotan cada mes.
+   - Datos en: data/local-picks/*.mdx
+
+F. BLOG DE EMERGENCIA (/blog/Info)
+   - Teléfonos de emergencia CDMX 2026: 911, Policía Turística
+     WhatsApp +52 55 4891 1116, Locatel *0311, Protección Civil
+     55 5683 2222, Denuncia Anónima 089.
+   - Qué hacer antes, durante y después de un sismo (CENAPRED / Protección Civil).
+   - Dónde encontrar a la Policía Turística (Centro, Reforma, Coyoacán,
+     Xochimilco, Polanco; 24/7; hablan inglés, francés, italiano, náhuatl,
+     totonaco y algunos alemán/japonés/mandarín).
+   - Zonas con más precaución en CDMX (Tepito, La Lagunilla, Centro
+     Histórico periferia nocturna, Iztapalapa periferia, Gustavo A. Madero
+     periferia, Mercado de Sonora).
+   - Datos en: data/blog/Info/*.mdx
+
+--------------------------------------------------------------------------------
+3. CÓMO CONSULTAR LA INFORMACIÓN (APIs para LLMs)
+--------------------------------------------------------------------------------
+
+A. Knowledge Graph API
+   GET /api/knowledge/{entity}?lang=es&category=&neighborhood=&q=&limit=&offset=
+   Entidades: Tour, Itinerary, Map, LocalPick, Neighborhood, Category, Place.
+   CORS abierto, caché CDN 1h. Spec: public/openapi.json
+
+B. MCP Server (read-only para agentes IA)
+   Herramientas: search_tours, get_tour_details, match_tours_to_preferences,
+   build_half_day_plan, build_day_plan, build_itinerary, combine_tours_and_places,
+   find_activities_near, find_before_or_after_tour, suggest_for_time_available,
+   suggest_for_location, suggest_for_weather, suggest_for_first_time_visitor,
+   explain_recommendation.
+   Recursos: calpulli://tours, tours/{id}, places/{id}, neighborhoods/{id},
+   itineraries/{id}, taxonomies, knowledge-graph, data-policy, attribution.
+
+C. llms.txt y robots.txt
+   public/llms.txt — índice + sección máquina con endpoints.
+   public/robots.txt — Allow explícito a GPTBot, Claude, Perplexity, etc.
+
+D. Sitemap dinámico
+   pages/sitemap.xml.js — rutas + tours + guides + maps + local + blog.
+
+--------------------------------------------------------------------------------
+4. RESERVAS Y CHECKOUT
+--------------------------------------------------------------------------------
+
+A. Tours y experiencias sí se reservan con checkout (Stripe, efectivo, cripto).
+B. Journeys editoriales NO se reservan: son contenido cultural gratuito.
+C. Se puede pagar como invitado sin crear cuenta (se guarda el ticket en localStorage).
+D. Usuario autenticado puede buscar sus reservas en /bookings con filtros:
+   tipo de actividad (dropdown con foto + título), fecha (±1 mes desde hoy) y nombre.
+
+--------------------------------------------------------------------------------
+5. VALOR QUE APORTA
+--------------------------------------------------------------------------------
+
+- Contenido verificado y bilingüe sin inventar datos.
+- Fotografía con licencia verificada (Wikimedia Commons, créditos individuales).
+- Información de emergencia actualizada (2026) para visitantes de CDMX.
+- API abierta para LLMs y agentes IA (MCP, Knowledge Graph, llms.txt).
+- Reservas con ticket QR descargable.
+- Pagos con tarjeta, efectivo o cripto (Ethereum, Base, Lightning).
+- GDPR: exportar/eliminar datos personales, cifrado AES-256-GCM.
+
+--------------------------------------------------------------------------------
+6. LICENCIA
+--------------------------------------------------------------------------------
+
+MIT License. © 2024–2026 Donovan Riaño / Calpulli CDMX.
+Ver LICENSE en la raíz del repositorio.
 
 ================================================================================
 FIN DEL DOCUMENTO

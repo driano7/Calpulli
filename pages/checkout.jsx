@@ -16,7 +16,6 @@ import {
   Mail,
 } from 'lucide-react'
 import { useCartStore } from '@/lib/store/useCartStore'
-import { JOURNEYS } from '@/data/journeysData'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { FlipCard } from '@/components/ui/FlipCard'
@@ -101,31 +100,6 @@ export default function CheckoutPage() {
    * recomendada.
    */
   const router = useRouter()
-  const journeySlug = typeof router?.query?.journey === 'string' ? router.query.journey : ''
-  const addedJourney = useRef(null)
-
-  useEffect(() => {
-    if (!journeySlug || addedJourney.current === journeySlug) return
-    const journey = JOURNEYS.find((j) => j.slug === journeySlug)
-    if (!journey) return
-    addedJourney.current = journeySlug
-    const today = new Date()
-    const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
-      today.getDate()
-    ).padStart(2, '0')}`
-    addItem({
-      experienceId: journey.experience || journey.id,
-      title: journey.title_es || journey.title_en,
-      imageUrl: journey.heroImage || null,
-      price: journey.price || 100,
-      currency: 'mxn',
-      location: journey.neighborhood || 'Ciudad de México',
-      date: iso,
-      time: '10:00',
-      maxGuests: 8,
-      highlights: [],
-    })
-  }, [journeySlug, addItem])
 
   // Inicializa / sincroniza participantNames cuando cambian items o user
   useEffect(() => {
@@ -782,7 +756,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-white dark:bg-zinc-950">
+    <div className="min-h-screen overflow-x-hidden bg-transparent dark:bg-transparent">
       <div className="container mx-auto max-w-full overflow-hidden px-4 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -877,7 +851,7 @@ export default function CheckoutPage() {
           )}
 
           {/* Identidad: guest vs auth */}
-          <div className="mb-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-white/10 dark:bg-zinc-900/50">
+          <div className="mb-6 rounded-2xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
             {isGuest ? (
               <div>
                 <div className="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white">
@@ -979,7 +953,7 @@ export default function CheckoutPage() {
               {items.map((item) => (
                 <div
                   key={item.lineId}
-                  className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-white/10 dark:bg-zinc-900"
+                  className="rounded-xl bg-white/30 p-3 backdrop-blur-sm dark:bg-white/5"
                 >
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">
                     {item.title} — {item.date} • {item.time} • {item.peopleCount}{' '}
@@ -1032,7 +1006,7 @@ export default function CheckoutPage() {
 
           <div className="grid gap-6 overflow-hidden lg:grid-cols-2 lg:gap-8">
             {/* Summary */}
-            <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-900/50 sm:p-6">
+            <div className="w-full min-w-0 overflow-hidden rounded-2xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10 sm:p-6">
               <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
                 {t('checkout.orderSummary', 'Resumen de tu compra')}
               </h2>
@@ -1040,7 +1014,7 @@ export default function CheckoutPage() {
                 {items.map((item) => (
                   <div
                     key={item.lineId}
-                    className="flex min-w-0 items-center justify-between gap-2 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-white/5 dark:bg-zinc-900 sm:gap-3"
+                    className="flex min-w-0 items-center justify-between gap-2 overflow-hidden rounded-xl bg-white/20 p-3 backdrop-blur-sm dark:bg-white/5 sm:gap-3"
                   >
                     <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden sm:gap-3">
                       <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg">
