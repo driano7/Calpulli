@@ -1,9 +1,9 @@
 ================================================================================
-AMAXING / CALPULLI CDMX — CAMBIOS EN JOURNEYS (LUCHAS + UI GLASS DARK)
+AMAXING / CALPULLI CDMX — CAMBIOS EN JOURNEYS, LOCAL PICKS Y BLOGS DE EMERGENCIA
 ================================================================================
 Fecha: 2026-10-26
 Autor: agente de implementación
-Alcance: Journey "Luchas" + componente UI Glass Dark
+Alcance: Journey "Luchas", Glass Dark UI, animación textos local picks, blogs emergencia
 
 --------------------------------------------------------------------------------
 1. AJUSTES DEL JOURNEY DE LUCHAS (PUNTO 1)
@@ -43,7 +43,30 @@ Archivo MODIFICADO:
   * Props: children, className, variant, style.
 
 --------------------------------------------------------------------------------
-3. ESTADO DE LA TRADUCCIÓN DE JOURNEYS (YA ESTABA HECHO)
+3. ANIMACIÓN DE TEXTOS EN LOCAL PICKS (TIPO JOURNEYS)
+--------------------------------------------------------------------------------
+
+Objetivo: que los textos de los local picks (ejemplo: Día de Muertos) se animen
+como los textos de los journeys — cada párrafo, título y bullet point aparece
+progresivamente al hacer scroll, en lugar de aparecer todo de golpe.
+
+Archivos MODIFICADOS:
+- components/ProseReveal.jsx
+  * Ahora usa animación tipo Journey (fade-up) para cada hijo directo del MDX
+    (h1, h2, h3, p, ul, ol, blockquote) en lugar de estilos inline manuales.
+  * Los bullet points de listas (ul/ol > li) aparecen uno a uno con stagger.
+  * Respeta prefers-reduced-motion (contenido visible sin animación).
+  * Re-anima al volver a entrar al viewport (scroll arriba/abajo).
+- pages/local/[slug].js
+  * Se importa Reveal de '@/components/journeys/Reveal'.
+  * El MDXLayoutRenderer se envuelve en <Reveal once={false}> para fade-in
+    del bloque completo al entrar al viewport.
+
+Resultado: al leer un local pick (como Día de Muertos), los títulos, párrafos
+y listas aparecen con la misma animación escalonada y fluida que los journeys.
+
+--------------------------------------------------------------------------------
+4. ESTADO DE LA TRADUCCIÓN DE JOURNEYS (YA ESTABA HECHO)
 --------------------------------------------------------------------------------
 
 No se hizo traducción nueva porque ya estaba implementada:
@@ -56,7 +79,7 @@ No se hizo traducción nueva porque ya estaba implementada:
 - pages/journeys/[slug].js: usa pickLocalized para journeys genéricos.
 
 --------------------------------------------------------------------------------
-4. VERIFICACIÓN DE INFORMACIÓN DE TODOS LOS JOURNEYS PARA LLMs
+5. VERIFICACIÓN DE INFORMACIÓN DE TODOS LOS JOURNEYS PARA LLMs
 --------------------------------------------------------------------------------
 
 El registro maestro está en data/journeysData.js (JOURNEYS[]) con 6 journeys.
@@ -75,7 +98,6 @@ Lista completa y estado de contenido consumible por LLMs:
    - Fuentes oficiales: CMLL, Ticketmaster, Blue Demon Jr., mercados, Wikipedia,
      Palacio de Bellas Artes.
    - verified_on: 2026-10-21. Precio referencia: 100 MXN.
-   - Ahora incluye horarios de próximas 7 funciones vía API /api/lucha/events.
    - Component: components/journeys/LuchasJourney.tsx (dedicado).
 
 2. CHAPULTEPEC (slug: chapultepec) — data/journeys/chapultepec.js
@@ -132,31 +154,91 @@ Faltan: guion narrativo completo de Antropología y verificación física de
 algunos horarios operativos (marcados como pending, no inventados).
 
 --------------------------------------------------------------------------------
-5. PENDIENTES PARA DESPLEGAR EN VERCEL (PUNTO 3)
+6. BLOGS DE EMERGENCIA ACTUALIZADOS (INFO PARA LLMs)
 --------------------------------------------------------------------------------
 
-- next build: YA PASA (verificado). Solo advertencias de autoprefixer
-  (color-adjust -> print-color-adjust), no errores.
-- Se corrigió error preexistente en lib/booking/storage.ts (return huérfano
-  fuera de función en líneas 28-29) que bloqueaba la compilación.
+Se actualizaron los blogs de emergencia que tenían información de 2022 (hace 4
+años) a fecha 2026, con contenido revisado y enlaces verificados.
+
+Archivos ACTUALIZADOS:
+- data/blog/Info/dangerous.mdx (es) — Zonas con más precaución en CDMX 2026
+- data/blog/Info/zonasRojas.mdx (es) — Mismo contenido en español
+- data/blog/Info/turistas.mdx (es) — Información turística oficial CDMX 2026
+- data/blog/Info/tourist.mdx (en) — Same content in English
+
+Archivos YA ACTUALIZADOS (2026, sin cambios):
+- data/blog/Info/terremotos.mdx (es) — Qué hacer en caso de sismo
+- data/blog/Info/earthquakes.mdx (en) — What to do in an Earthquake
+- data/blog/Info/policias.mdx (es) — Policías que pueden ayudarte
+- data/blog/Info/policies.mdx (en) — Police can help you
+- data/blog/Info/phones.mdx (en) — Emergency phones
+- data/blog/Info/telefonos.mdx (es) — Teléfonos de emergencia
+
+INFO DE EMERGENCIA CONSOLIDADA PARA CONSUMO POR LLMs:
+
+TELÉFONOS DE EMERGENCIA CDMX (2026):
+- Emergencias (911): policía, bomberos, ambulancia — número único, gratuito, 24/7
+- Policía Turística WhatsApp: +52 55 4891 1116 — ayuda bilingüe, comparte ubicación
+- Locatel CDMX: *0311 o 55 5658 1111 — información, objetos perdidos, contacto familiar
+- Protección Civil CDMX: 55 5683 2222 — encharcamientos, caída de árboles, riesgos
+- Denuncia Anónima: 089
+- Asuntos Internos SSC (abuso policial): 55 5208 7445
+- Embajada EE. UU.: 55 5080 2000
+
+QUÉ HACER EN CASO DE SISMO (2026):
+Antes:
+1. Ubica objetos que puedan caer y asegúralos.
+2. Ubica zonas seguras en tu alojamiento (columnas estructurales, mesas sólidas).
+3. Ten a mano: botiquín, lámpara, radio de pilas, power bank, agua, copia de pasaporte.
+4. Acuerda punto de reunión fuera del edificio.
+5. Aprende la salida segura más cercana.
+
+Durante:
+1. Mantén la calma, no corras.
+2. Atiende primero a niños, personas con discapacidad y mayores.
+3. Aléjate de ventanas, vidrios, puertas exteriores y fachadas.
+4. En edificio: NO uses elevador; quédate cerca de una columna.
+5. En lugar concurrido: camina hacia salidas de evacuación, no corras.
+6. Si manejas: detente y quédate dentro del vehículo.
+7. Si estás arriba del 4º piso: no intentes bajar mientras tiembla.
+
+Después:
+1. Espera 10-20 minutos antes de reingresar (réplicas).
+2. Revisa daños; si huele a gas, cierra gas y luz y ventila.
+3. Si se va la luz, usa lámparas de pilas — no velas, no cerillos, no fumar.
+4. Coopera con autoridades; ten teléfonos de emergencia a mano.
+
+POLICÍA TURÍSTICA CDMX (2026):
+- Dónde encontrarlos: Centro Histórico, Paseo de la Reforma, Coyoacán, Xochimilco, Polanco
+- Horario: 24/7 por turnos
+- Idiomas: inglés, francés, italiano, náhuatl, totonaco, y algunos alemán/japonés/mandarín
+- App "Mi Policía": botón de emergencia, comparte GPS, WhatsApp +52 55 4891 1116
+- Si te cobran de más o te roban: levantan reporte, te acompañan al Ministerio Público
+
+ZONAS CON MÁS PRECAUCIÓN (2026):
+- Tepito y La Lagunilla: mercados famosos, más carteristas y robos; ve en grupo.
+- Centro Histórico (periferia nocturna): evita calles poco iluminadas después de las 10 pm.
+- Iztapalapa (zonas periféricas): evita colonias alejadas del Metro.
+- Gustavo A. Madero (periferia): evita áreas alejadas del metro Indios Verdes por la noche.
+- Mercado de Sonora y cercanías: cuidado con pertenencias en zonas concurridas.
+
+--------------------------------------------------------------------------------
+7. PENDIENTES PARA DESPLEGAR EN VERCEL
+--------------------------------------------------------------------------------
+
+- next build: YA PASA (verificado).
 - Variables de entorno: el usuario indica que ya están configuradas en la
-  plataforma (TURSO_URL, TURSO_API_KEY, CRON_SECRET, NEXT_PUBLIC_SUPABASE_URL,
-  NEXT_PUBLIC_SUPABASE_ANON_KEY, NEWS_API_KEY, GEMINI_API_KEY/OPENROUTER_API_KEY).
+  plataforma (TURSO_URL, TURSO_API_KEY, CRON_SECRET, etc.).
 - vercel.json: ya tiene el cron configurado
   { path: "/api/cron/lucha-scraper", schedule: "0 6 */3 * *" }
-  (cada 3 días a las 06:00 UTC).
 
 CRON_SECRET en Vercel:
 - Ir al dashboard de Vercel -> Proyecto Amaxing -> Settings -> Environment
   Variables.
 - Agregar variable: CRON_SECRET = <mismo valor que usaban en GitHub Actions>.
-- Esta variable protege el endpoint /api/cron/lucha-scraper (requiere header
-  Authorization: Bearer <CRON_SECRET>).
-- En Vercel, los Cron Jobs se configuran en vercel.json (ya listo) y se
-  disparan automáticamente según el schedule.
 
 Pasos para desplegar:
-1. git add . && git commit -m "feat: conectar horarios de luchas al journey + glass dark UI + fix build"
+1. git add . && git commit -m "feat: animación textos local picks + blogs emergencia 2026"
 2. git push origin master
 3. Vercel detecta el push, ejecuta next build y despliega automáticamente.
 4. Verificar en Vercel Dashboard > Cron Jobs que el scraper esté activo.

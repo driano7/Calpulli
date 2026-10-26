@@ -1,62 +1,78 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+// MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
+/**
+ * Revela los textos del MDX (blogs y local picks) con animación tipo Journey:
+ *  - Cada hijo directo (h1, h2, h3, p, ul, ol, blockquote) entra con fade-up
+ *  - Los bullet points de listas aparecen uno a uno con stagger
+ *  - Respeta prefers-reduced-motion (sin animación, contenido visible)
+ *  - Re-anima al volver a entrar al viewport (scroll arriba/abajo)
+ */
 
-// Revela los hijos directos del contenido MDX uno a uno conforme scrollean
-// + animación escalonada para bullet points y listas (ul/ol > li)
+import { useRef, useEffect } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
+
 export function ProseReveal({ children, className = '', delay = 0 }) {
   const containerRef = useRef(null)
+  const reduced = useReducedMotion()
 
   useEffect(() => {
     const container = containerRef.current
     if (!container) return undefined
 
-    const children = Array.from(container.children)
-    if (children.length === 0) return undefined
+    const directChildren = Array.from(container.children).filter(
+      (el) => el.nodeType === Node.ELEMENT_NODE
+    )
 
-    // Estado inicial: oculto con desplazamiento para hijos directos
-    children.forEach((child) => {
-      // No ocultar listas completas si vamos a animar sus li individualmente
-      if (child.tagName === 'UL' || child.tagName === 'OL') {
-        const items = Array.from(child.querySelectorAll(':scope > li'))
-        items.forEach((li) => {
-          li.style.opacity = '0'
-          li.style.transform = 'translateX(-12px)'
-          li.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out'
-        })
-      } else {
-        child.style.opacity = '0'
-        child.style.transform = 'translateY(20px)'
-        child.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out'
-      }
+    if (directChildren.length === 0) return undefined
+
+    // Configurar estado inicial para modo reducido: todo visible
+    if (reduced) {
+      directChildren.forEach((child) => {
+        child.style.opacity = '1'
+        child.style.transform = 'none'
+        child.style.transition = 'none'
+      })
+      return undefined
+    }
+
+    // Estado inicial: oculto
+    directChildren.forEach((child) => {
+      child.style.opacity = '0'
+      child.style.transform = 'translateY(20px)'
+      child.style.transition =
+        'opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)'
     })
 
-    let startDelay = delay
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          const idx = children.indexOf(entry.target)
           const el = entry.target
+          const idx = directChildren.indexOf(el)
+
           if (entry.isIntersecting) {
-            // Entrando: anima
             if (el.tagName === 'UL' || el.tagName === 'OL') {
               el.style.opacity = '1'
               el.style.transform = 'translateY(0)'
               const items = Array.from(el.querySelectorAll(':scope > li'))
               items.forEach((li, i) => {
+                li.style.opacity = '0'
+                li.style.transform = 'translateX(-12px)'
+                li.style.transition =
+                  'opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)'
                 setTimeout(() => {
                   li.style.opacity = '1'
                   li.style.transform = 'translateX(0)'
-                }, startDelay + idx * 80 + i * 90)
+                }, delay + idx * 100 + i * 90)
               })
             } else {
               setTimeout(() => {
                 el.style.opacity = '1'
                 el.style.transform = 'translateY(0)'
-              }, startDelay + idx * 120)
+              }, delay + idx * 120)
             }
           } else {
-            // Saliendo: oculta para que al volver a entrar (scroll arriba) re-anime
+            // Salir: ocultar para re-animar al entrar de nuevo
             if (el.tagName === 'UL' || el.tagName === 'OL') {
               el.style.opacity = '0'
               el.style.transform = 'translateY(20px)'
@@ -75,9 +91,9 @@ export function ProseReveal({ children, className = '', delay = 0 }) {
       { threshold: 0.05, rootMargin: '0px 0px -10% 0px' }
     )
 
-    children.forEach((child) => observer.observe(child))
+    directChildren.forEach((child) => observer.observe(child))
     return () => observer.disconnect()
-  }, [children, delay])
+  }, [children, delay, reduced])
 
   return (
     <div ref={containerRef} className={className}>

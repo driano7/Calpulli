@@ -3,6 +3,7 @@ import { getFileBySlug, bundleMdxSource } from '@/lib/mdx'
 import { MDXLayoutRenderer } from '@/components/MDXComponents'
 import { getAllLocalPickSlugs, getLocalPickBySlug } from '@/lib/localPicks'
 import { useLanguage } from '@/lib/hooks/useLanguage'
+import { Reveal } from '@/components/journeys/Reveal'
 
 export async function getStaticPaths() {
   const slugs = getAllLocalPickSlugs()
@@ -45,5 +46,9 @@ export default function LocalPickPage({ postEs, postEn }) {
   if (!post) return null
   const { mdxSource, frontMatter } = post
   frontMatter.slug = frontMatter.slug.replace(/[.-](en|es)$/, '')
-  return <MDXLayoutRenderer layout="PostLayout" mdxSource={mdxSource} frontMatter={frontMatter} />
+  return (
+    <Reveal once={false} className="mb-8">
+      <MDXLayoutRenderer layout="PostLayout" mdxSource={mdxSource} frontMatter={frontMatter} />
+    </Reveal>
+  )
 }
