@@ -6,6 +6,8 @@ import { PageSEO } from '@/components/SEO'
 import { JOURNEYS, pickLocalized } from '@/data/journeysData'
 import { journeyVars } from '@/lib/journeyTheme'
 import { useLanguage } from '@/lib/hooks/useLanguage'
+import { useCartStore } from '@/lib/store/useCartStore'
+import { useRouter } from 'next/router'
 import { Reveal } from '@/components/journeys/Reveal'
 import { ImageReveal } from '@/components/journeys/ImageReveal'
 import { Sparkles } from 'lucide-react'
@@ -44,8 +46,27 @@ function JourneyPreview({ journey, title, isEs }) {
 }
 
 export default function JourneysIndex() {
-  const { currentLanguage } = useLanguage()
+  const { currentLanguage, t } = useLanguage()
   const isEs = currentLanguage === 'es'
+  const { addItem } = useCartStore()
+  const router = useRouter()
+
+  const handleReserve = (journey) => {
+    const title = pickLocalized(journey.title_es, journey.title_en, isEs)
+    addItem({
+      experienceId: journey.id,
+      title,
+      imageUrl: journey.heroImage,
+      price: journey.price,
+      currency: 'MXN',
+      location: 'Ciudad de México',
+      date: null,
+      time: null,
+      peopleCount: 1,
+      maxGuests: 10,
+    })
+    router.push('/checkout')
+  }
 
   return (
     <>
@@ -157,9 +178,15 @@ export default function JourneysIndex() {
                           : 'The editorial content of this journey is published progressively.')}
                     </span>
                     {price ? (
-                      <span className="mt-3 inline-block rounded-full border border-[var(--j2-soft)] px-3 py-1 text-xs font-semibold tabular-nums text-[var(--j2)]">
-                        ${price} MXN
-                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleReserve(journey)
+                        }}
+                        className="mt-3 inline-flex items-center justify-center rounded-full border border-[var(--j2-soft)] bg-[var(--j2)] px-4 py-2 text-xs font-semibold tabular-nums text-[var(--j2)] text-white transition-colors hover:bg-orange-600"
+                      >
+                        {isEs ? `Reservar por $${price} mxn` : `Reserve for $${price} mxn`}
+                      </button>
                     ) : null}
                   </span>
 
