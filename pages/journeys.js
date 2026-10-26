@@ -183,7 +183,7 @@ export default function JourneysIndex() {
                           e.stopPropagation()
                           handleReserve(journey)
                         }}
-                        className="mt-3 inline-flex items-center justify-center rounded-full border border-[var(--j2-soft)] bg-[var(--j2)] px-4 py-2 text-xs font-semibold tabular-nums text-[var(--j2)] text-white transition-colors hover:bg-orange-600"
+                        className="mt-3 inline-flex items-center justify-center rounded-full border border-[#C1440E]/30 bg-[#C1440E] px-4 py-2 text-xs font-semibold tabular-nums text-white shadow-sm transition-all hover:bg-[#9A3207] hover:shadow-md"
                       >
                         {isEs ? `Reservar por $${price} mxn` : `Reserve for $${price} mxn`}
                       </button>
