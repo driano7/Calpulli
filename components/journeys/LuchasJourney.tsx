@@ -108,13 +108,10 @@ export function LuchasJourney() {
             </p>
           </Reveal>
 
-          <Reveal delay={0.08} className="mt-12">
-            <ul className="mx-auto grid max-w-3xl gap-3">
-              {journey.notes.map((note, index) => (
-                <li
-                  key={index}
-                  className="flex gap-3 rounded-xl border border-zinc-200/70 bg-zinc-50/70 px-4 py-3 text-sm leading-relaxed text-zinc-700 dark:border-white/10 dark:bg-zinc-900/30 dark:text-zinc-300"
-                >
+          <ul className="mx-auto mt-12 grid max-w-3xl gap-3">
+            {journey.notes.map((note, index) => (
+              <Reveal key={index} delay={0.06 * index} once={false}>
+                <li className="flex gap-3 rounded-xl border border-zinc-200/70 bg-zinc-50/70 px-4 py-3 text-sm leading-relaxed text-zinc-700 dark:border-white/10 dark:bg-zinc-900/30 dark:text-zinc-300">
                   <span
                     className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full"
                     style={{ backgroundColor: CEMPASUCHIL }}
@@ -122,9 +119,9 @@ export function LuchasJourney() {
                   />
                   {note}
                 </li>
-              ))}
-            </ul>
-          </Reveal>
+              </Reveal>
+            ))}
+          </ul>
         </section>
 
         {/* ---------------------------------------------------------------

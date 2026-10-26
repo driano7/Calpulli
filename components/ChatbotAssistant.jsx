@@ -18,7 +18,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
-  Sparkle,
   Send,
   X,
   Utensils,
@@ -39,8 +38,10 @@ import {
   Mic,
   MicOff,
 } from 'lucide-react'
+import WhatsAppIcon from '@/components/social-icons/whatsapp.svg'
 import { useChatbot } from '@/hooks/useChatbot'
 import { useLanguage } from '@/lib/hooks/useLanguage'
+import { useRouter } from 'next/router'
 
 // ---- Onboarding questions (xocoCafe-style icon pills) ----
 const QUESTIONS = [
@@ -100,6 +101,7 @@ const QUESTIONS = [
 
 export default function ChatbotAssistant() {
   const { currentLanguage } = useLanguage()
+  const router = useRouter()
   const {
     sendMessage,
     isLoading,
@@ -117,6 +119,51 @@ export default function ChatbotAssistant() {
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState([])
+  const [initialMessageSent, setInitialMessageSent] = useState(false)
+
+  // Mensaje contextual según la página actual
+  const getInitialMessage = () => {
+    const path = typeof window !== 'undefined' ? window.location.pathname : '/'
+    if (path === '/') {
+      return isEs
+        ? 'Hola, ¿en qué puedo ayudarte con Amaxing? Puedo responder dudas generales sobre nuestros tours, journeys y experiencias.'
+        : 'Hi, how can I help you with Amaxing? I can answer general questions about our tours, journeys and experiences.'
+    }
+    if (path.includes('/journeys/luchas')) {
+      return isEs
+        ? '¿Quieres información sobre el Journey de Luchas? Te cuento sobre la Arena México y la Arena Coliseo, horarios de funciones y cómo reservar.'
+        : 'Want information about the Luchas Journey? I can tell you about Arena Mexico and Arena Coliseo, show times and how to book.'
+    }
+    if (path.includes('/journeys/')) {
+      return isEs
+        ? '¿Quieres saber más sobre este Journey? Puedo contarte detalles del recorrido, qué incluye y cómo reservarlo.'
+        : 'Want to know more about this Journey? I can tell you about the route, what it includes and how to book it.'
+    }
+    if (path.includes('/local')) {
+      return isEs
+        ? '¿Buscas recomendaciones de Local Picks? Te cuento qué hay en cada barrio de la CDMX este mes.'
+        : 'Looking for Local Picks recommendations? I can tell you what is in each CDMX neighborhood this month.'
+    }
+    if (path.includes('/tours')) {
+      return isEs
+        ? '¿Necesitas ayuda para elegir un tour? Puedo recomendarte según tus intereses y presupuesto.'
+        : 'Need help choosing a tour? I can recommend based on your interests and budget.'
+    }
+    return isEs ? 'Hola, ¿en qué puedo ayudarte hoy?' : 'Hi, how can I help you today?'
+  }
+
+  // Enviar mensaje inicial contextual cuando se abre el chat por primera vez
+  useEffect(() => {
+    if (open && !initialMessageSent && messages.length === 0 && !onboardingDone) {
+      const initialMsg = getInitialMessage()
+      // Pequeño delay para que el panel termine de animar
+      const timer = setTimeout(() => {
+        sendMessage(initialMsg)
+        setInitialMessageSent(true)
+      }, 600)
+      return () => clearTimeout(timer)
+    }
+  }, [open, initialMessageSent, messages.length, onboardingDone, sendMessage])
   const [isMobile, setIsMobile] = useState(false)
   const scrollRef = useRef(null)
   const inputRef = useRef(null)
@@ -586,7 +633,7 @@ export default function ChatbotAssistant() {
                         onClick={() => handleSelectOption(opt)}
                         className="group flex items-center gap-2 rounded-lg border border-zinc-200/60 bg-zinc-50/70 px-2.5 py-1.5 text-left transition-all duration-150 hover:border-orange-400 hover:bg-orange-500/10 dark:border-zinc-700 dark:bg-zinc-800/70"
                       >
-                        <span className="bg-orange-500/15 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-orange-500">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-500/15 text-orange-500">
                           <Icon className="h-3 w-3" />
                         </span>
                         <span className="text-[11px] font-medium leading-none text-zinc-800 dark:text-zinc-100">
@@ -855,7 +902,7 @@ export default function ChatbotAssistant() {
             className="fixed bottom-6 right-6 z-[100] flex h-14 w-14 items-center justify-center rounded-full bg-orange-500 text-white shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
             aria-label={t('Abrir Amaxing Assistant', 'Open Amaxing Assistant')}
           >
-            <Sparkle className="h-6 w-6" />
+            <WhatsAppIcon className="h-6 w-6" />
           </motion.button>
         )}
       </AnimatePresence>
@@ -874,8 +921,8 @@ export default function ChatbotAssistant() {
             {/* Header */}
             <div className="flex items-center justify-between rounded-t-2xl border-b border-zinc-200/50 bg-zinc-50/70 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/70">
               <div className="flex items-center gap-2.5">
-                <span className="bg-orange-500/15 flex h-8 w-8 items-center justify-center rounded-full text-orange-500">
-                  <Sparkle className="h-4 w-4" />
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/15 text-orange-500">
+                  <WhatsAppIcon className="h-4 w-4" />
                 </span>
                 <div>
                   <span className="font-semibold text-zinc-900 dark:text-white">Amaxing AI</span>
