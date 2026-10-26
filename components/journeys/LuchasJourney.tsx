@@ -24,7 +24,6 @@ import { EditorialHero } from './EditorialHero'
 import { EditorialMoment } from './EditorialMoment'
 import { DetailToggle } from './DetailToggle'
 import { Reveal } from './Reveal'
-import { LuchaArenaSchedule } from './LuchaArenaSchedule'
 import { MOMENT_TREATMENTS } from './motionConfig'
 import SupportBanner from '@/components/SupportBanner'
 
@@ -196,7 +195,22 @@ export function LuchasJourney() {
                           <dt className="shrink-0 font-semibold">
                             {isEs ? 'Funciones' : 'Shows'}:
                           </dt>
-                          <dd>{variantLabel(v, v.funciones_es, v.funciones_en)}</dd>
+                          <dd className="flex flex-wrap gap-2">
+                            {variantLabel(v, v.funciones_es, v.funciones_en)
+                              .split(',')
+                              .map((parte, i) => (
+                                <span
+                                  key={i}
+                                  className="font-bold underline underline-offset-2"
+                                  style={{
+                                    color: TERRACOTA,
+                                    textDecorationColor: TERRACOTA,
+                                  }}
+                                >
+                                  {parte.trim()}
+                                </span>
+                              ))}
+                          </dd>
                         </div>
                       </dl>
                       <p className="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
@@ -209,13 +223,6 @@ export function LuchasJourney() {
                       )}
                     </div>
                   </button>
-
-                  {/* Horarios de las próximas 7 funciones para esta arena */}
-                  <LuchaArenaSchedule
-                    arena={v.id === 'arena-mexico' ? 'mexico' : 'coliseo'}
-                    arenaName={variantLabel(v, v.nombre_es, v.nombre_en)}
-                    isEs={isEs}
-                  />
                 </Reveal>
               )
             })}

@@ -1,10 +1,12 @@
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
 /**
- * Glass Dark — capa semitransparente oscura con backdrop blur.
+ * Glass Dark — capa semitransparente con backdrop blur.
  *
- * Útil para overlays, cards, menús, navbars y paneles de datos en modo oscuro.
- * Se adapta al tema dark del sitio (zinc-900 / slate-950) y usa colores del
- * brand (terracota / cempasuchil) solo si se pasa `accent`.
+ * Se adapta al modo claro y oscuro:
+ *  - Modo claro: fondo blanco semitransparente + border zinc-200 (similar al header).
+ *  - Modo oscuro: fondo zinc-900 / slate-950 semitransparente + border blanco tenue.
+ *
+ * Útil para overlays, cards, menús, navbars y paneles de datos.
  */
 
 import { type CSSProperties, type ReactNode } from 'react'
@@ -12,9 +14,12 @@ import { type CSSProperties, type ReactNode } from 'react'
 type GlassDarkVariant = 'subtle' | 'strong' | 'panel'
 
 const VARIANT_CLASSES: Record<GlassDarkVariant, string> = {
-  subtle: 'bg-zinc-900/40 border border-white/10 backdrop-blur-sm',
-  strong: 'bg-zinc-900/70 border border-white/20 backdrop-blur-md',
-  panel: 'bg-slate-950/80 border border-white/15 backdrop-blur-xl shadow-2xl',
+  subtle:
+    'rounded-xl bg-white/70 border border-zinc-200 backdrop-blur-sm dark:bg-zinc-900/40 dark:border-white/10',
+  strong:
+    'rounded-xl bg-white/85 border border-zinc-300 backdrop-blur-md dark:bg-zinc-900/70 dark:border-white/20',
+  panel:
+    'rounded-xl bg-white/90 border border-zinc-200 backdrop-blur-xl shadow-xl dark:bg-slate-950/80 dark:border-white/15 dark:shadow-2xl',
 }
 
 interface GlassDarkProps {
@@ -26,7 +31,7 @@ interface GlassDarkProps {
 
 export function GlassDark({ children, className = '', variant = 'subtle', style }: GlassDarkProps) {
   return (
-    <div className={`rounded-xl ${VARIANT_CLASSES[variant]} ${className}`} style={style}>
+    <div className={`${VARIANT_CLASSES[variant]} ${className}`} style={style}>
       {children}
     </div>
   )
