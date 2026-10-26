@@ -359,28 +359,9 @@ export function Navbar() {
                 )}
               >
                 <div className="flex flex-col items-center gap-0.5">
-                  <svg
-                    className="hidden h-4 w-4 sm:block"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 11.37 9.198 15.343 3 17.05"
-                    />
-                  </svg>
+                  <span className="text-lg">{currentLanguage === 'es' ? '🇲🇽' : '🇺🇸'}</span>
                   <span className="text-[0.85rem] font-black uppercase tracking-[0.35em]">
                     {currentLanguage === 'es' ? 'ES' : 'EN'}
-                  </span>
-                  <span
-                    className="hidden text-[0.6rem] font-semibold normal-case tracking-[0.4em] text-gray-500 dark:text-gray-400 sm:block"
-                    aria-hidden
-                  >
-                    {currentLanguage === 'es' ? 'ENGLISH' : 'ESPAÑOL'}
                   </span>
                 </div>
               </button>

@@ -22,7 +22,7 @@ export default function BookingsPage() {
   const [showGuestBookings, setShowGuestBookings] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
-  // --- Búsqueda de reservas para usuarios autenticados ---
+  // --- Búsqueda de reservas (invitado y autenticado) ---
   const [activities, setActivities] = useState([])
   const [isLoadingActivities, setIsLoadingActivities] = useState(false)
   const [activityDropdownOpen, setActivityDropdownOpen] = useState(false)
@@ -45,21 +45,61 @@ export default function BookingsPage() {
   const minDate = oneMonthAgo.toISOString().split('T')[0]
   const maxDate = oneMonthFromNow.toISOString().split('T')[0]
 
+  const formatPrice = (price) => formatPriceByLocale(price, 'es')
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'confirmed':
+        return 'bg-emerald-100 text-emerald-800'
+      case 'pending':
+        return 'bg-amber-100 text-amber-800'
+      case 'cancelled':
+        return 'bg-red-100 text-red-800'
+      case 'completed':
+        return 'bg-blue-100 text-blue-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  // Cargar actividades para el dropdown
+  useEffect(() => {
+    fetchActivities()
+  }, [])
+
+  const fetchActivities = async () => {
+    setIsLoadingActivities(true)
+    try {
+      const response = await fetch('/api/activities?locale=' + (isEs ? 'es' : 'en'))
+      const data = await response.json()
+      if (data.activities) {
+        setActivities(data.activities)
+      }
+    } catch (error) {
+      console.error('Error fetching activities:', error)
+    } finally {
+      setIsLoadingActivities(false)
+    }
+  }
+
+  // Cargar reservas según el estado de autenticación
   useEffect(() => {
     if (user) {
       fetchBookings()
-      fetchActivities()
     } else {
-      // Check for guest bookings in localStorage when no user is logged in
+      // Invitado: cargar desde localStorage
       const storedBookings =
         typeof window !== 'undefined' ? localStorage.getItem('calpulli_bookings') : null
       if (storedBookings) {
-        const parsed = JSON.parse(storedBookings || '[]')
-        // Filter for guest bookings (userId starts with 'guest_')
-        const guestBookings = parsed.filter((b) => b.userId && b.userId.startsWith('guest_'))
-        if (guestBookings.length > 0) {
-          setBookings(guestBookings)
-          setShowGuestBookings(true)
+        try {
+          const parsed = JSON.parse(storedBookings || '[]')
+          const guestBookings = parsed.filter((b) => b.userId && b.userId.startsWith('guest_'))
+          if (guestBookings.length > 0) {
+            setBookings(guestBookings)
+            setShowGuestBookings(true)
+          }
+        } catch (e) {
+          console.error('Error parsing guest bookings:', e)
         }
       }
       setIsLoadingBookings(false)
@@ -86,26 +126,23 @@ export default function BookingsPage() {
     }
   }
 
-  const fetchActivities = async () => {
-    setIsLoadingActivities(true)
-    try {
-      const response = await fetch('/api/activities?locale=' + (isEs ? 'es' : 'en'))
-      const data = await response.json()
-      if (data.activities) {
-        setActivities(data.activities)
-      }
-    } catch (error) {
-      console.error('Error fetching activities:', error)
-    } finally {
-      setIsLoadingActivities(false)
-    }
-  }
-
-  const handleSearch = async () => {
+  // Aplicar filtros de búsqueda
+  const handleSearch = () => {
     setIsSearching(true)
     setSearchError(null)
     setHasSearched(true)
 
+    if (user) {
+      // Usuario autenticado: llamar a la API
+      void searchBookingsAPI()
+    } else {
+      // Invitado: filtrar localmente
+      filterGuestBookings()
+    }
+    setIsSearching(false)
+  }
+
+  const searchBookingsAPI = async () => {
     const params = new URLSearchParams()
     if (searchFilters.activityId) params.append('experienceId', searchFilters.activityId)
     if (searchFilters.date) params.append('date', searchFilters.date)
@@ -129,28 +166,42 @@ export default function BookingsPage() {
       console.error('Error searching bookings:', error)
       setSearchError('Error al buscar reservaciones')
       setSearchResults([])
-    } finally {
-      setIsSearching(false)
     }
   }
 
-  const formatPrice = (price) => formatPriceByLocale(price, 'es')
+  const filterGuestBookings = () => {
+    const todayStr = new Date().toISOString().split('T')[0]
+    const oneMonthAgoStr = oneMonthAgo.toISOString().split('T')[0]
+    const oneMonthFromNowStr = oneMonthFromNow.toISOString().split('T')[0]
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'confirmed':
-        return 'bg-emerald-100 text-emerald-800'
-      case 'pending':
-        return 'bg-amber-100 text-amber-800'
-      case 'cancelled':
-        return 'bg-red-100 text-red-800'
-      case 'completed':
-        return 'bg-blue-100 text-blue-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
+    const filtered = bookings.filter((b) => {
+      // Regla: ±1 mes desde hoy
+      if (b.date && (b.date < oneMonthAgoStr || b.date > oneMonthFromNowStr)) {
+        return false
+      }
+      // Filtro por actividad
+      if (searchFilters.activityId && b.experienceId !== searchFilters.activityId) {
+        return false
+      }
+      // Filtro por fecha exacta
+      if (searchFilters.date && b.date !== searchFilters.date) {
+        return false
+      }
+      // Filtro por nombre
+      if (searchFilters.name) {
+        const q = searchFilters.name.toLowerCase().trim()
+        const nameMatch =
+          b.customerName?.toLowerCase().includes(q) ||
+          b.participantNames?.some((pn) => pn.toLowerCase().includes(q)) ||
+          b.id?.toLowerCase().includes(q)
+        if (!nameMatch) return false
+      }
+      return true
+    })
+    setSearchResults(filtered)
   }
 
+  // Lista filtrada para mostrar
   const filteredBookings = bookings.filter((b) => {
     const q = searchQuery.toLowerCase().trim()
     if (!q) return true
@@ -163,9 +214,10 @@ export default function BookingsPage() {
     )
   })
 
-  // Para usuarios autenticados: mostrar resultados de búsqueda si se ha buscado,
-  // de lo contrario mostrar todos los bookings
-  const displayBookings = user && hasSearched ? searchResults : filteredBookings
+  // Para usuarios autenticados: mostrar resultados de búsqueda si se ha buscado
+  // Para invitados: mostrar resultados de búsqueda local si se ha buscado
+  const displayBookings =
+    user || showGuestBookings ? (hasSearched ? searchResults : filteredBookings) : filteredBookings
 
   if (authLoading) {
     return (
@@ -175,90 +227,242 @@ export default function BookingsPage() {
     )
   }
 
-  if (!user) {
-    // If we have guest bookings stored, display them
-    if (showGuestBookings && bookings.length > 0) {
-      return (
-        <div className="min-h-screen bg-white dark:bg-zinc-950">
-          <div className="container mx-auto px-4 py-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="mx-auto max-w-4xl"
-            >
-              <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {t('bookings.title') || 'Mis Reservaciones'}
-                </h2>
-                <div className="relative">
+  if (!user && !showGuestBookings) {
+    // Sin usuario ni reservas de invitado: mostrar formulario de búsqueda y login
+    return (
+      <div className="min-h-screen bg-white dark:bg-zinc-950">
+        <div className="container mx-auto px-4 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mx-auto max-w-4xl"
+          >
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {t('bookings.title') || 'Mis Reservaciones'}
+              </h2>
+              <Link
+                href="/tours"
+                className="text-sm font-medium text-orange-500 hover:text-orange-400"
+              >
+                {t('bookings.bookNew') || 'Reservar nueva experiencia'}
+              </Link>
+            </div>
+
+            {/* Formulario de búsqueda para invitado */}
+            <section className="mb-8 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-900/50">
+              <h3 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">
+                {isEs ? 'Buscar tu reservación' : 'Search your booking'}
+              </h3>
+
+              <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-4">
+                {/* Dropdown de actividad */}
+                <div className="relative w-full">
+                  <label className="mb-2 block text-sm font-medium text-zinc-600 dark:text-zinc-300">
+                    {isEs ? 'Tipo de actividad' : 'Activity type'}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setActivityDropdownOpen(!activityDropdownOpen)}
+                    className="flex w-full items-center gap-3 rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 transition-all focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-white/10 dark:bg-zinc-900 dark:text-white"
+                  >
+                    {selectedActivity ? (
+                      <>
+                        <img
+                          src={selectedActivity.imageUrl}
+                          alt={selectedActivity.title}
+                          className="h-8 w-8 rounded-md border border-zinc-100 object-cover dark:border-white/10"
+                        />
+                        <span>{selectedActivity.title}</span>
+                      </>
+                    ) : (
+                      <span className="text-zinc-400">
+                        {isEs ? 'Todas las actividades' : 'All activities'}
+                      </span>
+                    )}
+                    <svg
+                      className={`ml-auto h-4 w-4 text-zinc-400 transition-transform ${
+                        activityDropdownOpen ? 'rotate-180' : ''
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+
+                  {activityDropdownOpen && (
+                    <div className="dropdown-list absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg dark:border-white/10 dark:bg-zinc-900">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchFilters({ ...searchFilters, activityId: '' })
+                          setSelectedActivity(null)
+                          setActivityDropdownOpen(false)
+                        }}
+                        className="flex w-full items-center gap-3 px-3 py-2.5 text-sm text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                      >
+                        <span className="text-zinc-400">
+                          {isEs ? 'Todas las actividades' : 'All activities'}
+                        </span>
+                      </button>
+                      {activities.map((a) => (
+                        <button
+                          key={a.id}
+                          type="button"
+                          onClick={() => {
+                            setSearchFilters({ ...searchFilters, activityId: a.id })
+                            setSelectedActivity(a)
+                            setActivityDropdownOpen(false)
+                          }}
+                          className="flex w-full items-center gap-3 border-b border-zinc-100 px-3 py-2.5 text-sm text-zinc-900 last:border-0 hover:bg-zinc-50 dark:border-white/5 dark:text-white dark:hover:bg-zinc-800"
+                        >
+                          <img
+                            src={a.imageUrl}
+                            alt={a.title}
+                            className="h-8 w-8 flex-shrink-0 rounded-md border border-zinc-100 object-cover dark:border-white/10"
+                          />
+                          <span>{a.title}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Fecha */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-zinc-600 dark:text-zinc-300">
+                    {isEs ? 'Fecha' : 'Date'}
+                  </label>
                   <input
-                    type="text"
-                    placeholder={isEs ? 'Buscar reserva...' : 'Search reservation...'}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-48 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-white/10 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-500 sm:w-64"
+                    type="date"
+                    value={searchFilters.date}
+                    onChange={(e) => setSearchFilters({ ...searchFilters, date: e.target.value })}
+                    min={minDate}
+                    max={maxDate}
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-white/10 dark:bg-zinc-900 dark:text-white"
                   />
                 </div>
+
+                {/* Nombre */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-zinc-600 dark:text-zinc-300">
+                    {isEs ? 'Nombre' : 'Name'}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={isEs ? 'Tu nombre o de un acompañante' : 'Your name or companion'}
+                    value={searchFilters.name}
+                    onChange={(e) => setSearchFilters({ ...searchFilters, name: e.target.value })}
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-white/10 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-500"
+                  />
+                </div>
+
+                {/* Botón buscar */}
+                <button
+                  onClick={handleSearch}
+                  disabled={isSearching}
+                  className="w-full rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSearching
+                    ? isEs
+                      ? 'Buscando...'
+                      : 'Searching...'
+                    : isEs
+                    ? 'Buscar reservación'
+                    : 'Search booking'}
+                </button>
               </div>
 
-              {filteredBookings.length === 0 && bookings.length > 0 && (
-                <div className="mb-6 rounded-xl border border-zinc-200 bg-zinc-50 py-8 text-center dark:border-white/10 dark:bg-zinc-900/50">
-                  <p className="text-zinc-500 dark:text-zinc-400">
-                    {isEs
-                      ? 'No se encontraron reservaciones con ese criterio.'
-                      : 'No reservations found matching that criteria.'}
-                  </p>
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="mt-3 text-xs font-medium text-orange-500 hover:underline"
-                  >
-                    {isEs ? 'Limpiar búsqueda' : 'Clear search'}
-                  </button>
+              {/* Mensaje de rango de fechas */}
+              <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+                {isEs
+                  ? `Solo puedes buscar reservas entre el ${oneMonthAgo.toLocaleDateString(
+                      'es-MX',
+                      { day: 'numeric', month: 'short' }
+                    )} y el ${oneMonthFromNow.toLocaleDateString('es-MX', {
+                      day: 'numeric',
+                      month: 'short',
+                    })} (máximo ±1 mes desde hoy).`
+                  : `You can only search bookings between ${oneMonthAgo.toLocaleDateString(
+                      'en-US',
+                      { day: 'numeric', month: 'short' }
+                    )} and ${oneMonthFromNow.toLocaleDateString('en-US', {
+                      day: 'numeric',
+                      month: 'short',
+                    })} (maximum ±1 month from today).`}
+              </p>
+
+              {searchError && (
+                <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600 dark:bg-red-500/20 dark:text-red-300">
+                  {searchError}
                 </div>
               )}
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredBookings.map((booking) => (
-                  <AnimatedSection
-                    key={booking.id}
-                    experienceTitle={booking.experienceTitle}
-                    experienceImage={booking.experienceImage}
-                    date={booking.date}
-                    time={booking.time}
-                    totalPrice={booking.totalPrice}
-                    formatPrice={formatPrice}
-                    formatBookingDate={formatBookingDate}
-                    participantNames={booking.participantNames}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      )
-    }
+              {hasSearched &&
+                searchResults.length === 0 &&
+                !searchFilters.activityId &&
+                !searchFilters.date &&
+                !searchFilters.name &&
+                !isSearching &&
+                !searchError && (
+                  <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-500 dark:border-white/10 dark:bg-zinc-900/50 dark:text-zinc-400">
+                    {isEs
+                      ? 'Rellena al menos un filtro y presiona Buscar.'
+                      : 'Fill in at least one filter and press Search.'}
+                  </div>
+                )}
+            </section>
 
-    // Otherwise show login prompt for guest reservations
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-white px-4 dark:bg-zinc-950">
-        <div className="max-w-md text-center">
-          <h1 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">Inicia sesión</h1>
-          <p className="mb-6 text-zinc-500 dark:text-gray-400">
-            Inicia sesión para ver tus reservaciones
-          </p>
-          <Link
-            href="/login"
-            className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-8 py-4 font-semibold text-white transition-colors hover:bg-orange-600"
-          >
-            Iniciar sesión
-          </Link>
+            <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 py-16 text-center dark:border-white/10 dark:bg-zinc-900/50">
+              <svg
+                className="mx-auto h-16 w-16 text-zinc-400 dark:text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <h3 className="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
+                {hasSearched
+                  ? isEs
+                    ? 'No se encontraron reservaciones'
+                    : 'No bookings found'
+                  : isEs
+                  ? 'No tienes reservaciones aún'
+                  : "You don't have any bookings yet"}
+              </h3>
+              <p className="mt-2 text-zinc-500 dark:text-gray-400">
+                {isEs
+                  ? 'Inicia sesión para ver y buscar todas tus reservaciones.'
+                  : 'Log in to view and search all your bookings.'}
+              </p>
+              <Link
+                href="/login"
+                className="mt-6 inline-flex items-center justify-center rounded-xl bg-orange-500 px-8 py-4 font-semibold text-white transition-colors hover:bg-orange-600"
+              >
+                {isEs ? 'Iniciar sesión' : 'Log in'}
+              </Link>
+            </div>
+          </motion.div>
         </div>
       </div>
     )
   }
 
-  // --- Usuario autenticado: formulario de búsqueda + resultados ---
+  // Usuario con reservas (invitado con bookings en localStorage o autenticado)
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950">
       <div className="container mx-auto px-4 py-12">
@@ -280,27 +484,21 @@ export default function BookingsPage() {
             </Link>
           </div>
 
-          {/* Formulario de búsqueda */}
+          {/* Formulario de búsqueda (invitado y autenticado) */}
           <section className="mb-8 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-900/50">
             <h3 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">
               {isEs ? 'Buscar tu reservación' : 'Search your booking'}
             </h3>
 
             <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-4">
-              {/* Dropdown de actividad con foto + título */}
-              <div
-                className="relative w-full"
-                onClick={(e) => {
-                  if (!e.target.closest('.dropdown-list')) {
-                    setActivityDropdownOpen(!activityDropdownOpen)
-                  }
-                }}
-              >
+              {/* Dropdown de actividad */}
+              <div className="relative w-full">
                 <label className="mb-2 block text-sm font-medium text-zinc-600 dark:text-zinc-300">
                   {isEs ? 'Tipo de actividad' : 'Activity type'}
                 </label>
                 <button
                   type="button"
+                  onClick={() => setActivityDropdownOpen(!activityDropdownOpen)}
                   className="flex w-full items-center gap-3 rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 transition-all focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-white/10 dark:bg-zinc-900 dark:text-white"
                 >
                   {selectedActivity ? (
