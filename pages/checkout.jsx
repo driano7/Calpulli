@@ -881,7 +881,7 @@ export default function CheckoutPage() {
                       setGuestEmail(value)
                       setGuestEmailTouched(true)
                     }}
-                    onNameChange={renameGuestPerson}
+                    onNameChange={setGuestName}
                     onAdd={addGuestPerson}
                     onRemove={removeGuestPerson}
                     onRename={renameGuestPerson}

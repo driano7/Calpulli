@@ -4,19 +4,19 @@
   "description": "Calpulli CDMX — recorridos culturales por la Ciudad de México",
   "icons": [
     {
-      "src": "/static/favicons/android-chrome-96x96.png",
-      "sizes": "96x96",
+      "src": "/static/favicons/jaguarBaja.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/static/favicons/android-chrome-512x512.png",
+      "src": "/static/favicons/jaguarBaja.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/static/favicons/apple-touch-icon.png",
+      "src": "/static/favicons/jaguarBaja.png",
       "sizes": "180x180",
       "type": "image/png"
     }
