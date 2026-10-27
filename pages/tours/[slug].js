@@ -52,7 +52,7 @@ export default function TourDetail({ tour, locale }) {
   const { t, currentLanguage } = useLanguage()
   const router = useRouter()
   const { user } = useAuth()
-  const { addItem } = useCartStore()
+  const { addItem, clearCart } = useCartStore()
 
   const isEs = currentLanguage === 'es'
   const [fav, setFav] = useState(false)
@@ -101,6 +101,9 @@ export default function TourDetail({ tour, locale }) {
       router.push(`/login?redirect=/tours/${tour.id}`)
       return
     }
+    // Al seleccionar (agregar) una experiencia nueva, se reemplaza el carrito:
+    // no queremos acumular tours/journeys que el usuario ya no quiere.
+    clearCart()
     addItem({
       experienceId: tour.id,
       title,

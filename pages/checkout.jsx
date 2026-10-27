@@ -14,6 +14,7 @@ import {
   Lock,
   User,
   Mail,
+  Trash2,
 } from 'lucide-react'
 import { useCartStore } from '@/lib/store/useCartStore'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -27,7 +28,7 @@ import { GuestPeopleField, MAX_GUESTS } from '@/components/checkout/GuestPeopleF
 import { TicketGallery } from '@/components/checkout/TicketGallery'
 
 export default function CheckoutPage() {
-  const { items, subtotal, itemCount, clearCart, addItem, updateItem } = useCartStore()
+  const { items, subtotal, itemCount, clearCart, addItem, updateItem, removeItem } = useCartStore()
   const { user, token, isLoading } = useAuth()
   const { t, currentLanguage } = useLanguage()
   const locale = currentLanguage === 'es' ? 'es' : 'en'
@@ -1038,9 +1039,20 @@ export default function CheckoutPage() {
                         </p>
                       </div>
                     </div>
-                    <span className="flex-shrink-0 font-medium text-gray-900 dark:text-white">
-                      {formatPrice((item.price || 0) * (item.peopleCount || 1))}
-                    </span>
+                    <div className="flex flex-shrink-0 items-center gap-2">
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {formatPrice((item.price || 0) * (item.peopleCount || 1))}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.lineId)}
+                        aria-label={`${t('cart.remove', 'Eliminar')} ${item.title}`}
+                        title={t('cart.remove', 'Eliminar')}
+                        className="rounded-lg border border-zinc-200 bg-white p-2 text-zinc-500 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

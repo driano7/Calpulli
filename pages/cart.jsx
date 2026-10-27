@@ -10,7 +10,8 @@ import { useLanguage } from '@/lib/hooks/useLanguage'
 import { formatPriceMXN } from '@/lib/currency'
 
 export default function CartPage() {
-  const { items, removeItem, updateItem, subtotal, itemCount, totalItemCount } = useCartStore()
+  const { items, removeItem, updateItem, clearCart, subtotal, itemCount, totalItemCount } =
+    useCartStore()
   const { t, currentLanguage } = useLanguage()
   const locale = currentLanguage === 'es' ? 'es' : 'en'
   const [isCheckingOut, setIsCheckingOut] = useState(false)
@@ -303,6 +304,19 @@ export default function CartPage() {
                     : t('cart.checkout', 'Proceder al Checkout')}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
+
+                {/* Clear cart button */}
+                {items.length > 0 && (
+                  <button
+                    onClick={() => clearCart()}
+                    className="mt-3 w-full rounded-xl bg-red-500 py-3 font-semibold text-white transition-colors hover:bg-red-600"
+                    aria-label={t('cart.clearCart')}
+                  >
+                    {t('cart.clearCart')}
+                    <Trash2 className="inline-block h-4 w-4" />
+                  </button>
+                )}
+
                 <Link
                   href={payInCash ? '/checkout?cash=1' : '/checkout'}
                   onClick={() => {
