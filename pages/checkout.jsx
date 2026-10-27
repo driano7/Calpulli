@@ -88,6 +88,8 @@ export default function CheckoutPage() {
   const [stripeMode, setStripeMode] = useState(null)
   // lineId -> string[] (longitud = peopleCount)
   const [participantNames, setParticipantNames] = useState({})
+  // Nombre por default para invitado: titulo del item del carrito
+  const defaultGuestName = items.length > 0 ? items[0].title : ''
 
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())
   const authDisplayName = user
@@ -879,7 +881,7 @@ export default function CheckoutPage() {
                       setGuestEmail(value)
                       setGuestEmailTouched(true)
                     }}
-                    onNameChange={setGuestName}
+                    onNameChange={renameGuestPerson}
                     onAdd={addGuestPerson}
                     onRemove={removeGuestPerson}
                     onRename={renameGuestPerson}
