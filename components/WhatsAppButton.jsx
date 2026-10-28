@@ -16,7 +16,10 @@ export default function WhatsAppButton() {
   const reduced = useReducedMotion()
   const isEs = currentLanguage !== 'en'
 
-  const href = buildWhatsAppUrl(getWhatsAppMessage(router.pathname, isEs))
+  // asPath trae la ruta real; pathname devuelve el patron en rutas dinamicas
+  // (/journeys/[slug]) y el mensaje perderia el journey concreto.
+  const path = (router.asPath || router.pathname || '/').split('?')[0]
+  const href = buildWhatsAppUrl(getWhatsAppMessage(path, isEs))
   const label = isEs ? 'Escríbenos por WhatsApp' : 'Message us on WhatsApp'
 
   return (

@@ -38,6 +38,7 @@ export function MobileDock() {
   const { t, currentLanguage } = useLanguage()
   const isEs = currentLanguage !== 'en'
   const reducedMotion = useReducedMotion()
+  const currentPath = (router.asPath || router.pathname || '/').split('?')[0]
   const [compact, setCompact] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -100,7 +101,7 @@ export function MobileDock() {
           transition={{ duration: 0.3, delay: 0.08 }}
         >
           <a
-            href={buildWhatsAppUrl(getWhatsAppMessage(router.pathname, isEs))}
+            href={buildWhatsAppUrl(getWhatsAppMessage(currentPath, isEs))}
             target="_blank"
             rel="noopener noreferrer"
             onClick={resetTimer}
