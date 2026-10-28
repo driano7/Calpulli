@@ -2,6 +2,7 @@
 
 import Link from '@/components/Link'
 import Image from 'next/image'
+import { useRouter } from 'next/router'
 import AuthNav from './AuthNav'
 import { CartIcon } from './cart/CartIcon'
 import { ReservationIcon } from './reservation/ReservationIcon'
@@ -71,6 +72,8 @@ const localT = (key, locale = 'en') => {
 
 export function Navbar() {
   const { user, isLoading: authLoading } = useAuth()
+  const router = useRouter()
+  const bookingsActive = router.pathname === '/bookings' || router.pathname.startsWith('/bookings/')
   const [isVisible, setIsVisible] = useState(false)
   const [forceVisible, setForceVisible] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -368,10 +371,40 @@ export function Navbar() {
 
               <AuthNav />
 
-              {/* Reservation icon — always visible, independent of login status */}
-              <Link href="/bookings" className="transition-colors hover:text-[var(--j1)]">
-                <ReservationIcon className="h-5 w-5 text-zinc-500 transition-colors hover:text-[var(--j1)] dark:text-zinc-400" />
-              </Link>
+              {/* Reservation icon — animado en hover/clic y marcado cuando ya estas en /bookings */}
+              <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
+                <Link
+                  href="/bookings"
+                  aria-label={currentLanguage === 'es' ? 'Mis reservaciones' : 'My bookings'}
+                  aria-current={bookingsActive ? 'page' : undefined}
+                  title={currentLanguage === 'es' ? 'Mis reservaciones' : 'My bookings'}
+                  className={classNames(
+                    'relative flex h-9 w-9 items-center justify-center rounded-full transition-colors',
+                    bookingsActive
+                      ? 'bg-[#C1440E] text-white shadow-[0_0_0_3px_rgba(193,68,14,0.18)]'
+                      : 'text-zinc-500 hover:bg-[#C1440E]/10 hover:text-[#C1440E] dark:text-zinc-400 dark:hover:bg-[#C1440E]/15 dark:hover:text-[#E06A38]'
+                  )}
+                >
+                  <motion.span
+                    className="flex"
+                    animate={bookingsActive ? { rotate: [0, -10, 10, -7, 7, 0] } : { rotate: 0 }}
+                    transition={
+                      bookingsActive
+                        ? { duration: 0.8, ease: 'easeInOut', repeat: Infinity, repeatDelay: 5 }
+                        : { duration: 0.2 }
+                    }
+                    whileHover={{ rotate: [0, -14, 14, -10, 10, 0] }}
+                  >
+                    <ReservationIcon className="h-5 w-5" />
+                  </motion.span>
+                  {bookingsActive && (
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-0.5 h-1 w-1 rounded-full bg-white"
+                    />
+                  )}
+                </Link>
+              </motion.div>
 
               {user && !authLoading && <CartIcon />}
 

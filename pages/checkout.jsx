@@ -640,7 +640,7 @@ export default function CheckoutPage() {
               {isGuestSuccess ? (
                 <>
                   <Link
-                    href="/tours"
+                    href="/journeys"
                     className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-8 py-3 font-semibold text-white transition-colors hover:bg-orange-600"
                   >
                     {t('cart.exploreTours', 'Explorar más tours')}
@@ -661,7 +661,7 @@ export default function CheckoutPage() {
                     {t('checkoutSuccess.viewBookings', 'Ir a mi perfil')}
                   </Link>
                   <Link
-                    href="/tours"
+                    href="/journeys"
                     className="inline-flex items-center justify-center rounded-xl border border-zinc-300 bg-white px-8 py-3 font-semibold text-gray-900 transition-colors hover:border-orange-500/30 dark:border-white/10 dark:bg-zinc-900 dark:text-white"
                   >
                     {t('cart.exploreTours', 'Explorar más tours')}
@@ -754,7 +754,7 @@ export default function CheckoutPage() {
             {t('cart.emptySubtitle', 'Agrega experiencias antes de hacer checkout.')}
           </p>
           <Link
-            href="/tours"
+            href="/journeys"
             className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-8 py-4 font-semibold text-white transition-colors hover:bg-orange-600"
           >
             {t('cart.exploreTours', 'Explorar experiencias')}

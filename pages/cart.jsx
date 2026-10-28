@@ -72,7 +72,7 @@ export default function CartPage() {
               {t('cart.title', 'Tu Carrito')}
             </h1>
             <Link
-              href="/tours"
+              href="/journeys"
               className="text-sm font-medium text-orange-500 hover:text-orange-400"
             >
               ← {t('cart.backToTours', 'Seguir explorando')}
@@ -89,7 +89,7 @@ export default function CartPage() {
                 {t('cart.emptySubtitle', 'Agrega experiencias para reservar tu próxima aventura')}
               </p>
               <Link
-                href="/tours"
+                href="/journeys"
                 className="mt-6 inline-flex items-center rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-orange-600"
               >
                 {t('cart.exploreTours', 'Explorar experiencias')}

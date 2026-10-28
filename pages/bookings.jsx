@@ -243,7 +243,7 @@ export default function BookingsPage() {
                 {t('bookings.title') || 'Mis Reservaciones'}
               </h2>
               <Link
-                href="/tours"
+                href="/journeys"
                 className="text-sm font-medium text-orange-500 hover:text-orange-400"
               >
                 {t('bookings.bookNew') || 'Reservar nueva experiencia'}
@@ -477,7 +477,7 @@ export default function BookingsPage() {
               {t('bookings.title') || 'Mis Reservaciones'}
             </h2>
             <Link
-              href="/tours"
+              href="/journeys"
               className="text-sm font-medium text-orange-500 hover:text-orange-400"
             >
               {t('bookings.bookNew') || 'Reservar nueva experiencia'}
@@ -715,7 +715,7 @@ export default function BookingsPage() {
               </p>
               {!hasSearched && (
                 <Link
-                  href="/tours"
+                  href="/journeys"
                   className="mt-6 inline-flex items-center rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-orange-600"
                 >
                   {t('bookings.explore') || 'Explorar experiencias'}

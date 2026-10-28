@@ -20,7 +20,7 @@ import {
   LayoutGrid,
 } from 'lucide-react'
 import { useLanguage } from '@/lib/hooks/useLanguage'
-import { drawerItemsConfig, tourCategoriesConfig } from '@/data/hubMenuLinks'
+import { drawerItemsConfig } from '@/data/hubMenuLinks'
 
 // Use a type that works both server and client
 type DivRef = RefObject<HTMLDivElement | null>
@@ -255,59 +255,6 @@ export function HubMenu({ showTrigger = true }) {
                     )
                   })}
                 </motion.nav>
-
-                {/* Categories section */}
-                <motion.div
-                  className="border-t border-zinc-200/50 px-6 py-4 dark:border-zinc-800/50"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.3 }}
-                >
-                  <p className="px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    {(() => {
-                      const label = t('header.categories')
-                      return label === 'header.categories' ? 'Categories' : label
-                    })()}
-                  </p>
-                  <motion.div
-                    className="mt-2 space-y-1"
-                    variants={{
-                      open: { transition: { staggerChildren: 0.04, delayChildren: 0.1 } },
-                    }}
-                    initial="closed"
-                    animate="open"
-                  >
-                    {tourCategoriesConfig.map((category) => {
-                      const CategoryIcon = iconComponents[category.icon]
-                      const categoryLabel = getLabel(category, t)
-                      return (
-                        <motion.link
-                          key={category.href}
-                          href={category.href}
-                          onClick={closeMenu}
-                          variants={{
-                            closed: { opacity: 0, x: -20 },
-                            open: {
-                              opacity: 1,
-                              x: 0,
-                              transition: { type: 'spring', stiffness: 300, damping: 30 },
-                            },
-                          }}
-                          className="flex items-center gap-3 rounded-2xl px-4 py-3 text-base font-semibold text-zinc-900 transition-colors hover:bg-orange-500/10 dark:text-white"
-                        >
-                          {CategoryIcon && (
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-500/15 text-orange-500">
-                              <CategoryIcon className="h-4 w-4" />
-                            </span>
-                          )}
-                          <span className="hover:text-orange-600 dark:hover:text-orange-400">
-                            {categoryLabel}
-                          </span>
-                        </motion.link>
-                      )
-                    })}
-                  </motion.div>
-                </motion.div>
 
                 {/* Book Now CTA */}
                 <motion.div

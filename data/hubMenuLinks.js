@@ -10,7 +10,6 @@
  *
  * Mobile:
  *   - drawerItemsConfig     -> HubMenu drawer list + MobileDock nav
- *   - tourCategoriesConfig  -> HubMenu "Categories" section
  */
 
 // Desktop header items — orden: /journeys, /maps, /guides, /local, /about
@@ -55,37 +54,10 @@ const drawerItemsConfig = [
   { labelKey: 'header.nav.about', fallback: 'About Us', href: '/about', icon: 'Users' },
 ]
 
-// Mobile drawer "Categories" section — the 4 tour categories with their icons.
-const tourCategoriesConfig = [
-  {
-    labelKey: 'tourCategories.culinary',
-    fallback: 'Culinary Underworld',
-    href: '/tours?category=gastronomy',
-    icon: 'Utensils',
-  },
-  {
-    labelKey: 'tourCategories.history',
-    fallback: 'Uncensored History',
-    href: '/tours?category=history',
-    icon: 'Skull',
-  },
-  {
-    labelKey: 'tourCategories.neighborhoods',
-    fallback: 'Neighborhood Deep Dives',
-    href: '/tours?category=neighborhoods',
-    icon: 'MapPin',
-  },
-  {
-    labelKey: 'tourCategories.museums',
-    fallback: 'Art & Museums',
-    href: '/tours?category=museums',
-    icon: 'Palette',
-  },
-]
+// Mobile drawer "Categories" section: eliminada junto con la seccion /tours.
 
 module.exports = {
   navItemsConfig,
   drawerItemsConfig,
   headerDropdownConfig,
-  tourCategoriesConfig,
 }

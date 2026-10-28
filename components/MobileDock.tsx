@@ -4,9 +4,11 @@ import { useCallback, useEffect, useRef, useState, type ComponentType } from 're
 import { useRouter } from 'next/router'
 import classNames from 'classnames'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Footprints, BookOpen, Sparkle, Star, Users, MapPinned } from 'lucide-react'
+import { Footprints, BookOpen, Star, Users, MapPinned } from 'lucide-react'
 import Link from '@/components/Link'
+import WhatsAppIcon from '@/components/social-icons/whatsapp.svg'
 import { useLanguage } from '@/lib/hooks/useLanguage'
+import { buildWhatsAppUrl, getWhatsAppMessage } from '@/lib/whatsapp'
 
 const DOCK_ITEMS = [
   {
@@ -33,7 +35,8 @@ const isActiveRoute = (pathname: string, href: string) => {
 
 export function MobileDock() {
   const router = useRouter()
-  const { t } = useLanguage()
+  const { t, currentLanguage } = useLanguage()
+  const isEs = currentLanguage !== 'en'
   const reducedMotion = useReducedMotion()
   const [compact, setCompact] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -90,28 +93,27 @@ export function MobileDock() {
           compact ? 'px-1.5' : 'px-2'
         )}
       >
-        {/* AI aislada a la izquierda */}
+        {/* WhatsApp directo (sin chatbot) */}
         <motion.div
           initial={reducedMotion ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.08 }}
         >
-          <button
-            type="button"
-            onClick={() => {
-              resetTimer()
-              window.dispatchEvent(new CustomEvent('open-calpulli-chatbot'))
-            }}
-            title="Calpulli CDMX AI"
-            aria-label="Calpulli CDMX AI"
+          <a
+            href={buildWhatsAppUrl(getWhatsAppMessage(router.pathname, isEs))}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={resetTimer}
+            title={isEs ? 'Escríbenos por WhatsApp' : 'Message us on WhatsApp'}
+            aria-label={isEs ? 'Escríbenos por WhatsApp' : 'Message us on WhatsApp'}
             className={classNames(
               DOCK_BUTTON_BASE,
               compact ? 'h-10 w-10' : 'h-11 w-11',
-              'text-orange-500 hover:bg-orange-500/10 dark:hover:bg-orange-500/10'
+              'bg-[#25D366] text-white hover:bg-[#1fbe5b]'
             )}
           >
-            <Sparkle className={compact ? 'h-4 w-4' : 'h-5 w-5'} />
-          </button>
+            <WhatsAppIcon className={classNames(compact ? 'h-4 w-4' : 'h-5 w-5', 'fill-current')} />
+          </a>
         </motion.div>
 
         <div

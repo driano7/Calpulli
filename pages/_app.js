@@ -23,7 +23,7 @@ import { AuthProvider } from '@/lib/hooks/useAuth'
 import dynamic from 'next/dynamic'
 import AnalyticsProvider from '@/components/analytics/AnalyticsProvider'
 
-const ChatbotAssistant = dynamic(() => import('@/components/ChatbotAssistant'), {
+const WhatsAppButton = dynamic(() => import('@/components/WhatsAppButton'), {
   ssr: false,
   loading: () => null,
 })
@@ -77,7 +77,7 @@ export default function App({ Component, pageProps }) {
             <Analytics />
             <SiteCookie />
             {getLayout(<Component {...pageProps} />)}
-            <ChatbotAssistant />
+            <WhatsAppButton />
             <PageAnalyticsTracker />
           </AnalyticsProvider>
         </AuthProvider>

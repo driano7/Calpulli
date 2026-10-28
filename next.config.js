@@ -76,6 +76,8 @@ module.exports = withBundleAnalyzer({
   async redirects() {
     return [
       { source: '/home', destination: '/', permanent: false },
+      { source: '/tours', destination: '/journeys', permanent: false },
+      { source: '/tours/:slug*', destination: '/journeys', permanent: false },
       { source: '/experiences', destination: '/journeys', permanent: false },
       { source: '/experiences/:slug*', destination: '/journeys/:slug*', permanent: false },
       { source: '/stories', destination: '/guides', permanent: false },

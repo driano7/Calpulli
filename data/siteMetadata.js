@@ -22,7 +22,7 @@ const siteMetadata = {
   facebook: 'https://www.facebook.com/donovan.amx',
   linkedin: 'https://www.linkedin.com/in/driano7/',
   telegram: 'https://t.me/donovan_amx',
-  whatsapp: 'https://wa.me/523344789565',
+  whatsapp: 'https://wa.me/525512291607',
   donations: {
     bitcoin: 'bc1q4yud5g357y2ysxn7ekx0ncqnwpatypcwh4qc3f',
     ethereum: '0xfc10B4f288Dfcc996EB819021934536095a7Ce90',

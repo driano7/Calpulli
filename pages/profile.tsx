@@ -1426,7 +1426,7 @@ function BookingsContent({
               'Explora nuestras experiencias y reserva tu próxima aventura'}
           </p>
           <Link
-            href="/tours"
+            href="/journeys"
             className="mt-6 inline-flex items-center rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-orange-600"
           >
             {t('profile.explore') || 'Explorar experiencias'}

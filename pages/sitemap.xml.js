@@ -6,7 +6,6 @@ import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
 import siteMetadata from '@/data/siteMetadata'
-import { tours } from '@/data/toursData'
 import { getAllLocalPickSlugs } from '@/lib/localPicks'
 
 const SITE = (siteMetadata.siteUrl || 'https://donovan-amx.vercel.app').replace(/\/+$/, '')
@@ -52,7 +51,6 @@ export async function getServerSideProps({ res }) {
   // Rutas estáticas canónicas (sin redirects ni zonas privadas)
   for (const route of [
     '/',
-    '/tours',
     '/journeys',
     '/guides',
     '/maps',
@@ -65,10 +63,7 @@ export async function getServerSideProps({ res }) {
     urls.push({ loc: `${SITE}${route === '/' ? '' : route}`, lastmod: today })
   }
 
-  // Tours (12, fuente: data/toursData.js)
-  for (const tour of tours) {
-    urls.push({ loc: `${SITE}/tours/${tour.id}`, lastmod: today })
-  }
+  // La seccion /tours se retiro: sus URLs redirigen a /journeys.
 
   // Guides (data/guides/*.mdx, sin drafts)
   const guidesDir = path.join(root, 'data', 'guides')
