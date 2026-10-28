@@ -19,6 +19,7 @@ import {
 import { useCartStore } from '@/lib/store/useCartStore'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useLanguage } from '@/lib/hooks/useLanguage'
+import { sortCountries } from '@/lib/demographics'
 import { FlipCard } from '@/components/ui/FlipCard'
 import { VirtualTicket } from '@/components/tickets/VirtualTicket'
 import { CryptoPayment } from '@/components/CryptoPayment'
@@ -75,6 +76,14 @@ export default function CheckoutPage() {
   // ── Guest + Nombres de participantes ──────────────────────────────
   const [guestEmail, setGuestEmail] = useState('')
   const [guestEmailTouched, setGuestEmailTouched] = useState(false)
+  // Limpiar email de invitado cuando el modo cambia a invitado
+  // Para evitar que se muestre el email anterior de un usuario logueado
+  useEffect(() => {
+    if (isGuest) {
+      setGuestEmail('')
+      setEmailRegistered(false)
+    }
+  }, [isGuest])
   // Nombre de la persona que se esta agregando.
   const [guestName, setGuestName] = useState('')
   // Las personas de la reserva, cada una con su email y su nombre.
@@ -84,6 +93,12 @@ export default function CheckoutPage() {
   // El correo ya esta registrado: se ofrece entrar, sin bloquear.
   const [emailRegistered, setEmailRegistered] = useState(false)
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+  // País para reserva en efectivo
+  const [country, setCountry] = useState('')
+  const countryOptions = sortCountries().map((c) => ({
+    value: c.code,
+    label: locale === 'es' ? c.es : c.en,
+  }))
   // Modo de Stripe (mock / test / live) para poder avisarlo en la interfaz.
   const [stripeMode, setStripeMode] = useState(null)
   // lineId -> string[] (longitud = peopleCount)
