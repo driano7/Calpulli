@@ -182,6 +182,10 @@ export default function JourneysIndex() {
                     {price ? (
                       <button
                         onClick={(e) => {
+                          // El boton vive dentro del <Link> de la tarjeta:
+                          // hay que frenar la navegacion por defecto del enlace
+                          // para que el clic lleve al checkout y no a la ficha.
+                          e.preventDefault()
                           e.stopPropagation()
                           handleReserve(journey)
                         }}
