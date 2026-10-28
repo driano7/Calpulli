@@ -4,6 +4,10 @@ import React from 'react'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence, useInView, useScroll, useTransform } from 'framer-motion'
 import dynamic from 'next/dynamic'
+const QrScannerAdmin = dynamic(() => import('@/components/admin/QrScannerAdmin'), {
+  ssr: false,
+  loading: () => null,
+})
 import { buildClientQr } from '@/lib/qr/types'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -45,6 +49,9 @@ import {
   TrendingUp,
   Clock,
   MapPin as MapPinIcon,
+  Camera,
+  QrCode,
+  Search,
 } from 'lucide-react'
 import { CoffeeBackground } from '@/components/CoffeeBackground'
 import { GrecaOjoFelino } from '@/components/moodboard/Icons'
@@ -108,6 +115,55 @@ export default function Profile() {
   const [isLoadingBookings, setIsLoadingBookings] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [profileLoaded, setProfileLoaded] = useState(false)
+
+  // Lector de QR para administradores: lee el QR de un ticket y abre su reserva
+  const [showScanner, setShowScanner] = useState(false)
+  const [scanResult, setScanResult] = useState<string | null>(null)
+  const [isScanning, setIsScanning] = useState(false)
+  const [ticketSearch, setTicketSearch] = useState('')
+
+  /** Filtra bookings por nombre, código de ticket, clave de reserva o ID. */
+  const filteredBookings = useMemo(() => {
+    const q = ticketSearch.toLowerCase().trim()
+    if (!q) return bookings
+    return bookings.filter((b: any) => {
+      const haystack = [
+        b.customerName,
+        b.ticketCode,
+        b.bookingReference,
+        b.id,
+        b.experienceTitle,
+        ...(Array.isArray(b.participantNames) ? b.participantNames : []),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+      return haystack.includes(q)
+    })
+  }, [bookings, ticketSearch])
+
+  /** Cuando el admin escanea un QR, busca la reserva por código/clave y la abre. */
+  const handleScanResult = useCallback(
+    (code: string) => {
+      setIsScanning(false)
+      setShowScanner(false)
+      const q = code.trim().toUpperCase()
+      const found = bookings.find(
+        (b: any) =>
+          (b.ticketCode || '').toUpperCase() === q ||
+          (b.bookingReference || '').toUpperCase() === q ||
+          (b.id || '').toUpperCase() === q
+      )
+      if (found) {
+        setShowTicket(found)
+        setScanResult(null)
+      } else {
+        setScanResult(code)
+        setError(`No se encontró reserva con el código "${code}".`)
+      }
+    },
+    [bookings]
+  )
 
   const [role, setRole] = useState<'admin' | 'employee' | 'client' | null>(null)
   const [form, setForm] = useState<ProfileData>({
@@ -842,6 +898,15 @@ export default function Profile() {
       </div>
 
       {showTicket && <VirtualTicket ticket={showTicket} onClose={() => setShowTicket(null)} />}
+
+      {/* Escáner de QR para administradores */}
+      {showScanner && (
+        <QrScannerAdmin
+          open={showScanner}
+          onClose={() => setShowScanner(false)}
+          onScan={handleScanResult}
+        />
+      )}
     </CoffeeBackground>
   )
 }
@@ -1439,7 +1504,33 @@ function BookingsContent({
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
         >
-          {bookings.map((booking: any, index: number) => (
+          {/* Buscador de reservas por nombre o código/ticket */}
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="min-w-0 flex-1">
+              <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                {isEs ? 'Buscar reserva por nombre o código' : 'Search booking by name or code'}
+              </label>
+              <input
+                type="text"
+                value={ticketSearch}
+                onChange={(e) => setTicketSearch(e.target.value)}
+                placeholder={
+                  isEs ? 'Nombre, código o clave de reserva' : 'Name, code or booking reference'
+                }
+                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-white/10 dark:bg-zinc-900 dark:text-white"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowScanner(true)}
+              className="rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+            >
+              <QrCode className="mr-2 h-4 w-4" />
+              {isEs ? 'Escanear QR' : 'Scan QR'}
+            </button>
+          </div>
+
+          {filteredBookings.map((booking: any, index: number) => (
             <motion.div
               key={booking.id}
               initial={{ opacity: 0, y: 20 }}

@@ -352,6 +352,7 @@ export default function CheckoutPage() {
       time: item.time,
       peopleCount: Math.max(1, Number(item.peopleCount) || 1),
       participantNames: participantNames[item.lineId] || [],
+      unitPrice: item.price || 0,
     }))
 
   const createCheckoutSession = async () => {
@@ -633,6 +634,8 @@ export default function CheckoutPage() {
                   time: booking.time,
                   peopleCount: 1,
                   totalPrice: booking.totalAmount,
+                  journeyAmount: booking.journeyAmount,
+                  paymentMethod: booking.paymentMethod,
                   status: booking.status,
                   customerName: ticket.participantName,
                   customerEmail: booking.customerEmail,

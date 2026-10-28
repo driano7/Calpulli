@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
+import { Share } from 'lucide-react'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { formatPriceByLocale } from '@/lib/currency'
 
@@ -17,7 +18,12 @@ interface VirtualTicketProps {
     time: string
     peopleCount: number
     totalPrice: number
+    /** Monto del journey independientemente del método de pago (para mostrarlo
+     *  incluso cuando se paga en efectivo y el total es 0). */
+    journeyAmount?: number
     status: string
+    /** Método de pago: 'cash', 'card', 'crypto', etc. */
+    paymentMethod?: string
     customerName?: string
     customerEmail?: string
     currency?: string
@@ -30,6 +36,8 @@ interface VirtualTicketProps {
   responsible?: boolean
   /** Texto del total, ya formateado (el ticket no sabe la moneda de la vista). */
   totalLabel?: string
+  /** Función para compartir el ticket (Web Share API). */
+  onShare?: () => void | Promise<void>
 }
 
 export function VirtualTicket({
@@ -44,6 +52,7 @@ export function VirtualTicket({
   const isEs = currentLanguage === 'es'
   const ticketRef = useRef<HTMLDivElement>(null)
   const [isGenerating, setIsGenerating] = useState<'png' | 'pdf' | null>(null)
+  const [isSharing, setIsSharing] = useState(false)
   const [qrValue, setQrValue] = useState<string>(() => {
     const ticketCode = ticket.ticketCode || ticket.code || ticket.id
     if (ticketCode) {
@@ -142,6 +151,56 @@ export function VirtualTicket({
       setIsGenerating(null)
     }
   }, [onDownloadPDF, ticketCode])
+
+  const shareTicket = useCallback(async () => {
+    if (!ticketRef.current) return
+    setIsSharing(true)
+    try {
+      const html2canvas = (await import('html2canvas')).default
+      const canvas = await html2canvas(ticketRef.current, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false,
+      })
+      const dataUrl = canvas.toDataURL('image/png', 1.0)
+      const blob = await (await fetch(dataUrl)).blob()
+      const file = new File([blob], `ticket-${cleanTicketCode}.png`, { type: 'image/png' })
+
+      const isEs = currentLanguage === 'es'
+      const shareData = {
+        files: [file],
+        title: isEs ? 'Mi ticket Calpulli CDMX' : 'My Calpulli CDMX ticket',
+        text: isEs
+          ? `Mi ticket para "${ticket.experienceTitle}" — ${ticket.date} ${ticket.time}. Código: ${cleanTicketCode}`
+          : `My ticket for "${ticket.experienceTitle}" — ${ticket.date} ${ticket.time}. Code: ${cleanTicketCode}`,
+      }
+
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        try {
+          await navigator.share(shareData)
+          return
+        } catch (shareError) {
+          if (
+            shareError instanceof DOMException &&
+            (shareError.name === 'AbortError' || shareError.name === 'NotAllowedError')
+          ) {
+            throw shareError
+          }
+          // Fall through to download
+        }
+      }
+      // Fallback: descargar imagen si Web Share no está disponible
+      const link = document.createElement('a')
+      link.href = dataUrl
+      link.download = `ticket-${cleanTicketCode}.png`
+      link.click()
+    } catch (error) {
+      console.error('Error sharing ticket:', error)
+    } finally {
+      setIsSharing(false)
+    }
+  }, [ticket.experienceTitle, ticket.date, ticket.time, cleanTicketCode, currentLanguage])
 
   return (
     <motion.div
@@ -269,7 +328,15 @@ export function VirtualTicket({
               </div>
               <span className="text-sm font-semibold text-gray-700 dark:text-zinc-200">
                 {totalLabel ||
-                  (ticket.totalPrice === 0
+                  (ticket.paymentMethod === 'cash'
+                    ? isEs
+                      ? `Pagar en efectivo — Journey ${formatPrice(
+                          ticket.journeyAmount || ticket.totalPrice || 0
+                        )}`
+                      : `Pay on pickup — Journey ${formatPrice(
+                          ticket.journeyAmount || ticket.totalPrice || 0
+                        )}`
+                    : ticket.totalPrice === 0
                     ? isEs
                       ? 'Pagar en efectivo'
                       : 'Pay on pickup'
@@ -431,6 +498,39 @@ export function VirtualTicket({
               : isEs
               ? 'Descargar PDF'
               : 'Download PDF'}
+          </button>
+
+          <button
+            onClick={shareTicket}
+            disabled={isSharing}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-100 py-3 px-4 font-semibold text-gray-900 transition-colors hover:bg-gray-200 disabled:opacity-50 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+          >
+            {isSharing ? (
+              <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
+              </svg>
+            ) : (
+              <Share className="h-5 w-5" />
+            )}
+            {isSharing
+              ? isEs
+                ? 'Compartiendo...'
+                : 'Sharing...'
+              : isEs
+              ? 'Compartir ticket'
+              : 'Share ticket'}
           </button>
 
           <button

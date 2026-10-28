@@ -31,6 +31,7 @@ export default function BookingsPage() {
     activityId: '',
     date: '',
     name: '',
+    reference: '',
   })
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
@@ -147,6 +148,7 @@ export default function BookingsPage() {
     if (searchFilters.activityId) params.append('experienceId', searchFilters.activityId)
     if (searchFilters.date) params.append('date', searchFilters.date)
     if (searchFilters.name) params.append('name', searchFilters.name)
+    if (searchFilters.reference) params.append('reference', searchFilters.reference)
 
     try {
       const response = await fetch('/api/bookings/search?' + params.toString(), {
@@ -196,6 +198,15 @@ export default function BookingsPage() {
           b.id?.toLowerCase().includes(q)
         if (!nameMatch) return false
       }
+      // Filtro por clave de reserva / código de ticket
+      if (searchFilters.reference) {
+        const q = searchFilters.reference.toLowerCase().trim()
+        const refMatch =
+          b.bookingReference?.toLowerCase().includes(q) ||
+          b.ticketCode?.toLowerCase().includes(q) ||
+          b.id?.toLowerCase().includes(q)
+        if (!refMatch) return false
+      }
       return true
     })
     setSearchResults(filtered)
@@ -207,8 +218,9 @@ export default function BookingsPage() {
     if (!q) return true
     return (
       b.id?.toLowerCase().includes(q) ||
-      b.experienceTitle?.toLowerCase().includes(q) ||
+      b.bookingReference?.toLowerCase().includes(q) ||
       b.ticketCode?.toLowerCase().includes(q) ||
+      b.experienceTitle?.toLowerCase().includes(q) ||
       (b.date && b.date.toLowerCase().includes(q)) ||
       (b.time && b.time.toLowerCase().includes(q))
     )
@@ -365,6 +377,24 @@ export default function BookingsPage() {
                   />
                 </div>
 
+                {/* Clave de reserva / Código ticket */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-zinc-600 dark:text-zinc-300">
+                    {isEs ? 'Clave de reserva' : 'Booking reference'}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={
+                      isEs ? 'Código o clave de reserva' : 'Booking reference or ticket code'
+                    }
+                    value={searchFilters.reference}
+                    onChange={(e) =>
+                      setSearchFilters({ ...searchFilters, reference: e.target.value })
+                    }
+                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:border-white/10 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-500"
+                  />
+                </div>
+
                 {/* Botón buscar */}
                 <button
                   onClick={handleSearch}
@@ -411,6 +441,7 @@ export default function BookingsPage() {
                 !searchFilters.activityId &&
                 !searchFilters.date &&
                 !searchFilters.name &&
+                !searchFilters.reference &&
                 !isSearching &&
                 !searchError && (
                   <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-500 dark:border-white/10 dark:bg-zinc-900/50 dark:text-zinc-400">

@@ -76,6 +76,10 @@ export interface CreatedBooking {
   ticketCode: string
   status: string
   paymentStatus: string
+  /** Método de pago: 'cash', 'card', 'crypto'. */
+  paymentMethod?: string
+  /** Monto del journey independientemente del método de pago. */
+  journeyAmount?: number
   startDate: string
   guests: number
   totalAmount: number
@@ -224,6 +228,8 @@ export async function createBookingInTurso(input: CreateBookingInput): Promise<C
     ticketCode: ticketCodeFor(reference),
     status,
     paymentStatus,
+    paymentMethod: input.paymentMethod,
+    journeyAmount: total,
     startDate: iso,
     guests,
     totalAmount: total,

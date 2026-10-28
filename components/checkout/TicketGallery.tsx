@@ -16,6 +16,10 @@ interface BookingWithTickets {
   id: string
   bookingReference?: string
   ticketCode?: string
+  /** Método de pago: 'cash', 'card', 'crypto'. */
+  paymentMethod?: string
+  /** Monto del journey independientemente del método de pago. */
+  journeyAmount?: number
   customerName?: string
   experienceTitle?: string
   date?: string
