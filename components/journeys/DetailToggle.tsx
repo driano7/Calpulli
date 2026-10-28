@@ -1,9 +1,12 @@
 'use client'
 
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
+import { useRouter } from 'next/router'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useJourneyDetail } from './JourneyDetailContext'
 import { setAllJourneyDetails } from './journeyDetailBus'
+import { useCartStore } from '@/lib/store/useCartStore'
+import { getJourneyBySlug, pickLocalized } from '@/data/journeysData'
 
 /**
  * Control global del detalle desplegable.
@@ -33,7 +36,34 @@ export function DetailToggle({
 }) {
   const detail = useJourneyDetail()
   const reduced = useReducedMotion()
+  const router = useRouter()
+  const { addItem, clearCart } = useCartStore()
   if (!detail) return null
+
+  /**
+   * Reservar desde la ficha del journey: se REEMPLAZA el carrito para que
+   * solo quede este journey. Si el usuario venia de otro y se arrepintio,
+   * no queda nada acumulado.
+   */
+  const handleBook = (event: { preventDefault: () => void }) => {
+    event.preventDefault()
+    const journey = getJourneyBySlug(journeySlug)
+    if (!journey) {
+      router.push('/journeys')
+      return
+    }
+    clearCart()
+    addItem({
+      experienceId: journey.id,
+      title: pickLocalized(journey.title_es, journey.title_en, isEs),
+      imageUrl: journey.heroImage,
+      price: journey.price,
+      currency: 'MXN',
+      location: 'Ciudad de México',
+      maxGuests: 10,
+    })
+    router.push('/checkout')
+  }
 
   const expanded = detail.allOpen
 
@@ -98,6 +128,7 @@ export function DetailToggle({
       {price ? (
         <a
           href={`/checkout?journey=${journeySlug || ''}`}
+          onClick={handleBook}
           className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-[#E4007C] px-3.5 py-2.5 text-xs font-bold tabular-nums text-white shadow-lg transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           style={{ ['--tw-ring-color' as string]: '#E4007C' }}
           title={

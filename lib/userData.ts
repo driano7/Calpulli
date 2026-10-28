@@ -169,6 +169,7 @@ export async function deleteMyData() {
     PROFILE_KEY,
     'calpulli_bookings',
     'calpulli_cart',
+    'calpulli_cart_version',
     'calpulli_password',
     USER_ID_KEY,
   ]

@@ -31,7 +31,7 @@ const categoryLabelMap = {
 }
 
 export function ExperienceCard({ experience, onSelect, locale }) {
-  const { addItem } = useCartStore()
+  const { addItem, clearCart } = useCartStore()
   const CategoryIcon = categoryIconMap[experience.category] || MapPin
   const isEs = locale === 'es'
   const title = isEs ? experience.titleEs || experience.title : experience.title
@@ -166,6 +166,8 @@ export function ExperienceCard({ experience, onSelect, locale }) {
             <motion.button
               onClick={(e) => {
                 e.stopPropagation()
+                // Reemplaza el carrito: solo queda la experiencia elegida.
+                clearCart()
                 addItem({
                   experienceId: experience.id,
                   title,

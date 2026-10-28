@@ -7,7 +7,7 @@ import { useCartStore } from '@/lib/store/useCartStore'
 import { useAuth } from '@/lib/hooks/useAuth'
 
 export function AddToCartButton({ tour, locale }) {
-  const { addItem } = useCartStore()
+  const { addItem, clearCart } = useCartStore()
   const router = useRouter()
   const { user } = useAuth()
   const [added, setAdded] = useState(false)
@@ -18,6 +18,9 @@ export function AddToCartButton({ tour, locale }) {
       router.push(`/login?redirect=/tours/${tour.id}`)
       return
     }
+    // Al elegir un tour se reemplaza el carrito: si el usuario se arrepiente
+    // de lo anterior, no queda nada acumulado.
+    clearCart()
     addItem({
       experienceId: tour.id,
       title: tour.title,

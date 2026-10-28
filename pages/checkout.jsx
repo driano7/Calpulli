@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/router'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from '@/components/Link'
 import Image from '@/components/Image'
@@ -29,7 +28,7 @@ import { GuestPeopleField, MAX_GUESTS } from '@/components/checkout/GuestPeopleF
 import { TicketGallery } from '@/components/checkout/TicketGallery'
 
 export default function CheckoutPage() {
-  const { items, subtotal, itemCount, clearCart, addItem, updateItem, removeItem } = useCartStore()
+  const { items, subtotal, itemCount, clearCart, updateItem, removeItem } = useCartStore()
   const { user, token, isLoading } = useAuth()
   const { t, currentLanguage } = useLanguage()
   const locale = currentLanguage === 'es' ? 'es' : 'en'
@@ -110,14 +109,6 @@ export default function CheckoutPage() {
   const authDisplayName = user
     ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
     : ''
-
-  /**
-   * Un journey se puede reservar sin pasar por el carrito: /checkout?journey=slug
-   * mete la linea sola. La fecha por defecto es hoy (es un recorrido
-   * autoguiado: se reserva el dia que vienes) y la hora, la de inicio
-   * recomendada.
-   */
-  const router = useRouter()
 
   // Inicializa / sincroniza participantNames cuando cambian items o user
   useEffect(() => {

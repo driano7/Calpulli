@@ -165,7 +165,7 @@ export default function BookingPage() {
   const params = useParams()
   const { user, token, isLoading: authLoading } = useAuth()
   const { t, locale } = useTranslation()
-  const { addItem } = useCartStore()
+  const { addItem, clearCart } = useCartStore()
   const [selectedDate, setSelectedDate] = useState(null)
   const [selectedTime, setSelectedTime] = useState(null)
   const [peopleCount, setPeopleCount] = useState(2)
@@ -440,6 +440,8 @@ export default function BookingPage() {
   }
 
   const handleAddToCart = () => {
+    // Reemplaza el carrito: al elegir esta experiencia se descarta lo anterior.
+    clearCart()
     addItem({
       experienceId: experience.id,
       title: experience.title,

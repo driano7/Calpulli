@@ -39,6 +39,16 @@ const listeners = new Set<() => void>()
 const STORAGE_KEY = 'calpulli_cart'
 
 /**
+ * Version del formato del carrito.
+ *
+ * Subirla descarta automaticamente los carritos viejos en la siguiente carga.
+ * La version 2 elimina los carritos que quedaron con journeys agregados solos
+ * por versiones anteriores: el usuario no tiene que vaciarlos a mano.
+ */
+const STORAGE_VERSION_KEY = 'calpulli_cart_version'
+const STORAGE_VERSION = '2'
+
+/**
  * El carrito guarda SIEMPRE pesos mexicanos.
  *
  * Los tours guardan su precio en dolares (data/toursData.js es la fuente) y
@@ -66,6 +76,13 @@ const normalizeItem = (item: CartTourItem): CartTourItem => ({
 function loadFromStorage(): CartTourItem[] {
   if (typeof window === 'undefined') return []
   try {
+    // Carrito de una version anterior: se descarta solo, sin que el usuario
+    // tenga que borrar cache ni vaciarlo con el boton.
+    if (localStorage.getItem(STORAGE_VERSION_KEY) !== STORAGE_VERSION) {
+      localStorage.removeItem(STORAGE_KEY)
+      localStorage.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION)
+      return []
+    }
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
@@ -82,6 +99,7 @@ function persist(items: CartTourItem[]) {
   if (typeof window === 'undefined') return
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+    localStorage.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION)
   } catch {
     // storage full or unavailable
   }
@@ -104,6 +122,14 @@ const initialize = () => {
 // Initialize once on module load
 if (typeof window !== 'undefined') {
   initialize()
+
+  // Si el carrito se limpia o cambia en otra pestaña, esta se sincroniza:
+  // invitado y usuario logueado comparten el mismo carrito local.
+  window.addEventListener('storage', (event) => {
+    if (event.key !== STORAGE_KEY && event.key !== STORAGE_VERSION_KEY) return
+    cartState = loadFromStorage()
+    emitChange()
+  })
 }
 
 const createLineId = () => {
