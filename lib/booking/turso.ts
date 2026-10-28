@@ -196,8 +196,11 @@ export async function createBookingInTurso(input: CreateBookingInput): Promise<C
 
   const experienceRow: any = experience.rows[0]
 
-  // Un ticket por persona. Todos comparten el mismo codigo de reserva
-  // (sin sufijo de posicion): CDMX-XXXXXX.
+  // Un ticket por persona. Cada ticket guarda un código único en la base de
+  // datos (con sufijo de posición cuando hay varias personas) para evitar
+  // colisiones, pero la reserva y el ticket mostrado usan el código base
+  // sin sufijo: CDMX-XXXXXX.
+  const baseCode = ticketCodeFor(reference)
   const people =
     Array.isArray(input.participants) && input.participants.length
       ? input.participants
@@ -211,7 +214,8 @@ export async function createBookingInTurso(input: CreateBookingInput): Promise<C
   for (let index = 0; index < people.length; index += 1) {
     const position = index + 1
     const name = (people[index]?.name || '').trim() || `Invitado ${position}`
-    const ticketCode = ticketCodeFor(reference)
+    // Código único por ticket para la base de datos y el QR.
+    const ticketCode = position > 1 ? `${baseCode}-${position}` : baseCode
     const isResponsible = position === responsiblePosition
     await turso.execute({
       sql: `INSERT INTO booking_participants
@@ -225,7 +229,7 @@ export async function createBookingInTurso(input: CreateBookingInput): Promise<C
   return {
     id,
     bookingReference: reference,
-    ticketCode: ticketCodeFor(reference),
+    ticketCode: baseCode,
     status,
     paymentStatus,
     paymentMethod: input.paymentMethod,

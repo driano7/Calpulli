@@ -152,7 +152,9 @@ export default function Profile() {
         (b: any) =>
           (b.ticketCode || '').toUpperCase() === q ||
           (b.bookingReference || '').toUpperCase() === q ||
-          (b.id || '').toUpperCase() === q
+          (b.id || '').toUpperCase() === q ||
+          Array.isArray(b.tickets) &&
+            b.tickets.some((t: any) => (t.ticketCode || '').toUpperCase() === q)
       )
       if (found) {
         setShowTicket(found)
