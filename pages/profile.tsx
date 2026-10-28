@@ -1471,11 +1471,6 @@ function BookingsContent({
                 <p className="mb-1 text-sm text-zinc-500 dark:text-gray-400">
                   {formatBookingDate(booking.date, isEs ? 'es' : 'en')} · {booking.time}
                 </p>
-                {(booking.meetingPoint || booking.location) && (
-                  <p className="line-clamp-1 mb-3 text-sm text-zinc-500 dark:text-gray-400">
-                    📍 {booking.meetingPoint || booking.location}
-                  </p>
-                )}
                 <div className="mt-auto flex items-center justify-between border-t border-zinc-200 pt-3 dark:border-white/10">
                   <span className="text-2xl font-bold text-zinc-900 dark:text-white">
                     ${booking.totalPrice}

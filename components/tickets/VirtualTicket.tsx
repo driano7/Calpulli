@@ -47,26 +47,30 @@ export function VirtualTicket({
   const [qrValue, setQrValue] = useState<string>(() => {
     const ticketCode = ticket.ticketCode || ticket.code || ticket.id
     if (ticketCode) {
-      const code = String(ticketCode)
+      return String(ticketCode)
         .replace(/^AMX-T-/i, '')
         .toUpperCase()
-      return `AMX-T-${code}`
     }
     // Fallback for legacy data
     if (ticket.qrCodeData) {
       try {
         const parsed = JSON.parse(ticket.qrCodeData)
         if (parsed?.ticketCode) {
-          return `AMX-T-${String(parsed.ticketCode)
+          return String(parsed.ticketCode)
             .replace(/^AMX-T-/i, '')
-            .toUpperCase()}`
+            .toUpperCase()
         }
       } catch {
         // not JSON
       }
     }
-    return 'AMX-T-UNKNOWN'
+    return 'UNKNOWN'
   })
+
+  /** Código de reserva sin prefijo ni sufijo de persona, para mostrar. */
+  const cleanTicketCode = String(ticket.ticketCode || ticket.code || ticket.id || '')
+    .replace(/^AMX-T-/i, '')
+    .toUpperCase()
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return ''
@@ -98,7 +102,7 @@ export function VirtualTicket({
       const dataUrl = canvas.toDataURL('image/png', 1.0)
       const link = document.createElement('a')
       link.href = dataUrl
-      link.download = `ticket-${ticketCode}.png`
+      link.download = `ticket-${cleanTicketCode}.png`
       link.click()
 
       if (onDownloadPNG) onDownloadPNG()
@@ -129,7 +133,7 @@ export function VirtualTicket({
       const pdf = new jsPDF('p', 'mm', 'a4')
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight)
 
-      pdf.save(`ticket-${ticketCode}.pdf`)
+      pdf.save(`ticket-${cleanTicketCode}.pdf`)
 
       if (onDownloadPDF) onDownloadPDF()
     } catch (error) {
@@ -194,7 +198,7 @@ export function VirtualTicket({
                 </div>
               </div>
               <p className="mt-3 text-center font-mono text-sm font-semibold tracking-wider text-gray-600 dark:text-zinc-300">
-                {ticketCode}
+                {cleanTicketCode}
               </p>
             </div>
           </div>
@@ -230,40 +234,6 @@ export function VirtualTicket({
               <span className="text-sm text-gray-500 dark:text-zinc-400">{ticket.time}</span>
             </div>
 
-            {(ticket.meetingPoint || ticket.location) && (
-              <div className="flex items-center justify-between rounded-xl bg-orange-50 p-4 dark:bg-orange-500/10">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-500/20">
-                    <svg
-                      className="h-6 w-6 text-orange-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 21s-6-5.2-6-11a6 6 0 1112 0c0 5.8-6 11-6 11z"
-                      />
-                      <circle cx="12" cy="10" r="2.5" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {isEs ? 'Punto de recogida' : 'Meeting point'}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-zinc-400">
-                      {ticket.meetingPoint || ticket.location}
-                    </p>
-                    {ticket.meetingPoint && ticket.location && (
-                      <p className="text-xs text-gray-400">{ticket.location}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
             <div className="flex items-center justify-between rounded-xl bg-gray-50 p-4 dark:bg-zinc-800/50 dark:bg-zinc-800/50">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-500/20">
@@ -298,7 +268,12 @@ export function VirtualTicket({
                 </div>
               </div>
               <span className="text-sm font-semibold text-gray-700 dark:text-zinc-200">
-                {totalLabel || formatPrice(ticket.totalPrice)}
+                {totalLabel ||
+                  (ticket.totalPrice === 0
+                    ? isEs
+                      ? 'Pagar en efectivo'
+                      : 'Pay on pickup'
+                    : formatPrice(ticket.totalPrice))}
               </span>
             </div>
 
@@ -322,7 +297,7 @@ export function VirtualTicket({
                   </p>
                 </div>
                 <span className="font-mono text-lg font-bold tracking-widest text-orange-600">
-                  {ticketCode}
+                  {cleanTicketCode}
                 </span>
               </div>
             </div>
@@ -372,33 +347,6 @@ export function VirtualTicket({
                   {ticket.customerEmail}
                 </span>
               </div>
-            )}
-          </div>
-
-          {/* Status Badge */}
-          <div className="flex flex-col items-center gap-2">
-            <span
-              className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-                ticket.status === 'confirmed'
-                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300'
-                  : ticket.status === 'pending'
-                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300'
-                  : ticket.status === 'cancelled'
-                  ? 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300'
-                  : 'bg-blue-100 text-blue-800 dark:bg-blue-500/20'
-              }`}
-            >
-              {ticket.status === 'confirmed' && isEs ? '✓ Confirmada' : '✓ Confirmed'}
-              {ticket.status === 'pending' && isEs ? '⏳ Pendiente' : '⏳ Pending'}
-              {ticket.status === 'cancelled' && isEs ? '✗ Cancelada' : '✗ Cancelled'}
-              {ticket.status === 'completed' && isEs ? '✓ Completada' : '✓ Completed'}
-            </span>
-            {ticket.paymentMethod === 'crypto' && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700 dark:bg-orange-500/20 dark:text-orange-300">
-                <span aria-hidden="true">₿</span>
-                isEs ? 'Pagado con cripto' : 'Paid with crypto'
-                {ticket.cryptoNetwork ? ` · ${String(ticket.cryptoNetwork).toLowerCase()}` : ''}
-              </span>
             )}
           </div>
         </div>

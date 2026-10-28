@@ -40,11 +40,11 @@ export function generateBookingReference(): string {
   return `CDMX-${out}`
 }
 
-/** Código completo que se imprime en el QR. */
+/** Código completo que se imprime en el QR (sin prefijo, solo la referencia). */
 export function ticketCodeFor(reference: string): string {
-  return `AMX-T-${String(reference)
+  return String(reference)
     .replace(/^AMX-T-/i, '')
-    .toUpperCase()}`
+    .toUpperCase()
 }
 
 /** Normaliza fecha/hora a ISO. Acepta 'YYYY-MM-DD' y 'YYYY-MM-DDTHH:mm'. */
@@ -192,9 +192,8 @@ export async function createBookingInTurso(input: CreateBookingInput): Promise<C
 
   const experienceRow: any = experience.rows[0]
 
-  // Un ticket por persona. El codigo es el de la reserva mas la posicion:
-  // AMX-T-CDMX-XXXXXX-1, -2, ... El primero es el responsable salvo que el
-  // visitante haya elegido otro.
+  // Un ticket por persona. Todos comparten el mismo codigo de reserva
+  // (sin sufijo de posicion): CDMX-XXXXXX.
   const people =
     Array.isArray(input.participants) && input.participants.length
       ? input.participants
@@ -208,7 +207,7 @@ export async function createBookingInTurso(input: CreateBookingInput): Promise<C
   for (let index = 0; index < people.length; index += 1) {
     const position = index + 1
     const name = (people[index]?.name || '').trim() || `Invitado ${position}`
-    const ticketCode = `${ticketCodeFor(reference)}-${position}`
+    const ticketCode = ticketCodeFor(reference)
     const isResponsible = position === responsiblePosition
     await turso.execute({
       sql: `INSERT INTO booking_participants

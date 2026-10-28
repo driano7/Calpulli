@@ -719,7 +719,7 @@ export default function CheckoutPage() {
                   status: 'confirmed',
                   createdAt: now,
                   updatedAt: now,
-                  ticketCode: `AMX-T-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+                  ticketCode: Math.random().toString(36).slice(2, 8).toUpperCase(),
                   customerName:
                     pNames[0] ||
                     (user?.firstName
@@ -1605,7 +1605,7 @@ export default function CheckoutPage() {
                 status: 'confirmed',
                 createdAt: now,
                 updatedAt: now,
-                ticketCode: `AMX-T-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+                ticketCode: Math.random().toString(36).slice(2, 8).toUpperCase(),
                 customerName:
                   pNames[0] ||
                   (user?.firstName
