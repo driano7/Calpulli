@@ -18,7 +18,7 @@ import {
 import { useCartStore } from '@/lib/store/useCartStore'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useLanguage } from '@/lib/hooks/useLanguage'
-import { sortCountries } from '@/lib/demographics'
+import { sortCountries, COUNTRY_PHONE_CODES, countryFlag } from '@/lib/demographics'
 import { FlipCard } from '@/components/ui/FlipCard'
 import { VirtualTicket } from '@/components/tickets/VirtualTicket'
 import { CryptoPayment } from '@/components/CryptoPayment'
@@ -40,8 +40,13 @@ export default function CheckoutPage() {
   const [createdBookings, setCreatedBookings] = useState([])
   const [selectedTicket, setSelectedTicket] = useState(null)
 
-  // WhatsApp: obligatorio para efectivo. Sin esto no hay cómo localizarlo.
-  const [customerPhone, setCustomerPhone] = useState('')
+  // WhatsApp: obligatorio para efectivo. País (orden del onboarding: México primero)
+  // + campo de número; se concatena detrás como `+{código} {número}`.
+  const [phoneCountry, setPhoneCountry] = useState('MX')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const customerPhone = phoneNumber.trim()
+    ? `+${COUNTRY_PHONE_CODES[phoneCountry] || '52'} ${phoneNumber.trim()}`
+    : ''
   // Método de pago: tarjeta (Stripe), cripto o efectivo
   // Efectivo es la primera opcion: se paga en el punto de encuentro.
   const [payMethod, setPayMethod] = useState('cash')
@@ -262,6 +267,8 @@ export default function CheckoutPage() {
       return [...prev, created]
     })
     setGuestName('')
+    setGuestEmail('')
+    setGuestEmailTouched(false)
   }
 
   /** Quita una persona de la reserva. */
@@ -1161,23 +1168,37 @@ export default function CheckoutPage() {
                     </p>
                     <div className="mt-4 text-left">
                       <label
-                        htmlFor="whatsapp"
+                        htmlFor="whatsapp-country"
                         className="text-xs font-semibold text-zinc-700 dark:text-zinc-300"
                       >
                         {locale === 'es'
                           ? 'WhatsApp (obligatorio) — con este número te confirmamos'
                           : 'WhatsApp (required) — we confirm on this number'}
                       </label>
-                      <input
-                        id="whatsapp"
-                        type="tel"
-                        inputMode="tel"
-                        autoComplete="tel"
-                        placeholder="+52 55 1234 5678"
-                        value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
-                        className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-orange-500 focus:outline-none dark:border-white/10 dark:bg-zinc-900 dark:text-white"
-                      />
+                      <div className="mt-1 flex gap-2">
+                        <select
+                          id="whatsapp-country"
+                          value={phoneCountry}
+                          onChange={(e) => setPhoneCountry(e.target.value)}
+                          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-orange-500 focus:outline-none dark:border-white/10 dark:bg-zinc-900 dark:text-white sm:w-[170px]"
+                        >
+                          {sortCountries().map((c) => (
+                            <option key={c.code} value={c.code}>
+                              {countryFlag(c.code)} {c.es} (+{COUNTRY_PHONE_CODES[c.code] || ''})
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          id="whatsapp-number"
+                          type="tel"
+                          inputMode="tel"
+                          autoComplete="tel"
+                          placeholder="55 1234 5678"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          className="flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-orange-500 focus:outline-none dark:border-white/10 dark:bg-zinc-900 dark:text-white"
+                        />
+                      </div>
                       <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
                         {locale === 'es'
                           ? 'Sin este número no se guarda la reserva: sin teléfono no hay forma de avisarte ni de localizarte el día del tour.'

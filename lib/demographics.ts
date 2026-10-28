@@ -123,6 +123,67 @@ export function sortCountries() {
 
 export const COUNTRY_BY_CODE = Object.fromEntries(COUNTRIES.map((c) => [c.code, c]) as any)
 
+/** Códigos de llamada internacional por país (prefijo sin el '+'). */
+export const COUNTRY_PHONE_CODES: Record<string, string> = {
+  MX: '52',
+  US: '1',
+  CA: '1',
+  ES: '34',
+  AR: '54',
+  CO: '57',
+  CL: '56',
+  PE: '51',
+  BR: '55',
+  FR: '33',
+  DE: '49',
+  IT: '39',
+  GB: '44',
+  JP: '81',
+  KR: '82',
+  AU: '61',
+  AT: '43',
+  BE: '32',
+  BO: '591',
+  CN: '86',
+  CR: '506',
+  CU: '53',
+  DK: '45',
+  EC: '593',
+  SV: '503',
+  AE: '971',
+  PH: '63',
+  FI: '358',
+  GT: '502',
+  HN: '504',
+  IN: '91',
+  ID: '62',
+  IE: '353',
+  IL: '972',
+  MY: '60',
+  NI: '505',
+  NO: '47',
+  NZ: '64',
+  NL: '31',
+  PA: '507',
+  PY: '595',
+  PL: '48',
+  PT: '351',
+  PR: '1',
+  DO: '1',
+  SG: '65',
+  ZA: '27',
+  SE: '46',
+  CH: '41',
+  TH: '66',
+  UY: '598',
+  VE: '58',
+  VN: '84',
+}
+
+/** Bandera emoji a partir del código ISO (ej. MX -> 🇲🇽). */
+export const countryFlag = (code: string): string =>
+  code.toUpperCase().replace(/./g, (char) => String.fromCodePoint(char.charCodeAt(0) + 127397))
+
 /** Solo si el país es México se pregunta el estado. */
 export const MEXICAN_STATES = [
   { code: 'AGU', es: 'Aguascalientes' },

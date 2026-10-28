@@ -62,7 +62,7 @@ export function DetailToggle({
       location: 'Ciudad de México',
       maxGuests: 10,
     })
-    router.push('/checkout')
+    router.push('/cart')
   }
 
   const expanded = detail.allOpen
