@@ -1,5 +1,6 @@
 import { getStripeClient } from '@/lib/stripe'
 import { createBookingInTurso, findBookingsByStripeSession } from '@/lib/booking/turso'
+import { checkRateLimit } from '@/lib/booking/rateLimit'
 import { recordConversion } from '@/lib/referrals'
 import { trySend } from '@/lib/mail/service'
 import { BRAND } from '@/lib/brand'
@@ -172,6 +173,16 @@ async function registerReferralConversions(
 //  - Autenticado: Authorization Bearer + session.user.id -> userId real
 //  - Invitado: sin token, con guestEmail/guestName + participantNames -> guest_<random> (no guarda PII más allá del ticket temporal, pero sí genera métricas)
 export default async function handler(req, res) {
+  // Rate limiting: proteger contra bots/crapping (máx. 50 reservas / 10 min por IP)
+  const rl = checkRateLimit(req)
+  if (!rl.allowed) {
+    return res.status(429).json({
+      error: rl.message || 'Demasiadas solicitudes. Intenta de nuevo más tarde.',
+      blocked: rl.reason === 'blocked',
+      retryAfter: rl.remainingSeconds,
+    })
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }

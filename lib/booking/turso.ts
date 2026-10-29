@@ -87,6 +87,8 @@ export interface CreatedBooking {
   paymentMethod?: string
   /** Monto del journey independientemente del método de pago. */
   journeyAmount?: number
+  /** WhatsApp del responsable (para mostrar en el ticket). */
+  customerPhone?: string | null
   startDate: string
   guests: number
   totalAmount: number
@@ -249,6 +251,7 @@ export async function createBookingInTurso(input: CreateBookingInput): Promise<C
     status,
     paymentStatus,
     paymentMethod: input.paymentMethod,
+    customerPhone: input.customerPhone || null,
     journeyAmount: total,
     startDate: iso,
     guests,

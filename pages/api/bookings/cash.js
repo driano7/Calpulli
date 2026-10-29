@@ -8,6 +8,7 @@
  * asi que aqui ya es una reserva de verdad.
  */
 import { createBookingInTurso } from '@/lib/booking/turso'
+import { checkRateLimit } from '@/lib/booking/rateLimit'
 import { trySend } from '@/lib/mail/service'
 import { BRAND } from '@/lib/brand'
 import { getSessionOptional } from '@/lib/auth/session'
@@ -15,6 +16,16 @@ import { getSessionOptional } from '@/lib/auth/session'
 export const config = { runtime: 'nodejs' }
 
 export default async function handler(req, res) {
+  // Rate limiting: proteger contra bots/crapping (máx. 50 reservas / 10 min por IP)
+  const rl = checkRateLimit(req)
+  if (!rl.allowed) {
+    return res.status(429).json({
+      error: rl.message || 'Demasiadas solicitudes. Intenta de nuevo más tarde.',
+      blocked: rl.reason === 'blocked',
+      retryAfter: rl.remainingSeconds,
+    })
+  }
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST')
     return res.status(405).json({ error: 'Method not allowed' })

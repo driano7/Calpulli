@@ -30,6 +30,8 @@ interface VirtualTicketProps {
     location?: string
     /** Nombres de todos los participantes (uno por persona). */
     participantNames?: string[]
+    /** WhatsApp del responsable (para mostrar en el ticket). */
+    customerPhone?: string | null
   }
   onClose: () => void
   onDownloadPNG?: () => void
@@ -55,6 +57,18 @@ export function VirtualTicket({
   const ticketRef = useRef<HTMLDivElement>(null)
   const [isGenerating, setIsGenerating] = useState<'png' | 'pdf' | null>(null)
   const [isSharing, setIsSharing] = useState(false)
+
+  // Detectar si es móvil (Android o iOS) para habilitar share nativo
+  const [isMobileDevice, setIsMobileDevice] = useState(false)
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+  const isAndroid = /android/i.test(ua)
+  const isIOS = /iphone|ipod|ipad/i.test(ua) || (/macintosh/i.test(ua) && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1)
+  const canShareNative = typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (isAndroid || isIOS)
+
+  useEffect(() => {
+    setIsMobileDevice(isAndroid || isIOS)
+  }, [])
+
   const [qrValue, setQrValue] = useState<string>(() => {
     const ticketCode = ticket.ticketCode || ticket.code || ticket.id
     if (ticketCode) {
@@ -82,6 +96,23 @@ export function VirtualTicket({
   const cleanTicketCode = String(ticket.ticketCode || ticket.code || ticket.id || '')
     .replace(/^AMX-T-/i, '')
     .toUpperCase()
+
+  /** Participantes ordenados: el responsable primero con (Responsable). */
+  const orderedParticipants = (() => {
+    const names = Array.isArray(ticket.participantNames) ? [...ticket.participantNames] : []
+    if (names.length === 0) return []
+    const responsibleIdx = names.findIndex((n) => n === ticket.customerName)
+    const ordered = [...names]
+    if (responsibleIdx > 0) {
+      const [responsibleName] = ordered.splice(responsibleIdx, 1)
+      ordered.unshift(responsibleName)
+    }
+    return ordered.map((name, idx) => ({
+      name,
+      isResponsible: idx === 0 && responsibleIdx >= 0,
+      label: idx === 0 && responsibleIdx >= 0 ? `${name} (Responsable)` : name,
+    }))
+  })()
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return ''
@@ -330,42 +361,52 @@ export function VirtualTicket({
               </div>
 
               {/* Lista de participantes: nombre - actividad - fecha/hora - clave ticket */}
-              {ticket.participantNames && ticket.participantNames.length > 0 && (
+              {orderedParticipants.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
                     {isEs ? 'Participantes' : 'Participants'}
                   </p>
-                  {ticket.participantNames.map((name, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-start gap-3 text-sm"
-                    >
-                      <span className="text-zinc-500 dark:text-zinc-400">
-                        {idx + 1}.
+                  {orderedParticipants.map((p, idx) => (
+                    <div key={idx} className="flex items-start gap-3 text-sm">
+                      <span className="text-zinc-500 dark:text-zinc-400">{idx + 1}.</span>
+                      <span className="text-gray-900 dark:text-white font-medium">
+                        {p.label}
                       </span>
-                      <span className="text-gray-900 dark:text-white">
-                        {name}
-                      </span>
-                      <span className="ml-2 text-zinc-500 dark:text-zinc-400">
-                        —
-                      </span>
+                      <span className="ml-2 text-zinc-500 dark:text-zinc-400">—</span>
                       <span className="text-gray-900 dark:text-white">
                         {ticket.experienceTitle}
                       </span>
-                      <span className="ml-2 text-zinc-500 dark:text-zinc-400">
-                        —
-                      </span>
+                      <span className="ml-2 text-zinc-500 dark:text-zinc-400">—</span>
                       <span className="text-zinc-500 dark:text-zinc-400">
                         {ticket.date} {ticket.time ? '· ' + ticket.time : ''}
                       </span>
-                      <span className="ml-2 text-zinc-500 dark:text-zinc-400">
-                        —
-                      </span>
+                      <span className="ml-2 text-zinc-500 dark:text-zinc-400">—</span>
                       <span className="font-mono text-xs text-orange-600 dark:text-orange-400">
                         {ticket.ticketCode}
                       </span>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* WhatsApp del responsable */}
+              {ticket.customerPhone && (
+                <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-500/30 dark:bg-orange-500/10">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-500/20">
+                      <svg className="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22-.28L14.39 7.12a1 1 0 011.43-.05l3.56 1.49a1 1 0 001.43-.04l2.22-.74a2 2 0 00.44-1.58L16.54 1.47c-.16-.53-.66-1.06-1.27-1.27L6.94.43a2 2 0 00-1.58.44L.44 8.77a2 2 0 00-.15 1.58l2.22 7.41a2 2 0 001.572 1.172l5.262 2.631a1 1 0 01.116.177l.74.25a1 1 0 001.1-.25l3.56-1.49a1 1 0 01.43-.05l1.49-3.56c.18-.44.25-.91.05-1.38z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                        {isEs ? 'WhatsApp del responsable' : "Responsible's WhatsApp"}
+                      </p>
+                      <p className="text-sm text-gray-900 dark:text-white">
+                        {ticket.customerPhone}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -543,11 +584,12 @@ export function VirtualTicket({
               : 'Download PDF'}
           </button>
 
-          <button
-            onClick={shareTicket}
-            disabled={isSharing}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-100 py-3 px-4 font-semibold text-gray-900 transition-colors hover:bg-gray-200 disabled:opacity-50 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
-          >
+          {isMobileDevice && (
+            <button
+              onClick={shareTicket}
+              disabled={isSharing}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-100 py-3 px-4 font-semibold text-gray-900 transition-colors hover:bg-gray-200 disabled:opacity-50 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+            >
             {isSharing ? (
               <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle
@@ -575,6 +617,7 @@ export function VirtualTicket({
               ? 'Compartir ticket'
               : 'Share ticket'}
           </button>
+          )}
 
           <button
             onClick={onClose}

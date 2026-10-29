@@ -636,6 +636,7 @@ export default function CheckoutPage() {
                   totalPrice: booking.totalAmount,
                   journeyAmount: booking.journeyAmount,
                   paymentMethod: booking.paymentMethod,
+                  customerPhone: booking.customerPhone,
                   status: booking.status,
                   customerName: ticket.participantName,
                   customerEmail: booking.customerEmail,
@@ -735,6 +736,7 @@ export default function CheckoutPage() {
                       ? 'Invitado'
                       : 'Cliente cripto'),
                   customerEmail: user?.email || undefined,
+                  customerPhone: customerPhone || undefined,
                   participantNames: pNames.length ? pNames : undefined,
                   isGuest: !user,
                   paymentMethod: 'crypto',
