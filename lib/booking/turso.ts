@@ -269,6 +269,70 @@ export async function createBookingInTurso(input: CreateBookingInput): Promise<C
 }
 
 /**
+ * Cuenta cuántas reservas no canceladas tiene un usuario para un journey.
+ *
+ * Identidad:
+ *  - Usuario logueado: se busca por user_id.
+ *  - Invitado: se busca por customer_email + customer_phone (ambos deben coincidir).
+ *
+ * Solo se cuentan reservas con status distinto de 'cancelled'.
+ * Devuelve { count, limit, remaining, atLimit, warning } donde:
+ *  - limit = 3 (máximo de reservas por journey)
+ *  - warning = true cuando remaining <= 1 (cerca de agotarse)
+ */
+export interface JourneyLimit {
+  count: number
+  limit: number
+  remaining: number
+  atLimit: boolean
+  warning: boolean
+}
+
+const JOURNEY_LIMIT_PER_USER = 3
+
+export async function countBookingsByExperienceAndIdentity({
+  experienceId,
+  userId,
+  customerEmail,
+  customerPhone,
+}: {
+  experienceId: string
+  userId?: string | null
+  customerEmail?: string | null
+  customerPhone?: string | null
+}): Promise<JourneyLimit> {
+  let count = 0
+
+  if (userId) {
+    // Usuario logueado: contar por user_id
+    const result = await turso.execute({
+      sql: `SELECT COUNT(*) AS c FROM bookings
+            WHERE experience_id = ? AND user_id = ? AND status != 'cancelled'`,
+      args: [experienceId, userId],
+    })
+    count = Number((result.rows[0] as any)?.c) || 0
+  } else if (customerEmail && customerPhone) {
+    // Invitado: contar por email + teléfono
+    const result = await turso.execute({
+      sql: `SELECT COUNT(*) AS c FROM bookings
+            WHERE experience_id = ? AND is_guest = 1
+              AND customer_email = ? COLLATE NOCASE
+              AND customer_phone = ?
+              AND status != 'cancelled'`,
+      args: [experienceId, customerEmail.trim(), customerPhone.trim()],
+    })
+    count = Number((result.rows[0] as any)?.c) || 0
+  }
+
+  const limit = JOURNEY_LIMIT_PER_USER
+  const remaining = Math.max(0, limit - count)
+  const atLimit = count >= limit
+  const warning = remaining <= 1 && !atLimit
+
+  return { count, limit, remaining, atLimit, warning }
+}
+
+/**
  * Busca un ticket de persona por su codigo. El codigo es el secreto: como el
  * de un pase de abordar, quien lo tiene puede ver el ticket.
  */

@@ -40,6 +40,11 @@ export default function CheckoutPage() {
   const [createdBookings, setCreatedBookings] = useState([])
   const [selectedTicket, setSelectedTicket] = useState(null)
 
+  // Límite de reservas por journey (máximo 3 por usuario/identidad)
+  const [journeyLimit, setJourneyLimit] = useState(null)
+  const [limitChecked, setLimitChecked] = useState(false)
+  const [limitError, setLimitError] = useState(null)
+
   // WhatsApp: obligatorio para efectivo. País (orden del onboarding: México primero)
   // + campo de número; se concatena detrás como `+{código} {número}`.
   const [phoneCountry, setPhoneCountry] = useState('MX')
@@ -67,6 +72,68 @@ export default function CheckoutPage() {
       void 0
     }
   }, [])
+
+  // Consultar el límite de reservas por journey para este usuario/identidad.
+  // Se dispara cuando hay identidad suficiente (usuario logueado, o invitado
+  // con email y teléfono ya escritos).
+  useEffect(() => {
+    let cancelled = false
+    const isLoggedIn = !isLoading && Boolean(user)
+
+    const hasIdentity =
+      isLoggedIn ||
+      (isGuest && guestEmail.trim() && phoneNumber.trim())
+
+    if (!hasIdentity || limitChecked) return
+
+    const experienceId = items.length > 0 ? items[0].experienceId : null
+    if (!experienceId) return
+
+    const fetchLimit = async () => {
+      try {
+        const params = new URLSearchParams({ experienceId })
+        if (isLoggedIn) {
+          params.set('userId', String(user.id))
+        } else {
+          params.set('email', guestEmail.trim())
+          params.set('phone', phoneNumber.trim())
+        }
+        const response = await fetch(`/api/bookings/count?${params.toString()}`)
+        if (!response.ok) throw new Error('Error consultando límite')
+        const data = await response.json()
+        if (!cancelled) {
+          setJourneyLimit(data)
+          setLimitChecked(true)
+          if (data.atLimit) {
+            setLimitError(
+              data.message ||
+                (locale === 'es'
+                  ? 'Has alcanzado el límite de 3 reservas para este journey.'
+                  : 'You have reached the 3-booking limit for this journey.')
+            )
+          } else if (data.warning) {
+            setLimitError(
+              data.message ||
+                (locale === 'es'
+                  ? `Te queda ${data.remaining} reserva para este journey.`
+                  : `You have ${data.remaining} booking left for this journey.`)
+            )
+          } else {
+            setLimitError(null)
+          }
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setLimitError('No se pudo verificar el límite de reservas.')
+        }
+      }
+    }
+
+    fetchLimit()
+    return () => {
+      cancelled = true
+    }
+  }, [isLoading, user, isGuest, guestEmail, phoneNumber, limitChecked, items, locale])
 
   // Form de la tarjeta (vista previa visual en la flip card)
   const [form, setForm] = useState({
@@ -829,6 +896,30 @@ export default function CheckoutPage() {
             </div>
           )}
 
+          {/* Mensaje de límite de reservas por journey */}
+          {limitError && journeyLimit && (
+            <div
+              className={`mb-6 rounded-xl p-4 ${
+                journeyLimit.atLimit
+                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300'
+                  : 'border-orange-500/30 bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-300'
+              }`}
+            >
+              {journeyLimit.atLimit ? (
+                <>
+                  <p className="font-semibold">{limitError}</p>
+                  <p className="mt-1 text-xs text-amber-500 dark:text-amber-300">
+                    {locale === 'es'
+                      ? 'No puedes hacer más reservas para este journey hasta que cancele alguna existente.'
+                      : 'You cannot make more bookings for this journey until you cancel an existing one.'}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm">{limitError}</p>
+              )}
+            </div>
+          )}
+
           {/* El correo del comprador ya existe: se ofrece entrar */}
           {showLoginPrompt && (
             <div
@@ -1343,7 +1434,12 @@ export default function CheckoutPage() {
                         setIsSubmitting(false)
                       }
                     }}
-                    disabled={isSubmitting || !allNamesValid || (isGuest && !emailOk)}
+                    disabled={
+                      isSubmitting ||
+                      !allNamesValid ||
+                      (isGuest && !emailOk) ||
+                      journeyLimit?.atLimit
+                    }
                     className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-4 font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isSubmitting ? (

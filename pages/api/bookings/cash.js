@@ -7,7 +7,7 @@
  * Antes esto solo se armaba en el navegador (una reserva que nadie mas ve),
  * asi que aqui ya es una reserva de verdad.
  */
-import { createBookingInTurso } from '@/lib/booking/turso'
+import { createBookingInTurso, countBookingsByExperienceAndIdentity } from '@/lib/booking/turso'
 import { checkRateLimit } from '@/lib/booking/rateLimit'
 import { trySend } from '@/lib/mail/service'
 import { BRAND } from '@/lib/brand'
@@ -45,6 +45,28 @@ export default async function handler(req, res) {
   // El WhatsApp es obligatorio: sin el, la reserva no se puede confirmar.
   if (customerPhone.replace(/\D/g, '').length < 10) {
     return res.status(400).json({ error: 'Necesitamos un WhatsApp para confirmar' })
+  }
+
+  // Límite de 3 reservas por journey por usuario/identidad
+  const experienceId = items[0]?.experienceId
+  if (experienceId) {
+    const session = await getSessionOptional(req)
+    const isLoggedIn = Boolean(session?.user?.id)
+    const limit = await countBookingsByExperienceAndIdentity({
+      experienceId,
+      userId: isLoggedIn ? String(session.user.id) : undefined,
+      customerEmail: isLoggedIn ? undefined : customerEmail || undefined,
+      customerPhone: isLoggedIn ? undefined : customerPhone || undefined,
+    })
+    if (limit.atLimit) {
+      return res.status(429).json({
+        error:
+          locale === 'es'
+            ? `Has alcanzado el límite de ${limit.limit} reservas para este journey.`
+            : `You have reached the ${limit.limit}-booking limit for this journey.`,
+        atLimit: true,
+      })
+    }
   }
 
   try {

@@ -1,5 +1,5 @@
 import { getStripeClient } from '@/lib/stripe'
-import { createBookingInTurso, findBookingsByStripeSession } from '@/lib/booking/turso'
+import { createBookingInTurso, findBookingsByStripeSession, countBookingsByExperienceAndIdentity } from '@/lib/booking/turso'
 import { checkRateLimit } from '@/lib/booking/rateLimit'
 import { recordConversion } from '@/lib/referrals'
 import { trySend } from '@/lib/mail/service'
@@ -204,6 +204,27 @@ export default async function handler(req, res) {
 
   if (typeof sessionId !== 'string' || !sessionId) {
     return res.status(400).json({ error: 'Falta session_id' })
+  }
+
+  // Límite de 3 reservas por journey por usuario/identidad
+  const experienceId = Array.isArray(items) && items[0] ? items[0].experienceId : null
+  if (experienceId) {
+    const isLoggedIn = Boolean(session?.user?.id)
+    const limit = await countBookingsByExperienceAndIdentity({
+      experienceId,
+      userId: isLoggedIn ? String(session.user.id) : undefined,
+      customerEmail: isLoggedIn ? undefined : String(guestEmail || ''),
+      customerPhone: isLoggedIn ? undefined : String(customerPhone || guestPhone || ''),
+    })
+    if (limit.atLimit) {
+      return res.status(429).json({
+        error:
+          locale === 'es'
+            ? `Has alcanzado el límite de ${limit.limit} reservas para este journey.`
+            : `You have reached the ${limit.limit}-booking limit for this journey.`,
+        atLimit: true,
+      })
+    }
   }
 
   try {
