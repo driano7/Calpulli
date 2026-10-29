@@ -50,6 +50,36 @@ const securityHeaders = [
     key: 'Permissions-Policy',
     value: 'camera=(), microphone=(), geolocation=()',
   },
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Download-Options
+  {
+    key: 'X-Download-Options',
+    value: 'noopen',
+  },
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Permitted-Cross-Domain-Policies
+  {
+    key: 'X-Permitted-Cross-Domain-Policies',
+    value: 'none',
+  },
+  // Ocultar la tecnología del servidor (X-Powered-By)
+  {
+    key: 'X-Powered-By',
+    value: '',
+  },
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Embedder-Policy
+  {
+    key: 'Cross-Origin-Embedder-Policy',
+    value: 'require-corp',
+  },
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy
+  {
+    key: 'Cross-Origin-Opener-Policy',
+    value: 'same-origin',
+  },
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Resource-Policy
+  {
+    key: 'Cross-Origin-Resource-Policy',
+    value: 'same-origin',
+  },
 ]
 
 module.exports = withBundleAnalyzer({
