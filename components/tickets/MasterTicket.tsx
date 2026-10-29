@@ -6,7 +6,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Share, Download, FileText, QrCode as QrIcon, Users, Clock, MapPin } from 'lucide-react'
+import { Share, Download, FileText, Users, Clock, MapPin, Smartphone } from 'lucide-react'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { formatPriceMXN } from '@/lib/currency'
 
@@ -234,8 +234,17 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
                     {isEs ? 'Código Padre (Responsable)' : 'Parent Code (Responsible)'}
                   </span>
                   <div className="relative">
-                    {/* QR placeholder rendered by parent via qrcode if needed */}
-                    <QrIcon className="h-10 w-10 text-orange-600" />
+                    {/* QR placeholder */}
+                    <div className="w-16 h-16 bg-white border-4 border-orange-600 p-1">
+                      <svg className="w-full h-full" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="256" height="256" fill="white"/>
+                        <rect x="32" y="32" width="64" height="64" fill="black"/>
+                        <rect x="160" y="32" width="64" height="64" fill="black"/>
+                        <rect x="32" y="160" width="64" height="64" fill="black"/>
+                        <rect x="80" y="80" width="96" height="96" fill="black"/>
+                        <rect x="104" y="104" width="48" height="48" fill="white"/>
+                      </svg>
+                    </div>
                   </div>
                   <p className="mt-2 text-center font-mono text-sm font-bold tracking-widest text-orange-600">
                     {parentCode}
