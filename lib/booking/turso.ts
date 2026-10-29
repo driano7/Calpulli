@@ -560,3 +560,56 @@ export async function demographicsForUser(userId: string): Promise<Demographics>
     gender: normalizeGender(row.gender),
   }
 }
+
+/**
+ * Busca todas las reservas de un mismo cliente (email + teléfono) para una fecha dada.
+ * Se usa para agrupar varios bookings bajo un "ticket padre" (responsable).
+ */
+export interface GroupedBooking extends TicketLookup {
+  participants: Array<{ position: number; participantName: string; ticketCode: string; isResponsible: boolean }>
+}
+
+export async function findBookingsByCustomerGroup({
+  customerEmail,
+  customerPhone,
+  date,
+}: {
+  customerEmail: string
+  customerPhone: string
+  date: string
+}): Promise<GroupedBooking[]> {
+  const result = await turso.execute({
+    sql: `${TICKET_SELECT}
+          WHERE b.customer_email = ? COLLATE NOCASE
+            AND b.customer_phone = ?
+            AND b.start_date = ?
+          ORDER BY b.start_time`,
+    args: [customerEmail.trim(), customerPhone.trim(), date],
+  })
+  return result.rows.map(mapTicket)
+}
+
+/**
+ * Obtiene todos los participantes (tickets individuales) de un booking_reference.
+ */
+export async function findParticipantsByReference(bookingReference: string) {
+  const reference = String(bookingReference || '')
+    .trim()
+    .replace(/^AMX-T-/i, '')
+    .toUpperCase()
+  if (!reference) return []
+
+  const result = await turso.execute({
+    sql: `SELECT p.position, p.participant_name, p.ticket_code, p.is_responsible
+          FROM booking_participants p
+          WHERE p.booking_reference = ? COLLATE NOCASE
+          ORDER BY p.position`,
+    args: [reference],
+  })
+  return result.rows.map((row: any) => ({
+    position: Number(row.position) || 1,
+    participantName: row.participant_name || '',
+    ticketCode: row.ticket_code,
+    isResponsible: Number(row.is_responsible) === 1,
+  }))
+}

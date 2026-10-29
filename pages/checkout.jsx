@@ -21,11 +21,11 @@ import { useLanguage } from '@/lib/hooks/useLanguage'
 import { sortCountries, COUNTRY_PHONE_CODES, countryFlag } from '@/lib/demographics'
 import { FlipCard } from '@/components/ui/FlipCard'
 import { VirtualTicket } from '@/components/tickets/VirtualTicket'
+import { MasterTicket } from '@/components/tickets/MasterTicket'
 import { CryptoPayment } from '@/components/CryptoPayment'
 import { formatPriceMXN } from '@/lib/currency'
 import { captureAcquisitionChannel, getAcquisitionChannel } from '@/lib/booking/utm'
 import { GuestPeopleField, MAX_GUESTS } from '@/components/checkout/GuestPeopleField'
-import { TicketGallery } from '@/components/checkout/TicketGallery'
 
 export default function CheckoutPage() {
   const { items, subtotal, itemCount, clearCart, updateItem, removeItem } = useCartStore()
@@ -39,6 +39,7 @@ export default function CheckoutPage() {
   const [success, setSuccess] = useState(false)
   const [createdBookings, setCreatedBookings] = useState([])
   const [selectedTicket, setSelectedTicket] = useState(null)
+  const [showMasterTicket, setShowMasterTicket] = useState(false)
 
   // WhatsApp: obligatorio para efectivo. País (orden del onboarding: México primero)
   // + campo de número; se concatena detrás como `+{código} {número}`.
@@ -598,6 +599,25 @@ export default function CheckoutPage() {
     const isGuestSuccess = createdBookings.some(
       (b) => b.isGuest || String(b.userId).startsWith('guest_')
     )
+
+    // Enriquecer bookings con datos del checkout para el Ticket Padre
+    const masterBookings = createdBookings.map((b, idx) => {
+      const item = items[idx] || items[0]
+      const participantNames = Array.isArray(b.tickets)
+        ? b.tickets.map((t) => t.participantName)
+        : []
+      return {
+        ...b,
+        customerName: participantNames[0] || b.customerName || '',
+        customerPhone: b.customerPhone || customerPhone || '',
+        customerEmail:
+          b.customerEmail || (isGuest ? guestEmail : user?.email) || '',
+        experienceImage: b.imageUrl || item?.imageUrl || null,
+        isResponsible: idx === 0,
+        participantNames,
+      }
+    })
+
     return (
       <div className="min-h-screen bg-white dark:bg-zinc-950">
         <div className="container mx-auto px-4 py-12">
@@ -621,36 +641,22 @@ export default function CheckoutPage() {
                   )}
             </p>
 
-            {/* Un ticket por persona, con su codigo y su QR. */}
-            <TicketGallery
-              bookings={createdBookings}
-              locale={locale}
-              onOpen={({ booking, ticket }) =>
-                setSelectedTicket({
-                  id: `${booking.id}-${ticket.position}`,
-                  ticketCode: ticket.ticketCode,
-                  experienceTitle: booking.experienceTitle,
-                  experienceImage: booking.imageUrl,
-                  date: booking.date,
-                  time: booking.time,
-                  peopleCount: booking.guests || 1,
-                  totalPrice: booking.totalAmount,
-                  journeyAmount: booking.journeyAmount,
-                  paymentMethod: booking.paymentMethod,
-                  customerPhone: booking.customerPhone,
-                  status: booking.status,
-                  customerName: ticket.participantName,
-                  customerEmail: booking.customerEmail,
-                  currency: booking.currency,
-                  location: booking.location,
-                  isResponsible: ticket.isResponsible,
-                  participantNames:
-                    Array.isArray(booking.tickets) && booking.tickets.length
-                      ? booking.tickets.map((t) => t.participantName)
-                      : [ticket.participantName],
-                })
-              }
-            />
+            {/* Ticket Padre — resumen de todas las reservas de esta compra */}
+            <div className="mt-8">
+              <button
+                onClick={() => setShowMasterTicket(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-3 font-semibold text-white transition-colors hover:bg-orange-600"
+              >
+                <Users className="h-5 w-5" />
+                {isEs ? 'Ver y descargar Ticket Padre (todos)' : 'View and download Parent Ticket (all)'}
+              </button>
+              {showMasterTicket && (
+                <MasterTicket
+                  bookings={masterBookings}
+                  onClose={() => setShowMasterTicket(false)}
+                />
+              )}
+            </div>
 
             <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
               {isGuestSuccess ? (
