@@ -28,6 +28,13 @@ export interface CreateBookingInput {
   accessibilityNeeds?: string | null
   stripeSessionId?: string | null
   stripePaymentIntentId?: string | null
+  /** Items del carrito (para calcular el total si no se envía totalAmount). */
+  items?: Array<{
+    experienceId: string
+    unitPrice?: number
+    peopleCount?: number
+    [key: string]: any
+  }>
   /** Si el pago ya está confirmado, la reserva nace pagada. */
   paid?: boolean
 }
@@ -132,7 +139,16 @@ export async function createBookingInTurso(input: CreateBookingInput): Promise<C
     : { country: null, ageBand: null, gender: null }
 
   const guests = Math.max(1, Math.min(10, Number(input.peopleCount) || 1))
-  const total = Number(input.totalAmount) || 0
+  const total =
+    Number(input.totalAmount) ||
+    (Array.isArray(input.items)
+      ? input.items.reduce(
+          (sum, item) =>
+            sum +
+            (Number(item.unitPrice || 0) * Math.max(1, Number(item.peopleCount) || 1)),
+          0
+        )
+      : 0)
   const status = paid ? 'paid' : 'confirmed'
   const paymentStatus = paid ? 'paid' : 'unpaid'
 

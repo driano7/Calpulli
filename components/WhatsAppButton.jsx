@@ -34,7 +34,7 @@ export default function WhatsAppButton() {
       whileHover={reduced ? undefined : { scale: 1.08 }}
       whileTap={reduced ? undefined : { scale: 0.94 }}
       transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-      className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-[100] flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_32px_rgba(37,211,102,0.45)] transition-shadow hover:shadow-[0_10px_40px_rgba(37,211,102,0.65)] sm:right-6 sm:bottom-6"
+      className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] right-4 z-[100] flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_32px_rgba(37,211,102,0.45)] transition-shadow hover:shadow-[0_10px_40px_rgba(37,211,102,0.65)] sm:right-6 sm:bottom-4"
     >
       {!reduced && (
         <motion.span

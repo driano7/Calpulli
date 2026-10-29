@@ -4,7 +4,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Share } from 'lucide-react'
 import { useLanguage } from '@/lib/hooks/useLanguage'
-import { formatPriceByLocale } from '@/lib/currency'
+import { formatPriceMXN } from '@/lib/currency'
 
 interface VirtualTicketProps {
   ticket: {
@@ -28,6 +28,8 @@ interface VirtualTicketProps {
     customerEmail?: string
     currency?: string
     location?: string
+    /** Nombres de todos los participantes (uno por persona). */
+    participantNames?: string[]
   }
   onClose: () => void
   onDownloadPNG?: () => void
@@ -92,7 +94,7 @@ export function VirtualTicket({
     })
   }
 
-  const formatPrice = (price: number) => formatPriceByLocale(price, 'es')
+  const formatPrice = (price: number) => formatPriceMXN(price, 'es')
 
   const ticketCode = ticket.ticketCode || ticket.code || ticket.id
 
@@ -326,6 +328,47 @@ export function VirtualTicket({
                   </p>
                 </div>
               </div>
+
+              {/* Lista de participantes: nombre - actividad - fecha/hora - clave ticket */}
+              {ticket.participantNames && ticket.participantNames.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
+                    {isEs ? 'Participantes' : 'Participants'}
+                  </p>
+                  {ticket.participantNames.map((name, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-3 text-sm"
+                    >
+                      <span className="text-zinc-500 dark:text-zinc-400">
+                        {idx + 1}.
+                      </span>
+                      <span className="text-gray-900 dark:text-white">
+                        {name}
+                      </span>
+                      <span className="ml-2 text-zinc-500 dark:text-zinc-400">
+                        —
+                      </span>
+                      <span className="text-gray-900 dark:text-white">
+                        {ticket.experienceTitle}
+                      </span>
+                      <span className="ml-2 text-zinc-500 dark:text-zinc-400">
+                        —
+                      </span>
+                      <span className="text-zinc-500 dark:text-zinc-400">
+                        {ticket.date} {ticket.time ? '· ' + ticket.time : ''}
+                      </span>
+                      <span className="ml-2 text-zinc-500 dark:text-zinc-400">
+                        —
+                      </span>
+                      <span className="font-mono text-xs text-orange-600 dark:text-orange-400">
+                        {ticket.ticketCode}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <span className="text-sm font-semibold text-gray-700 dark:text-zinc-200">
                 {totalLabel ||
                   (ticket.paymentMethod === 'cash'

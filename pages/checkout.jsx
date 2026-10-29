@@ -632,7 +632,7 @@ export default function CheckoutPage() {
                   experienceImage: booking.imageUrl,
                   date: booking.date,
                   time: booking.time,
-                  peopleCount: 1,
+                  peopleCount: booking.guests || 1,
                   totalPrice: booking.totalAmount,
                   journeyAmount: booking.journeyAmount,
                   paymentMethod: booking.paymentMethod,
@@ -642,6 +642,10 @@ export default function CheckoutPage() {
                   currency: booking.currency,
                   location: booking.location,
                   isResponsible: ticket.isResponsible,
+                  participantNames:
+                    Array.isArray(booking.tickets) && booking.tickets.length
+                      ? booking.tickets.map((t) => t.participantName)
+                      : [ticket.participantName],
                 })
               }
             />

@@ -67,6 +67,30 @@ export function getWhatsAppMessage(pathname: string, isEs: boolean): string {
       : 'Hi, I would like information about Calpulli CDMX guides.'
   }
 
+  if (path.startsWith('/about') || path.startsWith('/quienes-somos')) {
+    return isEs
+      ? 'Hola, quiero información sobre Calpulli CDMX, quiénes somos y qué ofrecemos.'
+      : 'Hi, I would like information about Calpulli CDMX, who we are and what we offer.'
+  }
+
+  if (path.startsWith('/contact') || path.startsWith('/contacto')) {
+    return isEs
+      ? 'Hola, quiero contactar con Calpulli CDMX.'
+      : 'Hi, I would like to contact Calpulli CDMX.'
+  }
+
+  if (path.startsWith('/pricing')) {
+    return isEs
+      ? 'Hola, quiero información sobre precios y tarifas de Calpulli CDMX.'
+      : 'Hi, I would like information about Calpulli CDMX prices and rates.'
+  }
+
+  if (path === '/' || path === '') {
+    return isEs
+      ? 'Hola, tengo una duda sobre Calpulli CDMX y sus experiencias.'
+      : 'Hi, I have a question about Calpulli CDMX and its experiences.'
+  }
+
   return isEs
     ? 'Hola, tengo una duda sobre Calpulli CDMX.'
     : 'Hi, I have a question about Calpulli CDMX.'
