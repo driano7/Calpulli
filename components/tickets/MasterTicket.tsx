@@ -6,7 +6,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Share, Download, FileText, Users, Clock, MapPin, Smartphone } from 'lucide-react'
+import { Share, Download, FileText, Users, Clock, MapPin, Link as LinkIcon } from 'lucide-react'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { formatPriceMXN } from '@/lib/currency'
 
