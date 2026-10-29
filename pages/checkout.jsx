@@ -75,8 +75,9 @@ export default function CheckoutPage() {
 
   // Consultar el límite de reservas por journey para este usuario/identidad.
   // Se dispara cuando hay identidad suficiente (usuario logueado, o invitado
-  // con email y teléfono ya escritos).
+  // con email y teléfono ya escritos). Solo se ejecuta en el cliente.
   useEffect(() => {
+    if (typeof window === 'undefined') return
     let cancelled = false
     const isLoggedIn = !isLoading && Boolean(user)
 
