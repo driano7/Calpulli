@@ -608,6 +608,7 @@ export default function CheckoutPage() {
         : []
       return {
         ...b,
+        peopleCount: b.guests || 1,
         customerName: participantNames[0] || b.customerName || '',
         customerPhone: b.customerPhone || customerPhone || '',
         customerEmail:
