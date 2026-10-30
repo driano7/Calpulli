@@ -258,7 +258,7 @@ export default function BookingsPage() {
                 href="/journeys"
                 className="text-sm font-medium text-orange-500 hover:text-orange-400"
               >
-                {t('bookings.bookNew') || 'Reservar nueva experiencia'}
+                {t('bookings.bookNew') || 'Reservar nuevo journey'}
               </Link>
             </div>
 
@@ -511,7 +511,7 @@ export default function BookingsPage() {
               href="/journeys"
               className="text-sm font-medium text-orange-500 hover:text-orange-400"
             >
-              {t('bookings.bookNew') || 'Reservar nueva experiencia'}
+              {t('bookings.bookNew') || 'Reservar nuevo journey'}
             </Link>
           </div>
 

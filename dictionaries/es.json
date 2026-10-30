@@ -330,7 +330,7 @@
   },
   "bookings": {
     "title": "Mis Reservaciones",
-    "bookNew": "Reservar nueva experiencia",
+    "bookNew": "Reservar nuevo journey",
     "emptyTitle": "No tienes reservaciones aún",
     "emptySubtitle": "Explora nuestras experiencias y reserva tu próxima aventura",
     "explore": "Explorar experiencias"

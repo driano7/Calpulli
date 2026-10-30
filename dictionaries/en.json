@@ -330,7 +330,7 @@
   },
   "bookings": {
     "title": "My Bookings",
-    "bookNew": "Book a new experience",
+    "bookNew": "Book a new journey",
     "emptyTitle": "You don't have any bookings yet",
     "emptySubtitle": "Explore our experiences and book your next adventure",
     "explore": "Explore experiences"
