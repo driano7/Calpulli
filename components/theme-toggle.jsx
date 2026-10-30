@@ -29,7 +29,7 @@ export function ThemeToggle() {
     const root = document.documentElement
     root.classList.add('theme-transition')
     setTheme(isDark ? 'light' : 'dark')
-    window.setTimeout(() => root.classList.remove('theme-transition'), 480)
+    window.setTimeout(() => root.classList.remove('theme-transition'), 820)
   }
 
   return (

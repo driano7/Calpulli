@@ -19,6 +19,7 @@ precision highp float;
 uniform vec2 u_resolution;
 uniform float u_time;
 uniform vec2 u_mouse;
+uniform float u_themeProgress; // 0.0 = dark mode, 1.0 = light mode
 
 // Hash function for procedural noise & subtle film grain
 vec2 hash22(vec2 p) {
@@ -95,46 +96,48 @@ void main() {
   vec3 PINK       = vec3(0.894, 0.000, 0.486);
   vec3 CORE_WHITE = vec3(0.985, 0.995, 1.000);
   vec3 ELEC_BLUE  = vec3(0.095, 0.430, 0.980);
+  vec3 BG_LIGHT   = vec3(0.980, 0.957, 0.925); // #FAF3EA Calpulli bone white
   
-  vec3 col = vec3(0.0);
+  // Wave 1 fields
+  float core1 = exp(-pow(d1 / 0.024, 2.0));
+  float coreHalo1 = exp(-pow(d1 / 0.058, 2.0)) * 0.55;
 
-  // ================= WAVE 1 =================
-  {
-    float core = exp(-pow(d1 / 0.024, 2.0));
-    float coreHalo = exp(-pow(d1 / 0.058, 2.0)) * 0.55;
+  float pinkLip1 = exp(-pow((d1 + 0.042) / 0.038, 2.0)) * 0.95
+                + exp(-pow((d1 + 0.078) / 0.055, 2.0)) * 0.35;
 
-    // Pink accent lip along the outer edge
-    float pinkLip = exp(-pow((d1 + 0.042) / 0.038, 2.0)) * 0.95
-                  + exp(-pow((d1 + 0.078) / 0.055, 2.0)) * 0.35;
+  float blueBody1 = exp(-pow((d1 - 0.055) / 0.065, 2.0)) * 0.95
+                 + exp(-pow((d1 - 0.130) / 0.100, 2.0)) * 0.70
+                 + exp(-pow((d1 - 0.240) / 0.150, 2.0)) * 0.30;
 
-    // Electric blue luminous body spreading toward the center
-    float blueBody = exp(-pow((d1 - 0.055) / 0.065, 2.0)) * 0.95
-                   + exp(-pow((d1 - 0.130) / 0.100, 2.0)) * 0.70
-                   + exp(-pow((d1 - 0.240) / 0.150, 2.0)) * 0.30;
+  // Wave 2 fields
+  float core2 = exp(-pow(d2 / 0.025, 2.0)) * mask2;
+  float coreHalo2 = exp(-pow(d2 / 0.060, 2.0)) * 0.55 * mask2;
 
-    col += CORE_WHITE * (core * 1.25 + coreHalo * 0.6);
-    col += PINK * pinkLip;
-    col += ELEC_BLUE * vec3(blueBody * 0.85, blueBody * 0.85, blueBody * 1.05);
-  }
+  float blueBody2 = (exp(-pow((d2 + 0.055) / 0.065, 2.0)) * 0.95
+                  + exp(-pow((d2 + 0.130) / 0.110, 2.0)) * 0.65
+                  + exp(-pow((d2 + 0.230) / 0.160, 2.0)) * 0.25) * mask2;
 
-  // ================= WAVE 2 =================
-  {
-    float core = exp(-pow(d2 / 0.025, 2.0)) * mask2;
-    float coreHalo = exp(-pow(d2 / 0.060, 2.0)) * 0.55 * mask2;
+  float pinkLip2 = (exp(-pow((d2 - 0.040) / 0.040, 2.0)) * 0.85
+                 + exp(-pow((d2 - 0.075) / 0.060, 2.0)) * 0.25) * mask2;
 
-    // Electric blue body
-    float blueBody = (exp(-pow((d2 + 0.055) / 0.065, 2.0)) * 0.95
-                    + exp(-pow((d2 + 0.130) / 0.110, 2.0)) * 0.65
-                    + exp(-pow((d2 + 0.230) / 0.160, 2.0)) * 0.25) * mask2;
+  // --- Dark Mode Rendering (Luminous waves over pure black) ---
+  vec3 colDark = vec3(0.0);
+  colDark += CORE_WHITE * (core1 * 1.25 + coreHalo1 * 0.6 + core2 * 1.25 + coreHalo2 * 0.6);
+  colDark += PINK * (pinkLip1 + pinkLip2);
+  float totalBlue = blueBody1 + blueBody2;
+  colDark += ELEC_BLUE * vec3(totalBlue * 0.85, totalBlue * 0.85, totalBlue * 1.05);
 
-    // Pink accent on the lower lip
-    float pinkLip = (exp(-pow((d2 - 0.040) / 0.040, 2.0)) * 0.85
-                   + exp(-pow((d2 - 0.075) / 0.060, 2.0)) * 0.25) * mask2;
+  // --- Light Mode Rendering (Atmospheric luminous ribbons over warm bone #FAF3EA) ---
+  vec3 colLight = BG_LIGHT;
+  // Blend blue fluid body
+  colLight = mix(colLight, vec3(0.08, 0.38, 0.90), clamp(totalBlue * 0.55, 0.0, 1.0));
+  // Blend Mexican pink accent rim
+  colLight = mix(colLight, PINK, clamp((pinkLip1 + pinkLip2) * 0.65, 0.0, 1.0));
+  // Blend luminous core highlight
+  colLight = mix(colLight, vec3(1.0, 1.0, 1.0), clamp((core1 + core2) * 0.8, 0.0, 1.0));
 
-    col += CORE_WHITE * (core * 1.25 + coreHalo * 0.6);
-    col += ELEC_BLUE * vec3(blueBody * 0.85, blueBody * 0.85, blueBody * 1.05);
-    col += PINK * pinkLip;
-  }
+  // --- Smooth atmospheric transition between dark and light ---
+  vec3 col = mix(colDark, colLight, u_themeProgress);
 
   // Subtle analog film grain / dither for tactile finish (Signale style)
   float grain = (hash22(gl_FragCoord.xy * 0.37 + fract(t)).x - 0.5) * 0.022;
@@ -226,6 +229,7 @@ export function HeroMouseBackground({ className }: HeroMouseBackgroundProps) {
     const resolutionLocation = gl.getUniformLocation(program, 'u_resolution')
     const timeLocation = gl.getUniformLocation(program, 'u_time')
     const mouseLocation = gl.getUniformLocation(program, 'u_mouse')
+    const themeProgressLocation = gl.getUniformLocation(program, 'u_themeProgress')
 
     // Motion & interaction state
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -235,6 +239,23 @@ export function HeroMouseBackground({ className }: HeroMouseBackgroundProps) {
       reducedMotion = e.matches
     }
     prefersReducedMotion.addEventListener?.('change', onReducedMotionChange)
+
+    // Theme state (0.0 = dark, 1.0 = light)
+    const getIsDark = () => document.documentElement.classList.contains('dark')
+    let targetThemeProgress = getIsDark() ? 0.0 : 1.0
+    let currentThemeProgress = targetThemeProgress
+
+    // Observe theme toggle on <html class="...">
+    const themeObserver = new MutationObserver(() => {
+      targetThemeProgress = getIsDark() ? 0.0 : 1.0
+      if (reducedMotion) {
+        currentThemeProgress = targetThemeProgress
+      }
+    })
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
 
     let mouse = { x: 0.5, y: 0.5 }
     let targetMouse = { x: 0.5, y: 0.5 }
@@ -275,12 +296,25 @@ export function HeroMouseBackground({ className }: HeroMouseBackgroundProps) {
       gl.uniform2f(resolutionLocation, canvas.width, canvas.height)
       gl.uniform1f(timeLocation, t)
       gl.uniform2f(mouseLocation, mouse.x, mouse.y)
+      gl.uniform1f(themeProgressLocation, currentThemeProgress)
 
       gl.drawArrays(gl.TRIANGLES, 0, 6)
     }
 
     const loop = (now: number) => {
       if (!isVisible) return
+
+      // Smooth atmospheric theme interpolation (700-800ms feel)
+      if (!reducedMotion) {
+        const themeDiff = targetThemeProgress - currentThemeProgress
+        if (Math.abs(themeDiff) > 0.0005) {
+          currentThemeProgress += themeDiff * 0.082
+        } else {
+          currentThemeProgress = targetThemeProgress
+        }
+      } else {
+        currentThemeProgress = targetThemeProgress
+      }
 
       if (reducedMotion) {
         renderFrame(3.5)
@@ -334,6 +368,7 @@ export function HeroMouseBackground({ className }: HeroMouseBackgroundProps) {
     return () => {
       cancelAnimationFrame(animationFrameId)
       observer.disconnect()
+      themeObserver.disconnect()
       window.removeEventListener('resize', resize)
       window.removeEventListener('pointermove', onPointerMove)
       document.removeEventListener('visibilitychange', onVisibilityChange)
@@ -349,14 +384,14 @@ export function HeroMouseBackground({ className }: HeroMouseBackgroundProps) {
 
   return (
     <div
-      className={`pointer-events-none absolute inset-0 overflow-hidden bg-black ${className ?? ''}`}
+      className={`pointer-events-none absolute inset-0 overflow-hidden ${className ?? ''}`}
       aria-hidden="true"
     >
       {hasWebGL ? (
         <canvas ref={canvasRef} className="h-full w-full" />
       ) : (
         /* Accessible Fallback when WebGL is unavailable */
-        <div className="relative h-full w-full bg-black">
+        <div className="relative h-full w-full bg-[#FAF3EA] transition-colors duration-700 dark:bg-black">
           <div
             className="absolute -left-1/4 top-1/4 h-[70vw] w-[70vw] rounded-full opacity-60 blur-[120px]"
             style={{
