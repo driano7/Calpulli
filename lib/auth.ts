@@ -164,6 +164,86 @@ export async function resetPasswordWithToken(
   return 'ok'
 }
 
+/** El enlace de verificación de correo vive 24 horas. */
+export const EMAIL_VERIFICATION_TTL_HOURS = 24
+
+const hashVerificationToken = (token: string) => createHash('sha256').update(token).digest('hex')
+
+/**
+ * Crea un token de verificación de correo. El token crudo se devuelve una
+ * sola vez (para mandarlo por correo); en la base solo queda su hash.
+ * Un token vivo por usuario: el anterior deja de servir.
+ */
+export async function createEmailVerificationToken(
+  userId: string
+): Promise<{ token: string; expiresAt: string }> {
+  const token = randomBytes(32).toString('hex')
+  const tokenHash = hashVerificationToken(token)
+  const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_TTL_HOURS * 60 * 60_000).toISOString()
+
+  await turso.execute({
+    sql: `UPDATE email_verification_tokens SET is_used = 1
+          WHERE user_id = ? AND is_used = 0`,
+    args: [userId],
+  })
+
+  await turso.execute({
+    sql: `INSERT INTO email_verification_tokens (user_id, token_hash, expires_at)
+          VALUES (?, ?, ?)`,
+    args: [userId, tokenHash, expiresAt],
+  })
+
+  return { token, expiresAt }
+}
+
+/**
+ * Valida el token de verificación y marca el email como verificado.
+ * Devuelve 'ok' si se verificó, 'invalido' si el token es desconocido o
+ * ya se usó, 'expirado' si pasó su vigencia, o 'usuario' si el usuario
+ * no existe o está inactivo.
+ */
+export async function verifyEmailWithToken(
+  token: string
+): Promise<'ok' | 'invalido' | 'expirado' | 'usuario'> {
+  if (!token) return 'invalido'
+  const tokenHash = hashVerificationToken(token)
+
+  const result = await turso.execute({
+    sql: `SELECT id, user_id, expires_at, is_used
+          FROM email_verification_tokens
+          WHERE token_hash = ?`,
+    args: [tokenHash],
+  })
+
+  const row: any = result.rows[0]
+  if (!row) return 'invalido'
+  if (Number(row.is_used) === 1) return 'invalido'
+  if (new Date(row.expires_at).getTime() < Date.now()) {
+    await turso.execute({
+      sql: 'UPDATE email_verification_tokens SET is_used = 1 WHERE id = ?',
+      args: [row.id],
+    })
+    return 'expirado'
+  }
+
+  const user = await turso.execute({
+    sql: 'SELECT id FROM users WHERE id = ? AND is_active = 1',
+    args: [row.user_id],
+  })
+  if (!user.rows.length) return 'usuario'
+
+  await turso.execute({
+    sql: `UPDATE users SET is_email_verified = 1 WHERE id = ?`,
+    args: [row.user_id],
+  })
+  await turso.execute({
+    sql: 'UPDATE email_verification_tokens SET is_used = 1 WHERE id = ?',
+    args: [row.id],
+  })
+
+  return 'ok'
+}
+
 export async function destroySession(token: string): Promise<void> {
   await turso.execute({ sql: 'DELETE FROM sessions WHERE token = ?', args: [token] })
 }

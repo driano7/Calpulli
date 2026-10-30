@@ -2,6 +2,11 @@
 // Plantillas de correo. El contenido vive en la BD (email_templates) para que
 // el admin lo edite desde el panel; aquí solo están los valores por defecto y
 // la metadata que alimenta ese editor.
+//
+// Las plantillas nuevas (welcome, email_verification, password_reset) son
+// bilingües (es / en): subject, html y text pueden ser un string (español
+// por defecto) o un objeto { es, en }. getTemplate(key, locale) resuelve el
+// idioma correcto.
 import { BRAND } from '../brand'
 
 export interface TemplateMeta {
@@ -11,8 +16,22 @@ export interface TemplateMeta {
   variables: string[]
 }
 
+type LocalizedString = string | { es: string; en: string }
+
+interface LocalizedTemplate {
+  subject: LocalizedString
+  html: LocalizedString
+  text: LocalizedString
+}
+
+/** Resuelve un string localizado a partir del locale ('es' | 'en'). */
+export function resolveLocalized(value: LocalizedString, locale: string): string {
+  if (typeof value === 'string') return value
+  return value[locale === 'en' ? 'en' : 'es']
+}
+
 const wrap = (body: string) => `<!doctype html>
-<html lang="es">
+<html lang="{{lang}}">
   <body style="margin:0;padding:0;background:#fafaf9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1c1917">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fafaf9;padding:32px 16px">
       <tr><td align="center">
@@ -51,7 +70,7 @@ const wrap = (body: string) => `<!doctype html>
   </body>
 </html>`
 
-const btn = (href, text) =>
+const btn = (href: string, text: string) =>
   `<a href="${href}" style="display:inline-block;margin-top:20px;background:${BRAND.color.primary};color:#fff;padding:12px 24px;border-radius:10px;font-weight:700;text-decoration:none;font-size:14px">${text}</a>`
 
 export const TEMPLATE_META: TemplateMeta[] = [
@@ -59,7 +78,13 @@ export const TEMPLATE_META: TemplateMeta[] = [
     key: 'welcome',
     label: 'Bienvenida',
     description: 'Se envía al crear la cuenta.',
-    variables: ['firstName', 'siteUrl'],
+    variables: ['firstName', 'siteUrl', 'lang'],
+  },
+  {
+    key: 'email_verification',
+    label: 'Verificación de correo',
+    description: 'Se envía al crear la cuenta para verificar el email.',
+    variables: ['firstName', 'verifyUrl', 'lang'],
   },
   {
     key: 'booking_confirmed',
@@ -116,23 +141,59 @@ export const TEMPLATE_META: TemplateMeta[] = [
     key: 'password_reset',
     label: 'Recuperar contraseña',
     description: 'Enlace temporal para restablecer la contraseña.',
-    variables: ['firstName', 'resetUrl', 'expiresMinutes'],
+    variables: ['firstName', 'resetUrl', 'expiresMinutes', 'lang'],
   },
 ]
 
 export const TEMPLATE_KEYS = TEMPLATE_META.map((t) => t.key)
 
-export const DEFAULT_TEMPLATES: Record<string, { subject: string; html: string; text: string }> = {
+export const DEFAULT_TEMPLATES: Record<string, LocalizedTemplate> = {
   welcome: {
-    subject: `Bienvenido a ${BRAND.name}`,
-    html: wrap(`
-      <h2 style="margin:0 0 12px;font-size:20px">¡Hola {{firstName}}!</h2>
-      <p style="margin:0;color:#57534e;line-height:1.7">Tu cuenta ya está lista. Desde aquí puedes reservar experiencias, ver tus tickets con QR y gestionar tus datos.</p>
-      ${btn('{{siteUrl}}/tours', 'Ver los tours')}
-    `),
-    text: `¡Hola {{firstName}}! Tu cuenta en ${BRAND.name} ya está lista. {{siteUrl}}/tours`,
+    subject: {
+      es: `Bienvenido a ${BRAND.name}`,
+      en: `Welcome to ${BRAND.name}`,
+    },
+    html: {
+      es: wrap(`
+        <h2 style="margin:0 0 12px;font-size:20px">¡Hola {{firstName}}!</h2>
+        <p style="margin:0;color:#57534e;line-height:1.7">Tu cuenta ya está lista. Desde aquí puedes reservar experiencias, ver tus tickets con QR y gestionar tus datos.</p>
+        ${btn('{{siteUrl}}/tours', 'Explorar experiencias')}
+      `),
+      en: wrap(`
+        <h2 style="margin:0 0 12px;font-size:20px">Hello {{firstName}}!</h2>
+        <p style="margin:0;color:#57534e;line-height:1.7">Your account is ready. From here you can book experiences, view your QR tickets and manage your data.</p>
+        ${btn('{{siteUrl}}/tours', 'Explore experiences')}
+      `),
+    },
+    text: {
+      es: `¡Hola {{firstName}}! Tu cuenta en ${BRAND.name} ya está lista. {{siteUrl}}/tours`,
+      en: `Hello {{firstName}}! Your account at ${BRAND.name} is ready. {{siteUrl}}/tours`,
+    },
   },
-
+  email_verification: {
+    subject: {
+      es: 'Verifica tu correo electrónico',
+      en: 'Verify your email address',
+    },
+    html: {
+      es: wrap(`
+        <h2 style="margin:0 0 12px;font-size:20px">¡Hola {{firstName}}!</h2>
+        <p style="margin:0;color:#57534e;line-height:1.7">Casi estás listo. Haz clic en el botón para verificar tu correo y activar tu cuenta.</p>
+        ${btn('{{verifyUrl}}', 'Verificar correo')}
+        <p style="margin:18px 0 0;font-size:13px;color:#a8a29e">Si no creaste esta cuenta, ignora este mensaje.</p>
+      `),
+      en: wrap(`
+        <h2 style="margin:0 0 12px;font-size:20px">Hello {{firstName}}!</h2>
+        <p style="margin:0;color:#57534e;line-height:1.7">You're almost ready. Click the button to verify your email and activate your account.</p>
+        ${btn('{{verifyUrl}}', 'Verify email')}
+        <p style="margin:18px 0 0;font-size:13px;color:#a8a29e">If you did not create this account, please ignore this message.</p>
+      `),
+    },
+    text: {
+      es: `Hola {{firstName}}. Verifica tu correo: {{verifyUrl}}`,
+      en: `Hello {{firstName}}. Verify your email: {{verifyUrl}}`,
+    },
+  },
   booking_confirmed: {
     subject: `Reserva confirmada · {{bookingReference}}`,
     html: wrap(`
@@ -151,7 +212,6 @@ export const DEFAULT_TEMPLATES: Record<string, { subject: string; html: string; 
     `),
     text: `Reserva confirmada {{bookingReference}}\n{{experienceTitle}}\n{{startDate}} {{startTime}} · {{guests}} personas\n{{meetingPoint}}\nTotal: {{total}} {{currency}}\nTicket: {{ticketUrl}}`,
   },
-
   booking_cash_reserved: {
     subject: `Reserva guardada · pagas en el punto · {{bookingReference}}`,
     html: wrap(`
@@ -170,7 +230,6 @@ export const DEFAULT_TEMPLATES: Record<string, { subject: string; html: string; 
     `),
     text: `Reserva guardada {{bookingReference}} (pagas en efectivo al llegar)\n{{experienceTitle}}\n{{startDate}} {{startTime}} · {{guests}} personas\n{{meetingPoint}}\nTe confirmamos por WhatsApp: {{whatsappUrl}}`,
   },
-
   booking_reminder: {
     subject: `Tu tour es mañana · {{startTime}}`,
     html: wrap(`
@@ -184,7 +243,6 @@ export const DEFAULT_TEMPLATES: Record<string, { subject: string; html: string; 
     `),
     text: `Tu tour es mañana: {{experienceTitle}}\n{{startDate}} {{startTime}}\nPunto: {{meetingPoint}}\nLlega 15 min antes con tu QR.`,
   },
-
   check_in_done: {
     subject: `Check-in registrado · {{bookingReference}}`,
     html: wrap(`
@@ -195,7 +253,6 @@ export const DEFAULT_TEMPLATES: Record<string, { subject: string; html: string; 
     `),
     text: `Check-in registrado para {{experienceTitle}} ({{bookingReference}}). Tu guía te espera.`,
   },
-
   referral_converted: {
     subject: `Tu referido reservó · {{bookingReference}}`,
     html: wrap(`
@@ -207,18 +264,33 @@ export const DEFAULT_TEMPLATES: Record<string, { subject: string; html: string; 
     `),
     text: `Tu referido {{referralCode}} reservó {{total}} {{currency}} ({{bookingReference}}).`,
   },
-
   password_reset: {
-    subject: 'Restablecer tu contraseña',
-    html: wrap(`
-      <h2 style="margin:0 0 12px;font-size:20px">Restablecer contraseña</h2>
-      <p style="margin:0;color:#57534e;line-height:1.7">
-        Hola {{firstName}}. Este enlace sirve una sola vez y expira en {{expiresMinutes}} minutos.
-      </p>
-      ${btn('{{resetUrl}}', 'Cambiar contraseña')}
-      <p style="margin:18px 0 0;font-size:13px;color:#a8a29e">Si no lo pediste, ignora este correo.</p>
-    `),
-    text: `Restablecer contraseña (expira en {{expiresMinutes}} min): {{resetUrl}}`,
+    subject: {
+      es: 'Restablecer tu contraseña',
+      en: 'Reset your password',
+    },
+    html: {
+      es: wrap(`
+        <h2 style="margin:0 0 12px;font-size:20px">Restablecer contraseña</h2>
+        <p style="margin:0;color:#57534e;line-height:1.7">
+          Hola {{firstName}}. Este enlace sirve una sola vez y expira en {{expiresMinutes}} minutos.
+        </p>
+        ${btn('{{resetUrl}}', 'Cambiar contraseña')}
+        <p style="margin:18px 0 0;font-size:13px;color:#a8a29e">Si no lo pediste, ignora este correo.</p>
+      `),
+      en: wrap(`
+        <h2 style="margin:0 0 12px;font-size:20px">Reset your password</h2>
+        <p style="margin:0;color:#57534e;line-height:1.7">
+          Hi {{firstName}}. This link can be used once and expires in {{expiresMinutes}} minutes.
+        </p>
+        ${btn('{{resetUrl}}', 'Reset password')}
+        <p style="margin:18px 0 0;font-size:13px;color:#a8a29e">If you did not request this, ignore this email.</p>
+      `),
+    },
+    text: {
+      es: `Restablecer contraseña (expira en {{expiresMinutes}} min): {{resetUrl}}`,
+      en: `Reset your password (expires in {{expiresMinutes}} min): {{resetUrl}}`,
+    },
   },
 }
 

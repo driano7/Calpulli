@@ -6,7 +6,13 @@
 // cae por correo.
 import nodemailer, { type Transporter } from 'nodemailer'
 import { turso } from '../turso'
-import { DEFAULT_TEMPLATES, TEMPLATE_META, extractVariables, renderTemplate } from './templates'
+import {
+  DEFAULT_TEMPLATES,
+  TEMPLATE_META,
+  extractVariables,
+  renderTemplate,
+  resolveLocalized,
+} from './templates'
 import { getMailConfigFromEnv, isMailConfigured as isProviderConfigured } from './config'
 import { sendBrevoEmail, BrevoError } from './brevo'
 import { BRAND } from '../brand'
@@ -114,7 +120,10 @@ export async function seedTemplates(): Promise<void> {
   }
 }
 
-export async function getTemplate(key: string): Promise<EffectiveTemplate | null> {
+export async function getTemplate(
+  key: string,
+  locale: string = 'es'
+): Promise<EffectiveTemplate | null> {
   const meta = TEMPLATE_META.find((t) => t.key === key)
   const fallback = DEFAULT_TEMPLATES[key]
 
@@ -130,9 +139,13 @@ export async function getTemplate(key: string): Promise<EffectiveTemplate | null
       key,
       label: meta.label,
       description: meta.description,
-      subject: fallback.subject,
-      html: fallback.html,
-      text: fallback.text,
+      subject: renderTemplate(resolveLocalized(fallback.subject, locale), { lang: locale }),
+      html: renderTemplate(resolveLocalized(fallback.html, locale), {
+        lang: locale,
+      }),
+      text: renderTemplate(resolveLocalized(fallback.text, locale), {
+        lang: locale,
+      }),
       isActive: true,
       updatedAt: null,
     }
@@ -142,9 +155,9 @@ export async function getTemplate(key: string): Promise<EffectiveTemplate | null
     key,
     label: row.label || meta?.label || key,
     description: row.description || meta?.description || '',
-    subject: row.subject,
-    html: row.html,
-    text: row.text,
+    subject: renderTemplate(row.subject, { lang: locale }),
+    html: renderTemplate(row.html, { lang: locale }),
+    text: renderTemplate(row.text, { lang: locale }),
     isActive: Number(row.is_active) === 1,
     updatedAt: row.updated_at ?? null,
   }
@@ -174,6 +187,8 @@ export interface SendOptions {
   to: string
   userId?: string | null
   vars?: Record<string, string | number>
+  /** Idioma del destinatario ('es' | 'en'). Se usa para elegir la plantilla. */
+  locale?: string
 }
 
 /**
@@ -181,14 +196,15 @@ export interface SendOptions {
  * checkout. Todo queda registrado en email_log.
  */
 export async function sendMail(key: string, options: SendOptions): Promise<SendResult> {
-  const template = await getTemplate(key)
+  const locale = options.locale || 'es'
+  const template = await getTemplate(key, locale)
   if (!template) return { status: 'skipped', reason: `plantilla desconocida: ${key}` }
   if (!template.isActive) return { status: 'skipped', reason: 'plantilla desactivada' }
   if (!options.to || !options.to.includes('@')) {
     return { status: 'skipped', reason: 'destinatario inválido' }
   }
 
-  const vars = options.vars ?? {}
+  const vars = { lang: locale, ...(options.vars ?? {}) }
   const subject = renderTemplate(template.subject, vars)
   const html = renderTemplate(template.html, vars)
   const text = renderTemplate(template.text, vars)

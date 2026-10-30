@@ -23,10 +23,10 @@
     "more": "More"
   },
   "hero": {
-    "eyebrow": "JOURNEYS · MEXICO CITY",
+    "eyebrow": "EXPERIENCES · MEXICO CITY",
     "titleStart": "Mexico City,",
     "titleHighlight": "beyond the expected.",
-    "subtitle": "Editorial journeys into the neighborhoods, rituals, and stories that reveal the city beneath the surface. Thoughtfully designed to explore at your own pace.",
+    "subtitle": "There's more to the city than its postcards. Discover its neighborhoods, traditions, and stories, and explore at your own pace.",
     "cta": "Explore Journeys",
     "scrollHint": "Scroll to explore"
   },
@@ -141,7 +141,33 @@
     "confirmAndPay": "Confirm and pay",
     "notLoggedIn": "Redirecting to login...",
     "processingOrder": "Creating your booking...",
-    "paymentConfirmed": "Payment confirmed"
+    "paymentConfirmed": "Payment confirmed",
+    "addMoreJourneys": "Add more journeys",
+    "selectJourneys": "Select journeys",
+    "people": "People",
+    "price": "Price",
+    "addToCart": "Add to cart",
+    "close": "Close",
+    "alreadyInCart": "Already in your cart",
+    "searchCountry": "Search country…",
+    "selectCountry": "Select country"
+  },
+  "email": {
+    "verification": {
+      "subject": "Verify your email address",
+      "body": "Hi {{firstName}}, you're almost ready. Click the button to verify your email and activate your account.",
+      "button": "Verify email"
+    },
+    "welcome": {
+      "subject": "Welcome to Calpulli CDMX",
+      "body": "Hi {{firstName}}, your account has been created. Discover our experiences in Mexico City.",
+      "button": "Explore experiences"
+    },
+    "password_reset": {
+      "subject": "Reset your password",
+      "body": "Hi {{firstName}}, you requested a password reset. This link expires in {{expiresMinutes}} minutes.",
+      "button": "Reset password"
+    }
   },
   "checkoutSuccess": {
     "title": "Booking Confirmed!",

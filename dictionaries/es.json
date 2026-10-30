@@ -23,10 +23,10 @@
     "more": "Más"
   },
   "hero": {
-    "eyebrow": "JOURNEYS · CIUDAD DE MÉXICO",
+    "eyebrow": "EXPERIENCIAS · CIUDAD DE MÉXICO",
     "titleStart": "La Ciudad de México,",
     "titleHighlight": "más allá de lo evidente.",
-    "subtitle": "Journeys editoriales por los barrios, rituales e historias que revelan la esencia de la ciudad. Diseñados para descubrirla a tu propio ritmo.",
+    "subtitle": "Hay una ciudad más allá de sus postales. Descubre sus barrios, tradiciones e historias y explórala a tu propio ritmo.",
     "cta": "Explorar Journeys",
     "scrollHint": "Desplázate para explorar"
   },
@@ -141,7 +141,33 @@
     "confirmAndPay": "Confirmar y pagar",
     "notLoggedIn": "Redirigiendo al login...",
     "processingOrder": "Creando tu reserva...",
-    "paymentConfirmed": "Pago confirmado"
+    "paymentConfirmed": "Pago confirmado",
+    "addMoreJourneys": "Agregar más journeys",
+    "selectJourneys": "Seleccionar journeys",
+    "people": "Personas",
+    "price": "Precio",
+    "addToCart": "Agregar al carrito",
+    "close": "Cerrar",
+    "alreadyInCart": "Ya está en tu carrito",
+    "searchCountry": "Buscar país…",
+    "selectCountry": "Seleccionar país"
+  },
+  "email": {
+    "verification": {
+      "subject": "Verifica tu correo electrónico",
+      "body": "Hola {{firstName}}, casi estás listo. Haz clic en el botón para verificar tu correo y activar tu cuenta.",
+      "button": "Verificar correo"
+    },
+    "welcome": {
+      "subject": "Bienvenido a Calpulli CDMX",
+      "body": "Hola {{firstName}}, tu cuenta ya está creada. Descubre nuestras experiencias en la Ciudad de México.",
+      "button": "Explorar experiencias"
+    },
+    "password_reset": {
+      "subject": "Restablecer tu contraseña",
+      "body": "Hola {{firstName}}, solicitaste restablecer tu contraseña. Este enlace expira en {{expiresMinutes}} minutos.",
+      "button": "Cambiar contraseña"
+    }
   },
   "checkoutSuccess": {
     "title": "¡Reserva Confirmada!",
