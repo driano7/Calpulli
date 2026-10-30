@@ -3,6 +3,7 @@
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
 // Boton flotante de WhatsApp. Sustituye al antiguo asistente: no hay chatbot,
 // solo abre la conversacion con el numero oficial y un mensaje contextual.
+// En movil no se muestra (ya esta en el dock flotante).
 
 import { useRouter } from 'next/router'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -14,13 +15,29 @@ export default function WhatsAppButton() {
   const router = useRouter()
   const { currentLanguage } = useLanguage()
   const reduced = useReducedMotion()
-  const isEs = currentLanguage !== 'en'
+
+  // Detectar movil para ocultar el boton flotante (ya esta en el dock)
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+  const isMobile =
+    /android|iphone|ipad|ipod|windows phone/i.test(ua) ||
+    (typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1)
+
+  if (isMobile) return null
 
   // asPath trae la ruta real; pathname devuelve el patron en rutas dinamicas
   // (/journeys/[slug]) y el mensaje perderia el journey concreto.
   const path = (router.asPath || router.pathname || '/').split('?')[0]
-  const href = buildWhatsAppUrl(getWhatsAppMessage(path, isEs))
-  const label = isEs ? 'Escríbenos por WhatsApp' : 'Message us on WhatsApp'
+
+  const lang = currentLanguage || 'es'
+  const href = buildWhatsAppUrl(getWhatsAppMessage(path, lang))
+  const labels = {
+    es: 'Escríbenos por WhatsApp',
+    en: 'Message us on WhatsApp',
+    fr: 'Écrivez-nous sur WhatsApp',
+    it: 'Scrivici su WhatsApp',
+    pt: 'Envie-nos mensagem no WhatsApp',
+  }
+  const label = labels[lang] || labels.en
 
   return (
     <motion.a

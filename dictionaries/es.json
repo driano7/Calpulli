@@ -23,10 +23,11 @@
     "more": "Más"
   },
   "hero": {
-    "titleStart": "Descubre la",
-    "titleHighlight": "CDMX-traordinaria que nadie te enseña.",
-    "subtitle": "Calpulli CDMX, la ciudad en cada bocado: tours de chilangos para sentir la CDMX de verdad.",
-    "cta": "Reservar un Viaje",
+    "eyebrow": "JOURNEYS · CIUDAD DE MÉXICO",
+    "titleStart": "La Ciudad de México,",
+    "titleHighlight": "más allá de lo evidente.",
+    "subtitle": "Journeys editoriales por los barrios, rituales e historias que revelan la esencia de la ciudad. Diseñados para descubrirla a tu propio ritmo.",
+    "cta": "Explorar Journeys",
     "scrollHint": "Desplázate para explorar"
   },
   "about": {

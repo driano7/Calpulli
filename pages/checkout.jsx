@@ -12,6 +12,7 @@ import {
   Ticket as TicketIcon,
   Lock,
   User,
+  Users,
   Mail,
   Trash2,
 } from 'lucide-react'
@@ -611,8 +612,7 @@ export default function CheckoutPage() {
         peopleCount: b.guests || 1,
         customerName: participantNames[0] || b.customerName || '',
         customerPhone: b.customerPhone || customerPhone || '',
-        customerEmail:
-          b.customerEmail || (isGuest ? guestEmail : user?.email) || '',
+        customerEmail: b.customerEmail || (isGuest ? guestEmail : user?.email) || '',
         experienceImage: b.imageUrl || item?.imageUrl || null,
         isResponsible: idx === 0,
         participantNames,
@@ -649,7 +649,9 @@ export default function CheckoutPage() {
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-3 font-semibold text-white transition-colors hover:bg-orange-600"
               >
                 <Users className="h-5 w-5" />
-                {isEs ? 'Ver y descargar Ticket Padre (todos)' : 'View and download Parent Ticket (all)'}
+                {locale === 'es'
+                  ? 'Ver y descargar Ticket Padre (todos)'
+                  : 'View and download Parent Ticket (all)'}
               </button>
               {showMasterTicket && (
                 <MasterTicket
@@ -1351,12 +1353,7 @@ export default function CheckoutPage() {
                         setIsSubmitting(false)
                       }
                     }}
-                    disabled={
-                      isSubmitting ||
-                      !allNamesValid ||
-                      (isGuest && !emailOk) ||
-
-                    }
+                    disabled={isSubmitting || !allNamesValid || (isGuest && !emailOk)}
                     className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-4 font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isSubmitting ? (

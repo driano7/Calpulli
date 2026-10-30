@@ -1,403 +1,378 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 type HeroMouseBackgroundProps = {
   className?: string
 }
 
-type NodePoint = {
-  x: number
-  y: number
-  vx: number
-  vy: number
+const VERTEX_SHADER_SOURCE = `
+attribute vec2 a_position;
+void main() {
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}
+`
+
+const FRAGMENT_SHADER_SOURCE = `
+precision highp float;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform vec2 u_mouse;
+
+// Hash function for procedural noise & subtle film grain
+vec2 hash22(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.xx + p3.yz) * p3.zy);
 }
 
-type TrailOptions = {
-  friction: number
-  trails: number
-  size: number
-  dampening: number
-  tension: number
+// Quintic smooth noise for liquid domain distortion
+float vnoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+  
+  float a = (hash22(i).x - 0.5) * 2.0;
+  float b = (hash22(i + vec2(1.0, 0.0)).x - 0.5) * 2.0;
+  float c = (hash22(i + vec2(0.0, 1.0)).x - 0.5) * 2.0;
+  float d = (hash22(i + vec2(1.0, 1.0)).x - 0.5) * 2.0;
+  
+  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
 
-class Oscillator {
-  private phase: number
-  private offset: number
-  private frequency: number
-  private amplitude: number
-
-  constructor(phase: number, offset: number, frequency: number, amplitude: number) {
-    this.phase = phase
-    this.offset = offset
-    this.frequency = frequency
-    this.amplitude = amplitude
-  }
-
-  update() {
-    this.phase += this.frequency
-    return this.offset + Math.sin(this.phase) * this.amplitude
-  }
+// ACES filmic tonemapping for natural highlight roll-off
+vec3 tonemapACES(vec3 x) {
+  const float a = 2.51;
+  const float b = 0.03;
+  const float c = 2.43;
+  const float d = 0.59;
+  const float e = 0.14;
+  return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
 }
 
-class TrailLine {
-  private spring: number
-  private friction: number
-  private nodes: NodePoint[]
-  private options: TrailOptions
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+  vec2 p = uv - 0.5;
+  
+  // Smooth mouse deflection with damped edge falloff
+  vec2 mouseOffset = (u_mouse - 0.5) * 0.06;
+  p += mouseOffset * (0.6 - length(p));
 
-  constructor(pos: { x: number; y: number }, options: TrailOptions, spring: number) {
-    this.options = options
-    this.spring = spring + 0.1 * Math.random() - 0.05
-    this.friction = options.friction + 0.01 * Math.random() - 0.005
-    this.nodes = []
-    for (let i = 0; i < options.size; i += 1) {
-      this.nodes.push({ x: pos.x, y: pos.y, vx: 0, vy: 0 })
-    }
+  float aspect = u_resolution.x / u_resolution.y;
+  float isPortrait = step(aspect, 1.0);
+  
+  // Normalized coordinates: desktop vs mobile framing
+  float u = p.x;
+  float v = -p.y; // Positive v goes downward
+  
+  float u_scaled = mix(u * aspect * 0.78, u * 1.05, isPortrait);
+  float v_scaled = mix(v * 1.0, v * 0.95, isPortrait);
+
+  float t = u_time;
+  // Natural separation and approach cycle (slow breathing motion)
+  float breath = sin(t * 0.28) * 0.045;
+
+  // Domain warping for organic liquid eddies
+  float warp1 = vnoise(vec2(u_scaled * 1.15 + t * 0.07, v_scaled * 1.15 - t * 0.06)) * 0.09;
+  float warp2 = vnoise(vec2(u_scaled * 1.25 - t * 0.06, v_scaled * 1.25 + t * 0.07)) * 0.08;
+
+  // --- WAVE 1: Sweeps along the left quadrant ---
+  float wave1_base = mix(-0.50, -0.32, isPortrait);
+  float curve1_x = wave1_base - breath + 0.21 * cos(v_scaled * 2.7 + t * 0.14)
+                   + 0.07 * sin(v_scaled * 4.1 - t * 0.09) + warp1;
+  float d1 = u_scaled - curve1_x;
+
+  // --- WAVE 2: Sweeps across the lower-right quadrant ---
+  float wave2_base = mix(0.24, 0.26, isPortrait);
+  float curve2_y = wave2_base + breath + 0.17 * sin(u_scaled * 2.2 - t * 0.15)
+                   + 0.06 * cos(u_scaled * 1.2 + t * 0.11) + warp2;
+  float d2 = v_scaled - curve2_y;
+  float mask2 = clamp((u_scaled + mix(0.35, 0.30, isPortrait)) * 1.8, 0.0, 1.0);
+
+  // Calpulli Brand Tokens
+  // Rosa mexicano: #E4007C -> rgb(228, 0, 124) -> (0.894, 0.0, 0.486)
+  vec3 PINK       = vec3(0.894, 0.000, 0.486);
+  vec3 CORE_WHITE = vec3(0.985, 0.995, 1.000);
+  vec3 ELEC_BLUE  = vec3(0.095, 0.430, 0.980);
+  
+  vec3 col = vec3(0.0);
+
+  // ================= WAVE 1 =================
+  {
+    float core = exp(-pow(d1 / 0.024, 2.0));
+    float coreHalo = exp(-pow(d1 / 0.058, 2.0)) * 0.55;
+
+    // Pink accent lip along the outer edge
+    float pinkLip = exp(-pow((d1 + 0.042) / 0.038, 2.0)) * 0.95
+                  + exp(-pow((d1 + 0.078) / 0.055, 2.0)) * 0.35;
+
+    // Electric blue luminous body spreading toward the center
+    float blueBody = exp(-pow((d1 - 0.055) / 0.065, 2.0)) * 0.95
+                   + exp(-pow((d1 - 0.130) / 0.100, 2.0)) * 0.70
+                   + exp(-pow((d1 - 0.240) / 0.150, 2.0)) * 0.30;
+
+    col += CORE_WHITE * (core * 1.25 + coreHalo * 0.6);
+    col += PINK * pinkLip;
+    col += ELEC_BLUE * vec3(blueBody * 0.85, blueBody * 0.85, blueBody * 1.05);
   }
 
-  update(pos: { x: number; y: number }) {
-    let spring = this.spring
-    let point = this.nodes[0]
-    point.vx += (pos.x - point.x) * spring
-    point.vy += (pos.y - point.y) * spring
+  // ================= WAVE 2 =================
+  {
+    float core = exp(-pow(d2 / 0.025, 2.0)) * mask2;
+    float coreHalo = exp(-pow(d2 / 0.060, 2.0)) * 0.55 * mask2;
 
-    for (let i = 0; i < this.nodes.length; i += 1) {
-      point = this.nodes[i]
-      if (i > 0) {
-        const prev = this.nodes[i - 1]
-        point.vx += (prev.x - point.x) * spring
-        point.vy += (prev.y - point.y) * spring
-        point.vx += prev.vx * this.options.dampening
-        point.vy += prev.vy * this.options.dampening
-      }
-      point.vx *= this.friction
-      point.vy *= this.friction
-      point.x += point.vx
-      point.y += point.vy
-      spring *= this.options.tension
-    }
+    // Electric blue body
+    float blueBody = (exp(-pow((d2 + 0.055) / 0.065, 2.0)) * 0.95
+                    + exp(-pow((d2 + 0.130) / 0.110, 2.0)) * 0.65
+                    + exp(-pow((d2 + 0.230) / 0.160, 2.0)) * 0.25) * mask2;
+
+    // Pink accent on the lower lip
+    float pinkLip = (exp(-pow((d2 - 0.040) / 0.040, 2.0)) * 0.85
+                   + exp(-pow((d2 - 0.075) / 0.060, 2.0)) * 0.25) * mask2;
+
+    col += CORE_WHITE * (core * 1.25 + coreHalo * 0.6);
+    col += ELEC_BLUE * vec3(blueBody * 0.85, blueBody * 0.85, blueBody * 1.05);
+    col += PINK * pinkLip;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
-    let x = this.nodes[0]?.x ?? 0
-    let y = this.nodes[0]?.y ?? 0
-    ctx.beginPath()
-    ctx.moveTo(x, y)
+  // Subtle analog film grain / dither for tactile finish (Signale style)
+  float grain = (hash22(gl_FragCoord.xy * 0.37 + fract(t)).x - 0.5) * 0.022;
+  col += vec3(grain);
 
-    for (let i = 1; i < this.nodes.length - 2; i += 1) {
-      const current = this.nodes[i]
-      const next = this.nodes[i + 1]
-      if (!current || !next) continue
-      x = 0.5 * (current.x + next.x)
-      y = 0.5 * (current.y + next.y)
-      ctx.quadraticCurveTo(current.x, current.y, x, y)
-    }
+  gl_FragColor = vec4(tonemapACES(col), 1.0);
+}
+`
 
-    const penultimate = this.nodes[this.nodes.length - 2]
-    const last = this.nodes[this.nodes.length - 1]
-    if (penultimate && last) ctx.quadraticCurveTo(penultimate.x, penultimate.y, last.x, last.y)
-
-    ctx.stroke()
-    ctx.closePath()
+function createShader(gl: WebGLRenderingContext, type: number, source: string): WebGLShader | null {
+  const shader = gl.createShader(type)
+  if (!shader) return null
+  gl.shaderSource(shader, source)
+  gl.compileShader(shader)
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.error('Shader compile error:', gl.getShaderInfoLog(shader))
+    gl.deleteShader(shader)
+    return null
   }
+  return shader
+}
+
+function createProgram(
+  gl: WebGLRenderingContext,
+  vertexShader: WebGLShader,
+  fragmentShader: WebGLShader
+): WebGLProgram | null {
+  const program = gl.createProgram()
+  if (!program) return null
+  gl.attachShader(program, vertexShader)
+  gl.attachShader(program, fragmentShader)
+  gl.linkProgram(program)
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.error('Program link error:', gl.getProgramInfoLog(program))
+    gl.deleteProgram(program)
+    return null
+  }
+  return program
 }
 
 export function HeroMouseBackground({ className }: HeroMouseBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const [hasWebGL, setHasWebGL] = useState(true)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
-    if (reducedMotion.matches) return
-
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
 
-    const coarsePointerQuery = window.matchMedia('(pointer: coarse)')
-    const mobileViewportQuery = window.matchMedia('(max-width: 768px)')
-    const isMobileTouch = coarsePointerQuery.matches || mobileViewportQuery.matches
+    // Initialize WebGL context
+    const gl =
+      canvas.getContext('webgl', {
+        alpha: false,
+        antialias: false,
+        depth: false,
+        stencil: false,
+        preserveDrawingBuffer: false,
+        powerPreference: 'high-performance',
+      }) || (canvas.getContext('experimental-webgl') as WebGLRenderingContext | null)
 
-    const options: TrailOptions = {
-      friction: isMobileTouch ? 0.54 : 0.5,
-      trails: isMobileTouch ? 24 : 20,
-      size: isMobileTouch ? 42 : 50,
-      dampening: isMobileTouch ? 0.28 : 0.25,
-      tension: 0.98,
+    if (!gl) {
+      setHasWebGL(false)
+      return
     }
-    const strokeWidth = isMobileTouch ? 1.9 : 1
-    const glowBlur = isMobileTouch ? 14 : 8
 
-    const pointer = { x: 0, y: 0 }
-    const autoCenter = { x: 0, y: 0 }
-    const velocity = { x: 0, y: 0 }
-    let driftTick = 0
-    let autoPhase = Math.random() * Math.PI * 2
-    const orbitDirection = Math.random() > 0.5 ? 1 : -1
-    let autoMotionEnabled = false
-    const oscillator = new Oscillator(Math.random() * Math.PI * 2, 285, 0.0015, 85)
+    const vertexShader = createShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER_SOURCE)
+    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER_SOURCE)
+    if (!vertexShader || !fragmentShader) {
+      setHasWebGL(false)
+      return
+    }
+
+    const program = createProgram(gl, vertexShader, fragmentShader)
+    if (!program) {
+      gl.deleteShader(vertexShader)
+      gl.deleteShader(fragmentShader)
+      setHasWebGL(false)
+      return
+    }
+
+    // Geometry: Full-screen quad
+    const positionBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
+    const positions = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1])
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW)
+
+    const positionLocation = gl.getAttribLocation(program, 'a_position')
+    const resolutionLocation = gl.getUniformLocation(program, 'u_resolution')
+    const timeLocation = gl.getUniformLocation(program, 'u_time')
+    const mouseLocation = gl.getUniformLocation(program, 'u_mouse')
+
+    // Motion & interaction state
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    let reducedMotion = prefersReducedMotion.matches
+
+    const onReducedMotionChange = (e: MediaQueryListEvent) => {
+      reducedMotion = e.matches
+    }
+    prefersReducedMotion.addEventListener?.('change', onReducedMotionChange)
+
+    let mouse = { x: 0.5, y: 0.5 }
+    let targetMouse = { x: 0.5, y: 0.5 }
+    let animationFrameId = 0
+    let isVisible = true
     let width = 0
     let height = 0
-    let running = true
-    let rafId = 0
-    let autoStartTimeoutId = 0
+    let startTime = performance.now()
 
-    let lines: TrailLine[] = []
-    const createLines = () => {
-      lines = []
-      for (let i = 0; i < options.trails; i += 1) {
-        const spring = 0.45 + (i / options.trails) * 0.025
-        lines.push(new TrailLine(pointer, options, spring))
-      }
-    }
-
-    const resizeCanvas = () => {
+    const resize = () => {
       const rect = canvas.getBoundingClientRect()
       width = rect.width
       height = rect.height
-      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      // Limit dpr to 1.5 to maintain great fidelity while conserving GPU fillrate
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
       canvas.width = Math.max(1, Math.floor(width * dpr))
       canvas.height = Math.max(1, Math.floor(height * dpr))
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      if (pointer.x === 0 && pointer.y === 0) {
-        pointer.x = width * 0.5
-        pointer.y = height * 0.5
+      gl.viewport(0, 0, canvas.width, canvas.height)
+      if (reducedMotion) {
+        renderFrame(3.5)
       }
-      if (autoCenter.x === 0 && autoCenter.y === 0) {
-        autoCenter.x = pointer.x
-        autoCenter.y = pointer.y
-      } else {
-        autoCenter.x = Math.max(0, Math.min(width, autoCenter.x))
-        autoCenter.y = Math.max(0, Math.min(height, autoCenter.y))
-      }
-      clampPointer()
-      createLines()
     }
 
-    const setPointer = (clientX: number, clientY: number) => {
+    const onPointerMove = (e: PointerEvent) => {
       const rect = canvas.getBoundingClientRect()
-      pointer.x = clientX - rect.left
-      pointer.y = clientY - rect.top
-      clampPointer()
+      if (rect.width > 0 && rect.height > 0) {
+        targetMouse.x = (e.clientX - rect.left) / rect.width
+        targetMouse.y = (e.clientY - rect.top) / rect.height
+      }
     }
 
-    const clampPointer = () => {
-      const edgePadding = Math.max(12, Math.min(width, height) * 0.04)
-      pointer.x = Math.max(edgePadding, Math.min(width - edgePadding, pointer.x))
-      pointer.y = Math.max(edgePadding, Math.min(height - edgePadding, pointer.y))
+    const renderFrame = (t: number) => {
+      gl.useProgram(program)
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
+      gl.enableVertexAttribArray(positionLocation)
+      gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0)
+
+      gl.uniform2f(resolutionLocation, canvas.width, canvas.height)
+      gl.uniform1f(timeLocation, t)
+      gl.uniform2f(mouseLocation, mouse.x, mouse.y)
+
+      gl.drawArrays(gl.TRIANGLES, 0, 6)
     }
 
-    const activateAutoMotion = () => {
-      if (autoMotionEnabled) return
-      autoMotionEnabled = true
-      const baseSpeed = Math.max(0.95, Math.min(2.7, Math.min(width, height) * 0.0021))
-      velocity.x = (Math.random() > 0.5 ? 1 : -1) * baseSpeed
-      velocity.y = (Math.random() > 0.5 ? 1 : -1) * baseSpeed * 0.9
-    }
+    const loop = (now: number) => {
+      if (!isVisible) return
 
-    const keepSpeedInRange = () => {
-      const speed = Math.hypot(velocity.x, velocity.y)
-      const base = Math.max(0.95, Math.min(2.7, Math.min(width, height) * 0.0021))
-      const minSpeed = base
-      const maxSpeed = base * 4.2
-
-      if (!Number.isFinite(speed) || speed < 0.0001) {
-        velocity.x = base
-        velocity.y = -base * 0.85
+      if (reducedMotion) {
+        renderFrame(3.5)
         return
       }
 
-      if (speed < minSpeed) {
-        const scale = minSpeed / speed
-        velocity.x *= scale
-        velocity.y *= scale
-      } else if (speed > maxSpeed) {
-        const scale = maxSpeed / speed
-        velocity.x *= scale
-        velocity.y *= scale
-      }
+      // Smooth mouse lerping
+      mouse.x += (targetMouse.x - mouse.x) * 0.035
+      mouse.y += (targetMouse.y - mouse.y) * 0.035
+
+      const elapsed = (now - startTime) * 0.001
+      renderFrame(elapsed)
+
+      animationFrameId = requestAnimationFrame(loop)
     }
 
-    const addVelocityDrift = () => {
-      driftTick += 1
-      if (driftTick % 26 !== 0) return
-      velocity.x += (Math.random() - 0.5) * 0.85
-      velocity.y += (Math.random() - 0.5) * 0.85
-      keepSpeedInRange()
-    }
-
-    const onPointerMove = (event: PointerEvent) => {
-      setPointer(event.clientX, event.clientY)
-      autoCenter.x = pointer.x
-      autoCenter.y = pointer.y
-      activateAutoMotion()
-      if (event.movementX || event.movementY) {
-        velocity.x = velocity.x * 0.78 + event.movementX * 0.24
-        velocity.y = velocity.y * 0.78 + event.movementY * 0.24
-        keepSpeedInRange()
-      }
-    }
-
-    const onPointerOver = (event: PointerEvent) => {
-      setPointer(event.clientX, event.clientY)
-      autoCenter.x = pointer.x
-      autoCenter.y = pointer.y
-      activateAutoMotion()
-    }
-
-    const onTouchMove = (event: TouchEvent) => {
-      if (event.touches.length !== 1) return
-      const touch = event.touches[0]
-      if (!touch) return
-      setPointer(touch.clientX, touch.clientY)
-      autoCenter.x = pointer.x
-      autoCenter.y = pointer.y
-      activateAutoMotion()
-    }
-
-    const onTouchStart = (event: TouchEvent) => {
-      if (event.touches.length !== 1) return
-      const touch = event.touches[0]
-      if (!touch) return
-      setPointer(touch.clientX, touch.clientY)
-      autoCenter.x = pointer.x
-      autoCenter.y = pointer.y
-      activateAutoMotion()
-    }
-
-    const updateAutoMotion = () => {
-      if (!autoMotionEnabled) return
-      addVelocityDrift()
-      const edgePadding = Math.max(12, Math.min(width, height) * 0.04)
-      autoCenter.x += velocity.x
-      autoCenter.y += velocity.y
-
-      if (autoCenter.x <= edgePadding || autoCenter.x >= width - edgePadding) {
-        velocity.x *= -(0.95 + Math.random() * 0.12)
-        velocity.y += (Math.random() - 0.5) * 0.4
-        keepSpeedInRange()
-        autoCenter.x = Math.max(edgePadding, Math.min(width - edgePadding, autoCenter.x))
-      }
-
-      if (autoCenter.y <= edgePadding || autoCenter.y >= height - edgePadding) {
-        velocity.y *= -(0.95 + Math.random() * 0.12)
-        velocity.x += (Math.random() - 0.5) * 0.4
-        keepSpeedInRange()
-        autoCenter.y = Math.max(edgePadding, Math.min(height - edgePadding, autoCenter.y))
-      }
-
-      autoPhase += 0.068 * orbitDirection
-      const majorBase = Math.max(72, Math.min(width, height) * 0.14)
-      const minorBase = majorBase * 0.44
-      const pulse = 0.82 + 0.26 * Math.sin(autoPhase * 0.37)
-      const majorX = majorBase * pulse
-      const majorY = majorBase * (0.7 + 0.22 * Math.cos(autoPhase * 0.29))
-      const minorX = minorBase * (0.8 + 0.2 * Math.sin(autoPhase * 1.17))
-      const minorY = minorBase * (0.75 + 0.25 * Math.cos(autoPhase * 0.93))
-      pointer.x =
-        autoCenter.x +
-        Math.cos(autoPhase) * majorX +
-        Math.cos(autoPhase * 2.6 + Math.PI * 0.25) * minorX
-      pointer.y =
-        autoCenter.y + Math.sin(autoPhase * 1.22) * majorY + Math.sin(autoPhase * 2.1) * minorY
-      clampPointer()
-    }
-
-    const render = () => {
-      if (!running) return
-      updateAutoMotion()
-      const isDark = document.documentElement.classList.contains('dark')
-      const strokeLightness = isDark ? (isMobileTouch ? 62 : 55) : 45
-      const strokeAlpha = isDark ? (isMobileTouch ? 0.38 : 0.22) : isMobileTouch ? 0.5 : 0.32
-      const glowAlpha = isDark ? (isMobileTouch ? 0.28 : 0.14) : isMobileTouch ? 0.34 : 0.2
-      ctx.globalCompositeOperation = 'source-over'
-      ctx.clearRect(0, 0, width, height)
-      ctx.globalCompositeOperation = 'lighter'
-      const hue = Math.round(oscillator.update())
-      const activeStrokeAlpha = autoMotionEnabled ? Math.min(0.5, strokeAlpha + 0.14) : strokeAlpha
-      const activeGlowAlpha = autoMotionEnabled ? Math.min(0.4, glowAlpha + 0.1) : glowAlpha
-      const activeWidth = autoMotionEnabled ? strokeWidth + 0.35 : strokeWidth
-      ctx.strokeStyle = `hsla(${hue}, 95%, ${strokeLightness}%, ${activeStrokeAlpha})`
-      ctx.shadowColor = `hsla(${hue}, 95%, ${strokeLightness}%, ${activeGlowAlpha})`
-      ctx.shadowBlur = glowBlur
-      ctx.lineWidth = activeWidth
-      ctx.lineJoin = 'round'
-      ctx.lineCap = 'round'
-
-      for (const line of lines) {
-        line.update(pointer)
-        line.draw(ctx)
-      }
-
-      rafId = window.requestAnimationFrame(render)
-    }
-
-    resizeCanvas()
-    autoStartTimeoutId = window.setTimeout(() => {
-      activateAutoMotion()
-    }, 1100)
-    render()
-
-    const onBlur = () => {
-      running = false
-      window.cancelAnimationFrame(rafId)
-    }
-
-    const onFocus = () => {
-      if (running) return
-      running = true
-      render()
-    }
-
-    window.addEventListener('resize', resizeCanvas, { passive: true })
+    resize()
+    window.addEventListener('resize', resize, { passive: true })
     window.addEventListener('pointermove', onPointerMove, { passive: true })
-    window.addEventListener('pointerover', onPointerOver, { passive: true })
-    window.addEventListener('touchstart', onTouchStart, { passive: true })
-    window.addEventListener('touchmove', onTouchMove, { passive: true })
-    window.addEventListener('blur', onBlur)
-    window.addEventListener('focus', onFocus)
 
-    let visible = true
-    const setRunning = (next) => {
-      if (visible === next) return
-      visible = next
-      if (visible) {
-        running = true
-        render()
-      } else {
-        running = false
-        window.cancelAnimationFrame(rafId)
+    // Pause rendering when tab is not focused
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(animationFrameId)
+      } else if (isVisible && !reducedMotion) {
+        animationFrameId = requestAnimationFrame(loop)
       }
     }
-    const observer = new IntersectionObserver(([entry]) => setRunning(entry.isIntersecting), {
-      rootMargin: '100px 0px 100px 0px',
-    })
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    // Pause rendering when scrolled out of view
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const visible = entry?.isIntersecting ?? true
+        if (visible !== isVisible) {
+          isVisible = visible
+          if (isVisible && !reducedMotion) {
+            animationFrameId = requestAnimationFrame(loop)
+          } else {
+            cancelAnimationFrame(animationFrameId)
+          }
+        }
+      },
+      { rootMargin: '100px 0px 100px 0px' }
+    )
     observer.observe(canvas)
 
+    // Start render loop
+    animationFrameId = requestAnimationFrame(loop)
+
     return () => {
-      running = false
+      cancelAnimationFrame(animationFrameId)
       observer.disconnect()
-      window.cancelAnimationFrame(rafId)
-      window.clearTimeout(autoStartTimeoutId)
-      window.removeEventListener('resize', resizeCanvas)
+      window.removeEventListener('resize', resize)
       window.removeEventListener('pointermove', onPointerMove)
-      window.removeEventListener('pointerover', onPointerOver)
-      window.removeEventListener('touchstart', onTouchStart)
-      window.removeEventListener('touchmove', onTouchMove)
-      window.removeEventListener('blur', onBlur)
-      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      prefersReducedMotion.removeEventListener?.('change', onReducedMotionChange)
+
+      // Clean up WebGL resources
+      gl.deleteBuffer(positionBuffer)
+      gl.deleteProgram(program)
+      gl.deleteShader(vertexShader)
+      gl.deleteShader(fragmentShader)
     }
   }, [])
 
   return (
     <div
-      className={`pointer-events-none absolute inset-0 overflow-hidden ${className ?? ''}`}
-      aria-hidden
+      className={`pointer-events-none absolute inset-0 overflow-hidden bg-black ${className ?? ''}`}
+      aria-hidden="true"
     >
-      <canvas ref={canvasRef} className="h-full w-full opacity-[0.96] md:opacity-90" />
+      {hasWebGL ? (
+        <canvas ref={canvasRef} className="h-full w-full" />
+      ) : (
+        /* Accessible Fallback when WebGL is unavailable */
+        <div className="relative h-full w-full bg-black">
+          <div
+            className="absolute -left-1/4 top-1/4 h-[70vw] w-[70vw] rounded-full opacity-60 blur-[120px]"
+            style={{
+              background:
+                'radial-gradient(circle, rgba(228,0,124,0.35) 0%, rgba(15,98,254,0.5) 45%, transparent 70%)',
+            }}
+          />
+          <div
+            className="absolute -right-1/4 bottom-0 h-[65vw] w-[65vw] rounded-full opacity-50 blur-[130px]"
+            style={{
+              background:
+                'radial-gradient(circle, rgba(15,98,254,0.55) 0%, rgba(228,0,124,0.25) 50%, transparent 75%)',
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 }

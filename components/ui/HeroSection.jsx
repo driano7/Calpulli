@@ -1,95 +1,107 @@
 'use client'
 
+import Link from '@/components/Link'
 import { motion } from 'framer-motion'
-import { ElementAnimation } from '@/components/ElementAnimation'
 import { HeroMouseBackground } from '@/components/HeroMouseBackground'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 
 export function HeroSection() {
-  const { t, currentLanguage } = useLanguage()
-  const isEn = currentLanguage === 'en'
-  // Identidad Calpulli CDMX — badge, H1 y párrafo según locale
-  const badge = isEn
-    ? 'Calpulli CDMX • Tourism & Culture Platform'
-    : 'Calpulli CDMX • Plataforma de Turismo y Cultura'
-  const title = isEn ? 'Discover Mexico with Calpulli CDMX' : 'Descubre México con Calpulli CDMX'
-  const subtitle = isEn
-    ? 'Calpulli CDMX is the specialized tool any tourist would want at hand at any moment while traveling — interactive maps, tours, recommendations, places to avoid, the complete culture. Developed with care to explore Mexico City without clichés or complications.'
-    : 'Calpulli CDMX es la herramienta especializada en lo que cualquier turista desearía tener a la mano en cualquier momento al viajar, mapas interactivos, recorridos, recomendaciones, lugares a evitar, la cultura completa. Desarrollada con cariño para explorar Ciudad de México sin clichés ni complicaciones.'
-  const scrollHint = t('hero.scrollHint') || 'Scroll to explore'
+  const { t } = useLanguage()
+
+  const eyebrow = t('hero.eyebrow') || 'JOURNEYS · CIUDAD DE MÉXICO'
+  const titleStart = t('hero.titleStart') || 'La Ciudad de México,'
+  const titleHighlight = t('hero.titleHighlight') || 'más allá de lo evidente.'
+  const subtitle =
+    t('hero.subtitle') ||
+    'Journeys editoriales por los barrios, rituales e historias que revelan la esencia de la ciudad. Diseñados para descubrirla a tu propio ritmo.'
+  const cta = t('hero.cta') || 'Explorar Journeys'
+  const scrollHint = t('hero.scrollHint') || 'Desplázate para explorar'
 
   return (
-    <section className="relative min-h-[100dvh] w-full overflow-hidden border-0 bg-white/20 backdrop-blur-[1px] dark:bg-black/10">
-      <div className="absolute inset-0 z-0 bg-gradient-to-b from-white/20 via-transparent to-transparent dark:from-zinc-900/10 dark:via-transparent dark:to-transparent" />
-      <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,rgba(222,29,141,0.015),transparent_50%),linear-gradient(to_bottom,rgba(222,29,141,0.015),transparent_50%)]" />
-
-      {/* Color waves background (from Criptec) */}
+    <section className="relative flex min-h-[100dvh] w-full items-center justify-center overflow-hidden bg-black text-white">
+      {/* Background with fluid WebGL waves */}
       <HeroMouseBackground />
 
-      {/* Floating elements animation on scroll */}
-      <ElementAnimation />
-
-      <div className="container relative z-10 mx-auto flex min-h-[100dvh] items-center justify-center px-6">
-        <div className="hero-content mx-auto max-w-5xl text-center">
+      {/* Main hero typography & content */}
+      <div className="container relative z-10 mx-auto flex min-h-[100dvh] flex-col items-center justify-center px-6 py-24 text-center">
+        <div className="mx-auto max-w-4xl">
+          {/* Eyebrow */}
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+            transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
             className="mb-6 flex justify-center"
           >
-            <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-orange-600 backdrop-blur-md dark:border-orange-500/30 dark:text-orange-400">
-              <span className="h-2 w-2 rounded-full bg-orange-500" aria-hidden />
-              {badge}
+            <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.22em] text-[#E4007C] backdrop-blur-md">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#E4007C]" aria-hidden="true" />
+              {eyebrow}
             </span>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.2, ease: 'easeOut' }}
-            className="overflow-hidden"
-          >
-            <motion.h1
-              initial={{ y: 60, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{
-                duration: 1,
-                ease: [0.25, 0.1, 0.25, 1.0],
-                staggerChildren: 0.15,
-              }}
-              className="text-5xl font-bold leading-tight tracking-tight text-zinc-900/80 dark:text-white/80 md:text-7xl lg:text-[5.5rem]"
-            >
-              <span className="block font-serif opacity-90">{title}</span>
-            </motion.h1>
-          </motion.div>
-
+          {/* Centered Headline in two segments */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.8 }}
-            className="mx-auto mt-6 max-w-3xl"
+            transition={{ duration: 0.9, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
           >
-            <p className="text-lg leading-relaxed text-zinc-600 dark:text-gray-300 md:text-xl">
+            <h1 className="font-serif text-4xl font-normal leading-[1.08] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-[5.25rem]">
+              <span className="block text-white/95">{titleStart}</span>
+              <span className="mt-1 block italic text-white/90 sm:mt-2">{titleHighlight}</span>
+            </h1>
+          </motion.div>
+
+          {/* Promise / Subtitle with controlled reading width */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="mx-auto mt-6 max-w-2xl"
+          >
+            <p className="text-base font-light leading-relaxed text-zinc-300 sm:text-lg md:text-xl">
               {subtitle}
             </p>
           </motion.div>
+
+          {/* Functional CTA Button */}
+          {cta && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.65, ease: [0.22, 1, 0.36, 1] }}
+              className="mt-8 flex justify-center"
+            >
+              <Link
+                href="/journeys"
+                className="group inline-flex items-center gap-2 rounded-full bg-[#E4007C] px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#E4007C]/25 transition-all duration-300 hover:scale-[1.02] hover:bg-[#C5006A] hover:shadow-[#E4007C]/40 active:scale-[0.98]"
+              >
+                <span>{cta}</span>
+                <span
+                  className="transition-transform duration-300 group-hover:translate-x-1"
+                  aria-hidden="true"
+                >
+                  →
+                </span>
+              </Link>
+            </motion.div>
+          )}
         </div>
       </div>
 
-      <div className="absolute bottom-10 left-1/2 z-20 flex -translate-x-1/2 transform flex-col items-center gap-2">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.5, duration: 0.8 }}
-          className="text-sm uppercase tracking-wider text-zinc-500 dark:text-white/60"
-        >
-          {scrollHint}
-        </motion.div>
-        <motion.div
+      {/* Elegant scroll hint */}
+      <div className="pointer-events-none absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 transform flex-col items-center gap-2">
+        <motion.span
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.8, duration: 0.8 }}
-          className="h-12 w-0.5 bg-gradient-to-b from-orange-500/50 to-transparent"
+          transition={{ delay: 1.1, duration: 0.8 }}
+          className="text-white/45 text-xs uppercase tracking-[0.22em]"
+        >
+          {scrollHint}
+        </motion.span>
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 28 }}
+          transition={{ delay: 1.3, duration: 0.8 }}
+          className="w-[1.5px] bg-gradient-to-b from-white/40 via-[#E4007C]/40 to-transparent"
         />
       </div>
     </section>

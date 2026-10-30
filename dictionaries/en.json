@@ -23,10 +23,11 @@
     "more": "More"
   },
   "hero": {
-    "titleStart": "Discover the",
-    "titleHighlight": "CDMX-traordinary they never show you.",
-    "subtitle": "Calpulli CDMX, the city in every bite: local-led luxury tours through the real Mexico City.",
-    "cta": "Book a Trip",
+    "eyebrow": "JOURNEYS · MEXICO CITY",
+    "titleStart": "Mexico City,",
+    "titleHighlight": "beyond the expected.",
+    "subtitle": "Editorial journeys into the neighborhoods, rituals, and stories that reveal the city beneath the surface. Thoughtfully designed to explore at your own pace.",
+    "cta": "Explore Journeys",
     "scrollHint": "Scroll to explore"
   },
   "about": {
