@@ -127,7 +127,10 @@ export function HeroSection() {
   )
 
   return (
-    <section className="relative left-1/2 -mt-20 flex min-h-[100dvh] w-screen max-w-[100vw] -translate-x-1/2 items-center justify-center overflow-hidden bg-[#FAF3EA] pt-20 text-zinc-900 transition-colors duration-700 dark:bg-black dark:text-white">
+    <section
+      data-lang-transition-skip="true"
+      className="relative left-1/2 -mt-20 flex min-h-[100dvh] w-screen max-w-[100vw] -translate-x-1/2 items-center justify-center overflow-hidden bg-[#FAF3EA] pt-20 text-zinc-900 transition-colors duration-700 dark:bg-black dark:text-white"
+    >
       {/* Background with fluid WebGL waves (Atmospheric Shader Transition) */}
       <HeroMouseBackground />
 
