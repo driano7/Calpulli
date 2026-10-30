@@ -1,4 +1,4 @@
-export type MailProvider = 'smtp' | 'mailgun'
+export type MailProvider = 'smtp' | 'mailgun' | 'brevo'
 
 export type MailConfig = {
   enabled: boolean
@@ -18,6 +18,11 @@ export type MailConfig = {
     apiKey: string
     domain: string
     baseUrl: string
+  }
+  brevo: {
+    apiKey: string
+    senderEmail: string
+    senderName: string
   }
 }
 
@@ -50,7 +55,9 @@ const toNumber = (value: string | number | undefined, fallback: number) => {
 
 const normalizeProvider = (value: string | undefined): MailProvider => {
   const normalized = (value || 'smtp').trim().toLowerCase()
-  return normalized === 'mailgun' ? 'mailgun' : 'smtp'
+  if (normalized === 'mailgun') return 'mailgun'
+  if (normalized === 'brevo') return 'brevo'
+  return 'smtp'
 }
 
 const normalizeBaseUrl = (value: string | undefined) => {
@@ -86,6 +93,10 @@ export const getMailConfigFromEnv = (): MailConfig => {
   const mailgunDomain = process.env.MAILGUN_DOMAIN || ''
   const mailgunBaseUrl = normalizeBaseUrl(process.env.MAILGUN_BASE_URL)
 
+  const brevoApiKey = process.env.BREVO_API_KEY || ''
+  const brevoSenderEmail = process.env.BREVO_SENDER_EMAIL || ''
+  const brevoSenderName = process.env.BREVO_SENDER_NAME || 'Calpulli CDMX'
+
   return {
     enabled: toBool(process.env.MAIL_ENABLED, true),
     provider: normalizeProvider(process.env.MAIL_PROVIDER),
@@ -105,6 +116,11 @@ export const getMailConfigFromEnv = (): MailConfig => {
       domain: mailgunDomain.trim(),
       baseUrl: mailgunBaseUrl,
     },
+    brevo: {
+      apiKey: brevoApiKey.trim(),
+      senderEmail: brevoSenderEmail.trim(),
+      senderName: brevoSenderName.trim(),
+    },
   }
 }
 
@@ -115,6 +131,9 @@ export const isMailConfigured = (config: MailConfig) => {
   if (!config.fromEmail) return false
   if (config.provider === 'mailgun') {
     return Boolean(config.mailgun.apiKey && config.mailgun.domain)
+  }
+  if (config.provider === 'brevo') {
+    return Boolean(config.brevo.apiKey && config.brevo.senderEmail)
   }
   if (!config.smtp.host) return false
   if ((config.smtp.user && !config.smtp.pass) || (!config.smtp.user && config.smtp.pass))
