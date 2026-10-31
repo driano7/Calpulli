@@ -119,7 +119,7 @@ export function CountrySearchSelect({
     : 'Select country'
 
   return (
-    <div id="country-search-select" className={`relative w-full ${className ?? ''}`}>
+    <div id="country-search-select" className={`relative ${className ?? 'w-full'}`}>
       <button
         type="button"
         onClick={() => {
@@ -133,39 +133,49 @@ export function CountrySearchSelect({
           }
         }}
         disabled={disabled}
-        className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+        className={`flex w-full items-center justify-between gap-1 rounded-lg border px-2 py-2 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 sm:gap-2 sm:px-3 ${
           disabled
             ? 'cursor-not-allowed border-zinc-200 bg-zinc-50 text-zinc-400 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-500'
             : 'border-zinc-300 bg-white text-gray-900 hover:border-orange-400 dark:border-white/15 dark:bg-zinc-900 dark:text-gray-100 dark:hover:border-orange-400'
         } ${open ? 'border-orange-500' : ''}`}
       >
-        <span className="flex-1 truncate">
+        <span className="min-w-0 flex-1 truncate">
           {open ? (
             <input
               ref={inputRef}
               autoComplete="off"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full border-none bg-transparent text-sm text-gray-900 focus:outline-none dark:text-white"
+              placeholder={isEs ? 'Buscar país' : 'Search country'}
+              className="w-full border-none bg-transparent text-sm text-gray-900 placeholder:text-zinc-400 focus:outline-none dark:text-white"
             />
           ) : (
-            label
+            <>
+              <span className="hidden sm:inline">{label}</span>
+              <span className="sm:hidden">
+                {current
+                  ? `${countryFlag(value)} +${COUNTRY_PHONE_CODES[value] || ''}`
+                  : isEs
+                  ? 'País'
+                  : 'Country'}
+              </span>
+            </>
           )}
         </span>
-        {current ? (
-          <span className="text-xs">
+        {current && !open ? (
+          <span className="hidden shrink-0 text-xs sm:inline">
             {countryFlag(value)} {value} (+{COUNTRY_PHONE_CODES[value] || ''})
           </span>
-        ) : (
+        ) : !open ? (
           <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
-        )}
+        ) : null}
       </button>
 
       {open && !disabled && (
         <ul
           ref={listRef}
           role="listbox"
-          className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-zinc-200 bg-white text-sm text-gray-900 shadow-xl focus:outline-none dark:border-white/15 dark:bg-zinc-900 dark:text-gray-100"
+          className="absolute left-0 z-20 mt-1 max-h-64 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto rounded-lg border border-zinc-200 bg-white text-sm text-gray-900 shadow-xl focus:outline-none dark:border-white/15 dark:bg-zinc-900 dark:text-gray-100 sm:w-full"
         >
           <li
             role="option"

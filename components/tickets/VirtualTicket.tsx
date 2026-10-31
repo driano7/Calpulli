@@ -24,6 +24,8 @@ interface VirtualTicketProps {
     status: string
     /** Método de pago: 'cash', 'card', 'crypto', etc. */
     paymentMethod?: string
+    /** 'paid' | 'unpaid' | ... — define la etiqueta del ticket. */
+    paymentStatus?: string
     customerName?: string
     customerEmail?: string
     currency?: string
@@ -58,12 +60,27 @@ export function VirtualTicket({
   const [isGenerating, setIsGenerating] = useState<'png' | 'pdf' | null>(null)
   const [isSharing, setIsSharing] = useState(false)
 
+  // Etiqueta del ticket: un pago confirmado se muestra como "Journey pagado";
+  // efectivo o cripto aún sin verificar, como pendiente.
+  const isPaid = ticket.paymentStatus
+    ? ticket.paymentStatus === 'paid'
+    : ticket.paymentMethod
+    ? ticket.paymentMethod !== 'cash'
+    : Number(ticket.totalPrice) > 0
+
   // Detectar si es móvil (Android o iOS) para habilitar share nativo
   const [isMobileDevice, setIsMobileDevice] = useState(false)
   const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
   const isAndroid = /android/i.test(ua)
-  const isIOS = /iphone|ipod|ipad/i.test(ua) || (/macintosh/i.test(ua) && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1)
-  const canShareNative = typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (isAndroid || isIOS)
+  const isIOS =
+    /iphone|ipod|ipad/i.test(ua) ||
+    (/macintosh/i.test(ua) &&
+      typeof navigator.maxTouchPoints === 'number' &&
+      navigator.maxTouchPoints > 1)
+  const canShareNative =
+    typeof navigator !== 'undefined' &&
+    typeof navigator.share === 'function' &&
+    (isAndroid || isIOS)
 
   useEffect(() => {
     setIsMobileDevice(isAndroid || isIOS)
@@ -295,6 +312,23 @@ export function VirtualTicket({
             </div>
           </div>
 
+          {/* Estado del pago */}
+          <div
+            className={`rounded-xl border p-3 text-center text-sm font-semibold ${
+              isPaid
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300'
+                : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300'
+            }`}
+          >
+            {isPaid
+              ? isEs
+                ? 'Journey pagado'
+                : 'Journey paid'
+              : isEs
+              ? 'Pago pendiente'
+              : 'Payment pending'}
+          </div>
+
           {/* Ticket Info */}
           <div className="space-y-3">
             <div className="flex items-center justify-between rounded-xl bg-orange-50 p-4 dark:bg-orange-500/10">
@@ -363,15 +397,13 @@ export function VirtualTicket({
               {/* Lista de participantes: nombre - actividad - fecha/hora - clave ticket */}
               {orderedParticipants.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                     {isEs ? 'Participantes' : 'Participants'}
                   </p>
                   {orderedParticipants.map((p, idx) => (
                     <div key={idx} className="flex items-start gap-3 text-sm">
                       <span className="text-zinc-500 dark:text-zinc-400">{idx + 1}.</span>
-                      <span className="text-gray-900 dark:text-white font-medium">
-                        {p.label}
-                      </span>
+                      <span className="font-medium text-gray-900 dark:text-white">{p.label}</span>
                       <span className="ml-2 text-zinc-500 dark:text-zinc-400">—</span>
                       <span className="text-gray-900 dark:text-white">
                         {ticket.experienceTitle}
@@ -394,12 +426,22 @@ export function VirtualTicket({
                 <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-500/30 dark:bg-orange-500/10">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-500/20">
-                      <svg className="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22-.28L14.39 7.12a1 1 0 011.43-.05l3.56 1.49a1 1 0 001.43-.04l2.22-.74a2 2 0 00.44-1.58L16.54 1.47c-.16-.53-.66-1.06-1.27-1.27L6.94.43a2 2 0 00-1.58.44L.44 8.77a2 2 0 00-.15 1.58l2.22 7.41a2 2 0 001.572 1.172l5.262 2.631a1 1 0 01.116.177l.74.25a1 1 0 001.1-.25l3.56-1.49a1 1 0 01.43-.05l1.49-3.56c.18-.44.25-.91.05-1.38z" />
+                      <svg
+                        className="h-5 w-5 text-orange-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 8l7.89 5.26a2 2 0 002.22-.28L14.39 7.12a1 1 0 011.43-.05l3.56 1.49a1 1 0 001.43-.04l2.22-.74a2 2 0 00.44-1.58L16.54 1.47c-.16-.53-.66-1.06-1.27-1.27L6.94.43a2 2 0 00-1.58.44L.44 8.77a2 2 0 00-.15 1.58l2.22 7.41a2 2 0 001.572 1.172l5.262 2.631a1 1 0 01.116.177l.74.25a1 1 0 001.1-.25l3.56-1.49a1 1 0 01.43-.05l1.49-3.56c.18-.44.25-.91.05-1.38z"
+                        />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                         {isEs ? 'WhatsApp del responsable' : "Responsible's WhatsApp"}
                       </p>
                       <p className="text-sm text-gray-900 dark:text-white">
@@ -590,33 +632,33 @@ export function VirtualTicket({
               disabled={isSharing}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-100 py-3 px-4 font-semibold text-gray-900 transition-colors hover:bg-gray-200 disabled:opacity-50 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
             >
-            {isSharing ? (
-              <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                />
-              </svg>
-            ) : (
-              <Share className="h-5 w-5" />
-            )}
-            {isSharing
-              ? isEs
-                ? 'Compartiendo...'
-                : 'Sharing...'
-              : isEs
-              ? 'Compartir ticket'
-              : 'Share ticket'}
-          </button>
+              {isSharing ? (
+                <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
+              ) : (
+                <Share className="h-5 w-5" />
+              )}
+              {isSharing
+                ? isEs
+                  ? 'Compartiendo...'
+                  : 'Sharing...'
+                : isEs
+                ? 'Compartir ticket'
+                : 'Share ticket'}
+            </button>
           )}
 
           <button

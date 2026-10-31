@@ -4,7 +4,7 @@
  * Graceful fallbacks for demo mode.
  */
 
-export type NetworkKey = 'ETHEREUM' | 'BASE' | 'LIGHTNING'
+export type NetworkKey = 'ETHEREUM' | 'BASE' | 'ARBITRUM' | 'OPTIMISM' | 'LIGHTNING'
 
 export interface WalletConfig {
   network: NetworkKey
@@ -22,24 +22,38 @@ const LIGHTNING_WALLET =
 export const WALLETS: WalletConfig[] = [
   {
     network: 'ETHEREUM',
-    label: 'Ethereum / EVM',
+    label: 'Ethereum (EVM)',
     address: EVM_WALLET,
     icon: '⟠',
-    hint: 'ETH, USDT, USDC y tokens ERC-20 en mainnet o testnet',
+    hint: 'ETH y stablecoins USDT / USDC (ERC-20) en mainnet',
   },
   {
     network: 'BASE',
     label: 'Base',
     address: EVM_WALLET,
     icon: '🔵',
-    hint: 'Comisiones mínimas, ideal para montos pequeños',
+    hint: 'Comisiones mínimas, ideal para montos pequeños. USDT / USDC soportados.',
+  },
+  {
+    network: 'ARBITRUM',
+    label: 'Arbitrum',
+    address: EVM_WALLET,
+    icon: '🔷',
+    hint: 'ETH y stablecoins USDT / USDC en Arbitrum One',
+  },
+  {
+    network: 'OPTIMISM',
+    label: 'Optimism',
+    address: EVM_WALLET,
+    icon: '🔴',
+    hint: 'ETH y stablecoins USDT / USDC en Optimism',
   },
   {
     network: 'LIGHTNING',
-    label: 'Lightning Network',
+    label: 'Lightning Network (BTC)',
     address: LIGHTNING_WALLET,
     icon: '⚡',
-    hint: 'Pagos instantáneos con BTC, casi sin comisión',
+    hint: 'Pagos instantáneos con Bitcoin, casi sin comisión',
   },
 ]
 
@@ -57,6 +71,20 @@ export const MOCK_WALLETS: WalletConfig[] = [
     address: '0x2222222222222222222222222222222222222222',
     icon: '🧪',
     hint: 'Testnet Base Sepolia — usa hash mock para simular',
+  },
+  {
+    network: 'ARBITRUM',
+    label: 'Arbitrum Sepolia (MOCK)',
+    address: '0x3333333333333333333333333333333333333333',
+    icon: '🧪',
+    hint: 'Testnet Arbitrum — usa hash mock para simular',
+  },
+  {
+    network: 'OPTIMISM',
+    label: 'Optimism Sepolia (MOCK)',
+    address: '0x4444444444444444444444444444444444444444',
+    icon: '🧪',
+    hint: 'Testnet Optimism — usa hash mock para simular',
   },
   {
     network: 'LIGHTNING',

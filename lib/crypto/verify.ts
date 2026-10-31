@@ -9,7 +9,7 @@
 export type PaymentStatus = 'WAITING' | 'DETECTED' | 'CONFIRMED' | 'ERROR'
 
 export interface VerifyConfig {
-  network: 'ETHEREUM' | 'BASE' | 'LIGHTNING'
+  network: 'ETHEREUM' | 'BASE' | 'ARBITRUM' | 'OPTIMISM' | 'LIGHTNING'
   address?: string // business wallet
   expectedWei?: string // expected amount in wei
   txHash?: string // customer tx hash
@@ -18,7 +18,7 @@ export interface VerifyConfig {
 
 const NETWORK_MODE = process.env.NEXT_PUBLIC_CHAIN_MODE === 'MAINNET' ? 'MAINNET' : 'TESTNET'
 
-function explorerConfig(network: 'ETHEREUM' | 'BASE') {
+function explorerConfig(network: 'ETHEREUM' | 'BASE' | 'ARBITRUM' | 'OPTIMISM') {
   if (network === 'BASE') {
     return {
       baseUrl:
@@ -26,6 +26,24 @@ function explorerConfig(network: 'ETHEREUM' | 'BASE') {
           ? 'https://api-sepolia.basescan.org/api'
           : 'https://api.basescan.org/api',
       apiKey: process.env.NEXT_PUBLIC_BASESCAN_API_KEY || null,
+    }
+  }
+  if (network === 'ARBITRUM') {
+    return {
+      baseUrl:
+        NETWORK_MODE === 'TESTNET'
+          ? 'https://api-sepolia.arbiscan.io/api'
+          : 'https://api.arbiscan.io/api',
+      apiKey: process.env.NEXT_PUBLIC_ARBISCAN_API_KEY || null,
+    }
+  }
+  if (network === 'OPTIMISM') {
+    return {
+      baseUrl:
+        NETWORK_MODE === 'TESTNET'
+          ? 'https://api-sepolia-optimistic.etherscan.io/api'
+          : 'https://api-optimistic.etherscan.io/api',
+      apiKey: process.env.NEXT_PUBLIC_OPTIMISM_API_KEY || null,
     }
   }
   return {
@@ -78,7 +96,9 @@ export async function verifyPaymentOnce(config: VerifyConfig): Promise<{
 async function verifyEvm(
   config: VerifyConfig
 ): Promise<{ status: PaymentStatus; message: string }> {
-  const { baseUrl, apiKey } = explorerConfig(config.network as 'ETHEREUM' | 'BASE')
+  const { baseUrl, apiKey } = explorerConfig(
+    config.network as 'ETHEREUM' | 'BASE' | 'ARBITRUM' | 'OPTIMISM'
+  )
   if (!baseUrl) {
     return { status: 'ERROR', message: 'Red no configurada.' }
   }
@@ -161,4 +181,141 @@ async function verifyLightning(
     return { status: 'DETECTED', message: 'Pago LN en ruta' }
   }
   return { status: 'WAITING', message: 'Esperando pago Lightning…' }
+}
+
+// ---------------------------------------------------------------------------
+// Verificación del lado del servidor
+// ---------------------------------------------------------------------------
+// El navegador no es confiable: cualquiera puede llamar al endpoint de
+// confirmación con un hash inventado. Aquí se vuelve a consultar la red y,
+// además, se comprueba que la transacción haya llegado a la wallet del
+// negocio. El modo mock solo se acepta fuera de mainnet (o con una bandera
+// explícita) para no regalar tickets en producción.
+
+const TX_HASH_RE = /^0x[a-fA-F0-9]{64}$/
+
+function mockAllowed(): boolean {
+  return process.env.CRYPTO_ALLOW_MOCK === 'true' || NETWORK_MODE !== 'MAINNET'
+}
+
+/** Busca el hash entre las transferencias nativas y ERC-20 recibidas. */
+async function hashBelongsToWallet(
+  baseUrl: string,
+  apiKey: string | null,
+  address: string,
+  txHash: string
+): Promise<boolean> {
+  const hash = txHash.toLowerCase()
+  const wallet = address.toLowerCase()
+
+  for (const action of ['txlist', 'tokentx'] as const) {
+    const params = new URLSearchParams({
+      module: 'account',
+      action,
+      address,
+      startblock: '0',
+      endblock: '99999999',
+      sort: 'desc',
+      page: '1',
+      offset: '100',
+    })
+    if (apiKey) params.set('apikey', apiKey)
+
+    try {
+      const data = await (await fetch(`${baseUrl}?${params}`)).json()
+      if (data?.status !== '1' || !Array.isArray(data.result)) continue
+      const match = data.result.some(
+        (tx: any) =>
+          String(tx.hash || '').toLowerCase() === hash &&
+          String(tx.to || '').toLowerCase() === wallet
+      )
+      if (match) return true
+    } catch {
+      // Si un endpoint falla, se intenta el siguiente.
+    }
+  }
+
+  return false
+}
+
+/**
+ * Verificación autoritativa para el endpoint de confirmación. Devuelve
+ * `confirmed: true` solo si el pago existe y llegó a la wallet del negocio.
+ */
+export async function verifyPaymentForServer(config: VerifyConfig): Promise<{
+  confirmed: boolean
+  status: PaymentStatus
+  message: string
+}> {
+  const mock = isMock(config.address) || isMock(config.txHash) || isMock(config.invoice)
+  if (mock) {
+    if (!mockAllowed()) {
+      return {
+        confirmed: false,
+        status: 'ERROR',
+        message: 'El modo de prueba está deshabilitado en este entorno.',
+      }
+    }
+    if (config.txHash || config.invoice) {
+      return { confirmed: true, status: 'CONFIRMED', message: 'Pago mock confirmado' }
+    }
+    return {
+      confirmed: false,
+      status: 'DETECTED',
+      message: 'Falta el hash o la factura para confirmar.',
+    }
+  }
+
+  if (config.network === 'LIGHTNING') {
+    const result = await verifyLightning(config.invoice)
+    return { confirmed: result.status === 'CONFIRMED', ...result }
+  }
+
+  if (!config.address) {
+    return { confirmed: false, status: 'ERROR', message: 'Wallet no configurada.' }
+  }
+  if (!config.txHash || !TX_HASH_RE.test(config.txHash)) {
+    return {
+      confirmed: false,
+      status: 'ERROR',
+      message: 'El hash de la transacción no es válido.',
+    }
+  }
+
+  const { baseUrl, apiKey } = explorerConfig(config.network)
+
+  try {
+    const receiptParams = new URLSearchParams({
+      module: 'transaction',
+      action: 'gettxreceiptstatus',
+      txhash: config.txHash,
+    })
+    if (apiKey) receiptParams.set('apikey', apiKey)
+    const receipt = await (await fetch(`${baseUrl}?${receiptParams}`)).json()
+
+    if (!(receipt?.status === '1' && receipt.result?.status === '1')) {
+      return {
+        confirmed: false,
+        status: 'DETECTED',
+        message: 'La transacción todavía no está confirmada.',
+      }
+    }
+
+    const received = await hashBelongsToWallet(baseUrl, apiKey, config.address, config.txHash)
+    if (!received) {
+      return {
+        confirmed: false,
+        status: 'DETECTED',
+        message: 'La transacción no llegó a la wallet del negocio.',
+      }
+    }
+
+    return { confirmed: true, status: 'CONFIRMED', message: 'Pago confirmado en la blockchain' }
+  } catch {
+    return {
+      confirmed: false,
+      status: 'ERROR',
+      message: 'No se pudo consultar la red. Intenta de nuevo.',
+    }
+  }
 }

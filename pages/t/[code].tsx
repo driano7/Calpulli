@@ -83,6 +83,7 @@ export default function PublicTicketPage() {
               peopleCount: 1,
               totalPrice: ticket.totalAmount,
               status: ticket.status,
+              paymentStatus: ticket.paymentStatus,
               customerName: ticket.participantName,
               currency: ticket.currency || 'MXN',
               location: ticket.location,

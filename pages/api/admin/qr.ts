@@ -2,6 +2,17 @@
 // POST /api/admin/qr — Resuelve un QR (reserva o cliente) contra Turso
 import { getSessionUser, logAccess } from '@/lib/auth'
 import { checkIn, getTicketByCode } from '@/lib/booking/turso'
+import { trySend } from '@/lib/mail/service'
+
+/** Escapa lo que viaja dentro del correo (nombres de personas). */
+function escapeHtml(value: unknown): string {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -29,6 +40,9 @@ export default async function handler(req, res) {
     }
 
     if (wantsCheckIn) {
+      // El correo de check-in se manda solo la primera vez: si el empleado
+      // vuelve a escanear el mismo QR no queremos repetirle el aviso.
+      const wasCheckedIn = Boolean(ticket.checkedInAt)
       const updated = await checkIn(ticket.bookingReference, actor.id)
       await logAccess({
         actorId: actor.id,
@@ -39,6 +53,14 @@ export default async function handler(req, res) {
         details: { bookingReference: ticket.bookingReference, guests: ticket.guests },
         ip: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ?? null,
       })
+
+      if (!wasCheckedIn && ticket.customerEmail) {
+        await trySend('check_in_done', ticket.customerEmail, null, {
+          firstName: escapeHtml((ticket.customerName || '').split(' ')[0] || 'viajera'),
+          experienceTitle: escapeHtml(ticket.experienceTitle || 'Tu tour'),
+          bookingReference: escapeHtml(ticket.bookingReference),
+        })
+      }
 
       return res.status(200).json({ resolved: toResolved(updated ?? ticket), checkedIn: true })
     }

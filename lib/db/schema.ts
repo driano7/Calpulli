@@ -65,7 +65,10 @@ export async function initLuchaEventsTable() {
 
 export async function upsertLuchaEvent(event: LuchaEvent) {
   const now = new Date().toISOString()
-  const id = event.id || `lucha-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  // Id determinista: la misma función (arena + fecha + hora) actualiza la fila
+  // existente en vez de acumular duplicados cada vez que corre el cron.
+  const id =
+    event.id || `lucha-${event.arena}-${event.date}-${String(event.time || '').replace(/\D/g, '')}`
 
   await turso.execute({
     sql: `

@@ -12,7 +12,7 @@ interface CryptoPaymentProps {
   amount: number
   currency?: string
   onClose: () => void
-  onConfirmed: (reference: string, network: NetworkKey) => void
+  onConfirmed: (reference: string, network: NetworkKey) => void | Promise<void>
 }
 
 const STATUS_STYLES: Record<PaymentStatus, { color: string; labelEs: string; labelEn: string }> = {
@@ -176,6 +176,11 @@ export function CryptoPayment({
   const [status, setStatus] = useState<PaymentStatus>('WAITING')
   const [statusMessage, setStatusMessage] = useState('')
   const [showQrScanner, setShowQrScanner] = useState(false)
+  const [cryptoRate, setCryptoRate] = useState<{
+    usdPerCrypto: number
+    mxnPerUsd: number
+  } | null>(null)
+  const [rateLoading, setRateLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const confirmedRef = useRef(false)
@@ -184,6 +189,41 @@ export function CryptoPayment({
     if (pollRef.current) {
       clearInterval(pollRef.current)
       pollRef.current = null
+    }
+  }, [])
+
+  // Tipo de cambio de los últimos ~3 minutos (precio público, sin API key).
+  // Convierte el monto del carrito (MXN) al equivalente aproximado en la
+  // cripto seleccionada, para que el usuario sepa cuánto debe enviar.
+  const fetchCryptoRate = useCallback(async (symbol: 'BTC' | 'ETH') => {
+    setRateLoading(true)
+    try {
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 4000)
+      const [cResp, fResp] = await Promise.all([
+        fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${
+            symbol === 'BTC' ? 'bitcoin' : 'ethereum'
+          }&vs_currencies=usd`,
+          { signal: ctrl.signal }
+        ),
+        fetch('https://api.exchangerate.host/latest?base=USD&symbols=MXN', {
+          signal: ctrl.signal,
+        }),
+      ])
+      clearTimeout(timer)
+      const cData = await cResp.json()
+      const fData = await fResp.json()
+      const usdPerCrypto = cData[symbol === 'BTC' ? 'bitcoin' : 'ethereum']?.usd
+      const mxnPerUsd = fData.rates?.MXN
+      if (typeof usdPerCrypto === 'number' && typeof mxnPerUsd === 'number') {
+        setCryptoRate({ usdPerCrypto, mxnPerUsd })
+      }
+    } catch {
+      // Tipo de cambio no disponible: se sigue mostrando el monto en MXN.
+      setCryptoRate(null)
+    } finally {
+      setRateLoading(false)
     }
   }, [])
 
@@ -222,13 +262,29 @@ export function CryptoPayment({
         if (result.status === 'CONFIRMED' && !confirmedRef.current) {
           confirmedRef.current = true
           stopPolling()
-          setTimeout(() => onConfirmed(reference, wallet.network), 800)
+          // El servidor vuelve a verificar el pago y guarda la reserva. Solo
+          // si eso sale bien se cierra el modal; si falla, se muestra el error
+          // aquí mismo para que el usuario no crea que ya tiene ticket.
+          setTimeout(async () => {
+            try {
+              await onConfirmed(reference, wallet.network)
+            } catch (error: any) {
+              confirmedRef.current = false
+              setStatus('ERROR')
+              setStatusMessage(
+                error?.message ||
+                  (isEs
+                    ? 'No pudimos guardar tu reserva. Intenta de nuevo.'
+                    : 'We could not save your booking. Please try again.')
+              )
+            }
+          }, 800)
         }
       }
       void check()
       pollRef.current = setInterval(check, 5000)
     },
-    [onConfirmed, stopPolling]
+    [onConfirmed, stopPolling, isEs]
   )
 
   const handleReferenceSubmit = () => {
@@ -333,8 +389,20 @@ export function CryptoPayment({
                   {L.eyebrow}
                 </p>
                 <h3 className="text-lg font-bold text-zinc-900 dark:text-white">
-                  ${amount.toLocaleString()} {currency}
+                  ${amount.toLocaleString()} MXN
                 </h3>
+                {selectedWallet && cryptoRate && !rateLoading && (
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-gray-400">
+                    ≈ {(amount / cryptoRate.usdPerCrypto).toFixed(6)}{' '}
+                    {selectedWallet.network === 'LIGHTNING' ? 'BTC' : 'ETH'}·
+                    {'tipo de cambio últimos 3 min'}
+                  </p>
+                )}
+                {rateLoading && (
+                  <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+                    Obteniendo tipo de cambio…
+                  </p>
+                )}
               </div>
               <button
                 type="button"
@@ -372,7 +440,10 @@ export function CryptoPayment({
                       <button
                         key={`${wallet.network}-${wallet.label}`}
                         type="button"
-                        onClick={() => setSelectedWallet(wallet)}
+                        onClick={() => {
+                          setSelectedWallet(wallet)
+                          void fetchCryptoRate(wallet.network === 'LIGHTNING' ? 'BTC' : 'ETH')
+                        }}
                         className="flex items-center gap-4 rounded-xl border border-zinc-200 p-4 text-left transition-all hover:border-orange-500/50 hover:bg-orange-500/5 dark:border-white/10 dark:hover:border-orange-500/40"
                       >
                         <span className="text-2xl">{wallet.icon}</span>
@@ -439,7 +510,7 @@ export function CryptoPayment({
                           a.download = `calpulli-${selectedWallet.network}-qr.png`
                           a.click()
                         }}
-                        className="dark:border-white/15 inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-50 dark:border-white/15 dark:text-zinc-300"
                       >
                         QR PNG
                       </button>
@@ -471,7 +542,7 @@ export function CryptoPayment({
                       <button
                         type="button"
                         onClick={() => setShowQrScanner((v) => !v)}
-                        className="dark:border-white/15 inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-300"
                       >
                         <ScanLine className="h-3.5 w-3.5" />
                         {L.scanQr}
@@ -479,7 +550,7 @@ export function CryptoPayment({
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="dark:border-white/15 inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-300"
                       >
                         <Upload className="h-3.5 w-3.5" />
                         {L.uploadQr}

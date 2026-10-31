@@ -109,9 +109,9 @@ export async function seedTemplates(): Promise<void> {
             VALUES (?,?,?,?,?,?,?)`,
       args: [
         meta.key,
-        fallback.subject,
-        fallback.html,
-        fallback.text,
+        resolveLocalized(fallback.subject, 'es'),
+        resolveLocalized(fallback.html, 'es'),
+        resolveLocalized(fallback.text, 'es'),
         meta.label,
         meta.description,
         JSON.stringify(meta.variables),
@@ -376,11 +376,12 @@ export async function trySend(
   key: string,
   to: string | null | undefined,
   userId: string | null | undefined,
-  vars: Record<string, string | number>
+  vars: Record<string, string | number>,
+  locale: string = 'es'
 ): Promise<void> {
   if (!to) return
   try {
-    await sendMail(key, { to, userId, vars })
+    await sendMail(key, { to, userId, vars, locale })
   } catch (error) {
     console.error(`[mail] fallo preparando ${key}:`, error)
   }

@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/lucha-scraper",
       "schedule": "0 6 */3 * *"
+    },
+    {
+      "path": "/api/cron/booking-reminders",
+      "schedule": "0 15 * * *"
     }
   ]
 }

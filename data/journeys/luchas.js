@@ -115,6 +115,12 @@ const ARENAS = {
     inauguracion_en: 'Opened on April 27, 1956',
     funciones_es: 'Martes 19:30, viernes 20:30, domingo 17:00',
     funciones_en: 'Tuesday 7:30 pm, Friday 8:30 pm, Sunday 5:00 pm',
+    /** Horario semanal, para calcular las próximas fechas reales. */
+    funciones: [
+      { day: 2, time: '19:30' },
+      { day: 5, time: '20:30' },
+      { day: 0, time: '17:00' },
+    ],
     foto: 'arenaMexicoEntrada',
   },
   coliseo: {
@@ -128,6 +134,11 @@ const ARENAS = {
     inauguracion_en: 'Opened on April 2, 1943',
     funciones_es: 'Jueves 19:00, sábado 19:30',
     funciones_en: 'Thursday 7:00 pm, Saturday 7:30 pm',
+    /** Horario semanal, para calcular las próximas fechas reales. */
+    funciones: [
+      { day: 4, time: '19:00' },
+      { day: 6, time: '19:30' },
+    ],
     foto: 'arenaColiseo',
   },
 }
@@ -228,6 +239,7 @@ export const LUCHAS_VARIANTS = [
     inauguracion_en: ARENAS.mexico.inauguracion_en,
     funciones_es: ARENAS.mexico.funciones_es,
     funciones_en: ARENAS.mexico.funciones_en,
+    funciones: ARENAS.mexico.funciones,
     resumen_es:
       'El recinto grande de Doctores, con dieciséis mil butacas y un mural que cuenta cien años de pelea. Aquí la lucha libre se presenta como un espectáculo grande, y el relato va del recinto hacia la máscara.',
     resumen_en:
@@ -479,6 +491,7 @@ export const LUCHAS_VARIANTS = [
     inauguracion_en: ARENAS.coliseo.inauguracion_en,
     funciones_es: ARENAS.coliseo.funciones_es,
     funciones_en: ARENAS.coliseo.funciones_en,
+    funciones: ARENAS.coliseo.funciones,
     resumen_es:
       'El recinto chico de Perú 77, abierto en 1943, donde empezó la época de oro. Aquí la lucha libre no se presenta como un espectáculo grande: se presenta como lo que es, un oficio de barrio con su público. El recorrido es el Centro Histórico, y la comida va antes.',
     resumen_en:
@@ -889,6 +902,72 @@ export function toEditorialMoment(moment) {
 export function luchasMoments(variantId) {
   const variant = LUCHAS_VARIANTS.find((v) => v.id === variantId) || LUCHAS_VARIANTS[0]
   return variant.momentos.map(toEditorialMoment)
+}
+
+/**
+ * Próximas funciones con fecha real.
+ *
+ * El horario semanal (martes, viernes, domingo…) se convierte en fechas
+ * concretas contadas desde hoy en Ciudad de México. Se calcula con
+ * Intl/timeZone UTC para que el servidor y el navegador muestren lo mismo
+ * (evita el desfase de un día y el error de hidratación).
+ */
+const SHOW_DAY_MS = 24 * 60 * 60 * 1000
+
+function mexicoTodayUtc(now) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now)
+  const value = (type) => Number(parts.find((part) => part.type === type)?.value)
+  return Date.UTC(value('year'), value('month') - 1, value('day'))
+}
+
+function formatShowDate(utcMs, time, locale) {
+  const date = new Date(utcMs)
+  const intlLocale = locale === 'en' ? 'en-US' : 'es-MX'
+  const weekday = new Intl.DateTimeFormat(intlLocale, {
+    timeZone: 'UTC',
+    weekday: 'long',
+  }).format(date)
+  const day = new Intl.DateTimeFormat(intlLocale, {
+    timeZone: 'UTC',
+    day: 'numeric',
+  }).format(date)
+  const month = new Intl.DateTimeFormat(intlLocale, {
+    timeZone: 'UTC',
+    month: 'long',
+  }).format(date)
+  return locale === 'en'
+    ? `${weekday}, ${month} ${day} · ${time}`
+    : `${weekday} ${day} de ${month} · ${time}`
+}
+
+export function luchasUpcomingShows(variantId, count = 4, now = new Date()) {
+  const variant = LUCHAS_VARIANTS.find((v) => v.id === variantId) || LUCHAS_VARIANTS[0]
+  const schedule = Array.isArray(variant.funciones) ? variant.funciones : []
+  if (!schedule.length) return []
+
+  const todayUtc = mexicoTodayUtc(now)
+  const shows = []
+
+  for (let offset = 0; offset < 42 && shows.length < count; offset++) {
+    const utcMs = todayUtc + offset * SHOW_DAY_MS
+    const weekday = new Date(utcMs).getUTCDay()
+    for (const slot of schedule) {
+      if (slot.day !== weekday) continue
+      shows.push({
+        iso: new Date(utcMs).toISOString().slice(0, 10),
+        time: slot.time,
+        label_es: formatShowDate(utcMs, slot.time, 'es'),
+        label_en: formatShowDate(utcMs, slot.time, 'en'),
+      })
+    }
+  }
+
+  return shows.slice(0, count)
 }
 
 /** La variante por defecto: la primera (Arena Mexico). */

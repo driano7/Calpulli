@@ -15,11 +15,13 @@ import {
   Users,
   Mail,
   Trash2,
+  Plus,
+  X,
 } from 'lucide-react'
 import { useCartStore } from '@/lib/store/useCartStore'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useLanguage } from '@/lib/hooks/useLanguage'
-import { sortCountries, COUNTRY_PHONE_CODES, countryFlag } from '@/lib/demographics'
+import { COUNTRY_PHONE_CODES } from '@/lib/demographics'
 import { FlipCard } from '@/components/ui/FlipCard'
 import { VirtualTicket } from '@/components/tickets/VirtualTicket'
 import { MasterTicket } from '@/components/tickets/MasterTicket'
@@ -27,9 +29,11 @@ import { CryptoPayment } from '@/components/CryptoPayment'
 import { formatPriceMXN } from '@/lib/currency'
 import { captureAcquisitionChannel, getAcquisitionChannel } from '@/lib/booking/utm'
 import { GuestPeopleField, MAX_GUESTS } from '@/components/checkout/GuestPeopleField'
+import { CountrySearchSelect } from '@/components/checkout/CountrySearchSelect'
+import { JOURNEYS, pickLocalized } from '@/data/journeysData'
 
 export default function CheckoutPage() {
-  const { items, subtotal, itemCount, clearCart, updateItem, removeItem } = useCartStore()
+  const { items, subtotal, itemCount, clearCart, updateItem, removeItem, addItem } = useCartStore()
   const { user, token, isLoading } = useAuth()
   const { t, currentLanguage } = useLanguage()
   const locale = currentLanguage === 'es' ? 'es' : 'en'
@@ -49,10 +53,59 @@ export default function CheckoutPage() {
   const customerPhone = phoneNumber.trim()
     ? `+${COUNTRY_PHONE_CODES[phoneCountry] || '52'} ${phoneNumber.trim()}`
     : ''
-  // Método de pago: tarjeta (Stripe), cripto o efectivo
-  // Efectivo es la primera opcion: se paga en el punto de encuentro.
-  const [payMethod, setPayMethod] = useState('cash')
+  // ── Modo de pago: tarjeta (Stripe) deshabilitado temporalmente ──
+  // El cobro con tarjeta por Stripe está bloqueado mientras se finaliza la
+  // integración. Quedan disponibles: efectivo y cripto.
+  const payMethod = 'cash'
   const [showCryptoModal, setShowCryptoModal] = useState(false)
+
+  // ── Agregar más journeys desde el summary del checkout ────────────────
+  const [showAddMoreModal, setShowAddMoreModal] = useState(false)
+  // experienceId -> peopleCount para los journeys marcados en el modal
+  const [selectedJourneys, setSelectedJourneys] = useState({})
+
+  const cartIds = new Set(items.map((it) => it.experienceId))
+
+  const toggleJourney = (experienceId, people) => {
+    setSelectedJourneys((prev) => {
+      const next = { ...prev }
+      if (next[experienceId]) {
+        delete next[experienceId]
+      } else {
+        next[experienceId] = people
+      }
+      return next
+    })
+  }
+
+  const addSelectedJourneys = () => {
+    const isEs = currentLanguage === 'es'
+    let added = 0
+    for (const journey of JOURNEYS) {
+      const people = selectedJourneys[journey.id]
+      if (!people || people < 1) continue
+      // No duplicar un journey que ya está en el carrito
+      if (cartIds.has(journey.id)) continue
+      addItem({
+        experienceId: journey.id,
+        title: pickLocalized(journey.title_es, journey.title_en, isEs),
+        imageUrl: journey.heroImage,
+        price: journey.price,
+        currency: 'MXN',
+        location: 'Ciudad de México',
+        date: null,
+        time: null,
+        peopleCount: people,
+        maxGuests: 10,
+      })
+      added++
+    }
+    setSelectedJourneys({})
+    setShowAddMoreModal(false)
+    if (added > 0) {
+      setError(null)
+    }
+  }
 
   // Capturar canal de adquisición (first-touch UTM) para CAC por canal
   useEffect(() => {
@@ -64,7 +117,9 @@ export default function CheckoutPage() {
     try {
       const cashParam = new URLSearchParams(window.location.search).get('cash')
       const cashFlag = localStorage.getItem('amaxing_pay_cash')
-      if (cashParam === '1' || cashFlag === '1') setPayMethod('cash')
+      if (cashParam === '1' || cashFlag === '1') {
+        // Efectivo es el único método disponible: nada que cambiar.
+      }
     } catch (e) {
       void 0
     }
@@ -100,14 +155,6 @@ export default function CheckoutPage() {
   // El correo ya esta registrado: se ofrece entrar, sin bloquear.
   const [emailRegistered, setEmailRegistered] = useState(false)
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
-  // País para reserva en efectivo
-  const [country, setCountry] = useState('')
-  const countryOptions = sortCountries().map((c) => ({
-    value: c.code,
-    label: locale === 'es' ? c.es : c.en,
-  }))
-  // Modo de Stripe (mock / test / live) para poder avisarlo en la interfaz.
-  const [stripeMode, setStripeMode] = useState(null)
   // lineId -> string[] (longitud = peopleCount)
   const [participantNames, setParticipantNames] = useState({})
   // Nombre por default para invitado: titulo del item del carrito
@@ -213,23 +260,6 @@ export default function CheckoutPage() {
       clearTimeout(timer)
     }
   }, [guestEmail])
-
-  /**
-   * El modo de Stripe se pide al servidor: el navegador no puede saber si
-   * hay llave de prueba o si se esta simulando el cobro.
-   */
-  useEffect(() => {
-    let cancelled = false
-    fetch('/api/stripe/mode')
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (!cancelled && data) setStripeMode(data)
-      })
-      .catch(() => void 0)
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   // Si el usuario edita su nombre en perfil y vuelve, no pisar nombres ya escritos manualmente
   const updateParticipantName = (lineId, idx, value) => {
@@ -588,6 +618,135 @@ export default function CheckoutPage() {
     [token, clearCart, items, participantNames, guestEmail, locale, subtotal, itemCount, user]
   )
 
+  /**
+   * Confirmación de cripto: el navegador solo manda la referencia; el servidor
+   * vuelve a verificar el pago, guarda la reserva pagada en Turso y devuelve
+   * los tickets reales. Así el ticket no nace de un hash inventado.
+   */
+  const confirmCryptoPayment = useCallback(
+    async (reference, network) => {
+      setIsSubmitting(true)
+      setError(null)
+      try {
+        const headers = { 'Content-Type': 'application/json' }
+        if (token) headers.Authorization = `Bearer ${token}`
+
+        const cryptoItems = items.map((item) => ({
+          experienceId: item.experienceId || item.id,
+          date: item.date,
+          time: item.time,
+          peopleCount: Math.max(1, Number(item.peopleCount) || 1),
+          participantNames: participantNames[item.lineId] || [],
+          unitPrice: item.price || 0,
+        }))
+
+        if (!cryptoItems.length) {
+          throw new Error(locale === 'es' ? 'Tu carrito está vacío.' : 'Your cart is empty.')
+        }
+
+        const response = await fetch('/api/bookings/crypto', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            reference,
+            network,
+            items: cryptoItems,
+            guestEmail: isGuest || !token ? guestEmail.trim() : undefined,
+            customerName: isGuest
+              ? (participantNames[items[0]?.lineId]?.[0] || '').trim()
+              : user?.firstName
+              ? `${user.firstName} ${user.lastName || ''}`.trim()
+              : undefined,
+            customerPhone: customerPhone.trim() || undefined,
+            currency: locale === 'es' ? 'MXN' : 'USD',
+            responsiblePosition: isGuest ? responsiblePosition : 1,
+            locale,
+          }),
+        })
+
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error || 'No pudimos confirmar tu pago')
+        }
+
+        const bookings = data.bookings || []
+        setCreatedBookings(bookings)
+
+        try {
+          const existing = localStorage.getItem('amaxing_bookings')
+          const parsed = existing ? JSON.parse(existing) : []
+          localStorage.setItem(
+            'amaxing_bookings',
+            JSON.stringify([...(Array.isArray(parsed) ? parsed : []), ...bookings])
+          )
+        } catch (e) {
+          /* storage lleno o no disponible */
+        }
+
+        try {
+          const sid = sessionStorage.getItem('analytics_session_id')
+          await fetch('/api/analytics/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              eventType: 'purchase',
+              conversionEvent: 'purchase',
+              conversionValue: subtotal,
+              sessionId: sid,
+              userId: user?.id || null,
+              pagePath: '/checkout',
+              pageCategory: 'checkout',
+              timeOnPage: 0,
+              scrollDepth: 0,
+              bounce: false,
+              exitPage: false,
+              userAgent: navigator.userAgent,
+              referrerUrl: document.referrer || '',
+              eventData: {
+                isGuest: isGuest || !token,
+                paymentMethod: 'crypto',
+                itemCount,
+                currency: locale === 'es' ? 'MXN' : 'USD',
+              },
+            }),
+          })
+        } catch (e) {
+          void 0
+        }
+
+        setSuccess(true)
+        setShowCryptoModal(false)
+        clearCart()
+        try {
+          sessionStorage.removeItem('amaxing_checkout_snapshot')
+        } catch (e) {
+          void 0
+        }
+      } catch (err) {
+        console.error('Crypto confirm error:', err)
+        setError(err.message || 'Ocurrió un error al confirmar el pago.')
+        throw err
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      token,
+      items,
+      participantNames,
+      guestEmail,
+      locale,
+      isGuest,
+      user,
+      customerPhone,
+      responsiblePosition,
+      clearCart,
+      subtotal,
+      itemCount,
+    ]
+  )
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white dark:bg-zinc-950">
@@ -708,62 +867,134 @@ export default function CheckoutPage() {
           <VirtualTicket ticket={selectedTicket} onClose={() => setSelectedTicket(null)} />
         )}
 
+        {/* Modal: agregar más journeys desde el summary */}
+        <AnimatePresence>
+          {showAddMoreModal && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 sm:p-6"
+              role="dialog"
+              aria-modal="true"
+              aria-label={locale === 'es' ? 'Agregar más journeys' : 'Add more journeys'}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setShowAddMoreModal(false)
+              }}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ duration: 0.2 }}
+                className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900"
+              >
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                    {locale === 'es' ? 'Seleccionar journeys' : 'Select journeys'}
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddMoreModal(false)}
+                    className="rounded-lg p-2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-100"
+                    aria-label={t('checkout.close', 'Cerrar')}
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <p className="mb-4 text-sm text-zinc-600 dark:text-gray-400">
+                  {locale === 'es'
+                    ? 'Elige los journeys que quieres agregar y cuántas personas irán a cada uno.'
+                    : 'Choose the journeys you want to add and how many people will go to each one.'}
+                </p>
+
+                <div className="space-y-3">
+                  {JOURNEYS.map((journey) => {
+                    const already = cartIds.has(journey.id)
+                    const people = selectedJourneys[journey.id] || 1
+                    const title = pickLocalized(
+                      journey.title_es,
+                      journey.title_en,
+                      currentLanguage === 'es'
+                    )
+                    return (
+                      <div
+                        key={journey.id}
+                        className="group relative flex items-center justify-between gap-3 rounded-xl border p-3 transition-colors hover:bg-orange-50/50 dark:hover:bg-orange-900/10"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                            {title}
+                          </p>
+                          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                            {formatPriceMXN(journey.price, locale)}
+                          </p>
+                          {already && (
+                            <p className="mt-1 text-[11px] font-semibold text-orange-600 dark:text-orange-400">
+                              {t('checkout.alreadyInCart', 'Ya está en tu carrito')}
+                            </p>
+                          )}
+                        </div>
+
+                        {already ? (
+                          <span className="text-[11px] text-zinc-500 dark:text-zinc-500/50">
+                            {t('checkout.alreadyInCart', 'Ya está en tu carrito')}
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => toggleJourney(journey.id, Math.max(1, people - 1))}
+                              disabled={people <= 1}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-300 bg-white text-sm font-bold text-gray-900 transition-colors hover:bg-zinc-100 disabled:opacity-40 dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-900"
+                              aria-label={locale === 'es' ? 'Menos personas' : 'Fewer people'}
+                            >
+                              −
+                            </button>
+                            <span className="w-8 text-center text-sm font-medium text-gray-900 dark:text-white">
+                              {people}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => toggleJourney(journey.id, people + 1)}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-300 bg-white text-sm font-bold text-gray-900 transition-colors hover:bg-zinc-100 dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-900"
+                              aria-label={locale === 'es' ? 'Más personas' : 'More people'}
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                <div className="mt-6 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddMoreModal(false)}
+                    className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  >
+                    {t('checkout.close', 'Close')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={addSelectedJourneys}
+                    disabled={Object.keys(selectedJourneys).length === 0}
+                    className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {t('checkout.addToCart', 'Add to cart')}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
         <CryptoPayment
           open={showCryptoModal}
           amount={subtotal}
           currency={locale === 'es' ? 'MXN' : 'USD'}
           onClose={() => setShowCryptoModal(false)}
-          onConfirmed={async (reference, network) => {
-            setShowCryptoModal(false)
-            setSuccess(true)
-            try {
-              const raw = localStorage.getItem('amaxing_bookings')
-              const existing = raw ? JSON.parse(raw) : []
-              const now = new Date().toISOString()
-              const cryptoBookings = items.map((item, idx) => {
-                const pNames = participantNames[item.lineId] || []
-                return {
-                  id: `crypto-${Date.now()}-${idx}`,
-                  userId:
-                    user?.id || `guest_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-                  experienceId: item.experienceId || item.id,
-                  experienceTitle: item.title,
-                  experienceImage: item.imageUrl || item.image,
-                  date: item.date || now.slice(0, 10),
-                  time: item.time || '10:00',
-                  peopleCount: item.peopleCount || item.quantity || 1,
-                  totalPrice: (item.price || 0) * (item.peopleCount || item.quantity || 1),
-                  currency: locale === 'es' ? 'MXN' : 'USD',
-                  status: 'confirmed',
-                  createdAt: now,
-                  updatedAt: now,
-                  ticketCode: Math.random().toString(36).slice(2, 8).toUpperCase(),
-                  customerName:
-                    pNames[0] ||
-                    (user?.firstName
-                      ? `${user.firstName} ${user.lastName || ''}`.trim()
-                      : isGuest
-                      ? 'Invitado'
-                      : 'Cliente cripto'),
-                  customerEmail: user?.email || undefined,
-                  customerPhone: customerPhone || undefined,
-                  participantNames: pNames.length ? pNames : undefined,
-                  isGuest: !user,
-                  paymentMethod: 'crypto',
-                  paymentReference: reference,
-                  cryptoNetwork: network,
-                }
-              })
-              localStorage.setItem(
-                'amaxing_bookings',
-                JSON.stringify([...existing, ...cryptoBookings])
-              )
-              setCreatedBookings(cryptoBookings)
-            } catch (e) {
-              // storage error
-            }
-            clearCart()
-          }}
+          onConfirmed={confirmCryptoPayment}
         />
       </div>
     )
@@ -810,27 +1041,6 @@ export default function CheckoutPage() {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               {t('checkout.title', 'Checkout')}
             </h1>
-            <span
-              className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-                stripeMode && stripeMode.mode === 'live'
-                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
-                  : 'border-orange-500/30 bg-orange-500/10 text-orange-500'
-              }`}
-            >
-              {stripeMode
-                ? stripeMode.mode === 'mock'
-                  ? locale === 'es'
-                    ? 'Stripe — modo DEMO'
-                    : 'Stripe — DEMO mode'
-                  : stripeMode.mode === 'test'
-                  ? locale === 'es'
-                    ? 'Stripe — modo PRUEBA'
-                    : 'Stripe — TEST mode'
-                  : locale === 'es'
-                  ? 'Stripe — pago real'
-                  : 'Stripe — live'
-                : t('checkout.testMode', 'Stripe test mode')}
-            </span>
           </div>
 
           {error && (
@@ -1124,6 +1334,17 @@ export default function CheckoutPage() {
                   </svg>
                   {locale === 'es' ? 'Vaciar carrito' : 'Clear cart'}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedJourneys({})
+                    setShowAddMoreModal(true)
+                  }}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs font-semibold text-orange-600 transition-colors hover:bg-orange-500/10 dark:border-orange-500/20 dark:bg-orange-900/10 dark:text-orange-400 dark:hover:bg-orange-900/30"
+                >
+                  <Plus className="h-3 w-3" />
+                  {locale === 'es' ? 'Agregar más journeys' : 'Add more journeys'}
+                </button>
               </div>
             </div>
 
@@ -1134,39 +1355,33 @@ export default function CheckoutPage() {
                 {t('checkout.payment', 'Detalles de la tarjeta')}
               </h2>
 
-              {/* Selector de método */}
+              {/* Selector de método (Stripe/tarjeta bloqueado temporalmente) */}
               <div className="mb-5 grid grid-cols-3 gap-2 sm:gap-3">
                 <button
                   type="button"
-                  onClick={() => setPayMethod('cash')}
-                  className={`flex items-center justify-center gap-1 rounded-xl border px-2 py-3 text-xs font-bold transition-all sm:gap-2 sm:px-4 sm:text-sm ${
-                    payMethod === 'cash'
-                      ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                      : 'border-zinc-300 text-zinc-500 hover:border-zinc-400 dark:border-white/15 dark:text-gray-400'
-                  }`}
+                  aria-pressed="true"
+                  className="flex items-center justify-center gap-1 rounded-xl border border-emerald-500 bg-emerald-500/10 px-2 py-3 text-xs font-bold text-emerald-600 dark:text-emerald-400 sm:gap-2 sm:px-4 sm:text-sm"
                 >
                   💵 {locale === 'es' ? 'Efectivo' : 'Cash'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPayMethod('card')}
-                  className={`flex items-center justify-center gap-1 rounded-xl border px-2 py-3 text-xs font-bold transition-all sm:gap-2 sm:px-4 sm:text-sm ${
-                    payMethod === 'card'
-                      ? 'border-orange-500 bg-orange-500/10 text-orange-600 dark:text-orange-400'
-                      : 'border-zinc-300 text-zinc-500 hover:border-zinc-400 dark:border-white/15 dark:text-gray-400'
-                  }`}
+                  disabled
+                  aria-label={locale === 'es' ? 'Tarjeta próximamente' : 'Card coming soon'}
+                  title={
+                    locale === 'es'
+                      ? 'Pago con tarjeta bloqueado temporalmente'
+                      : 'Card payment temporarily blocked'
+                  }
+                  className="flex items-center justify-center gap-1 rounded-xl border border-zinc-300 px-2 py-3 text-xs font-bold text-zinc-400 transition-colors disabled:opacity-50 dark:border-white/15 dark:text-zinc-500 sm:gap-2 sm:px-4 sm:text-sm"
                 >
                   <CreditCard className="h-4 w-4" />
                   {locale === 'es' ? 'Tarjeta' : 'Card'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPayMethod('crypto')}
-                  className={`flex items-center justify-center gap-1 rounded-xl border px-2 py-3 text-xs font-bold transition-all sm:gap-2 sm:px-4 sm:text-sm ${
-                    payMethod === 'crypto'
-                      ? 'border-orange-500 bg-orange-500/10 text-orange-600 dark:text-orange-400'
-                      : 'border-zinc-300 text-zinc-500 hover:border-zinc-400 dark:border-white/15 dark:text-gray-400'
-                  }`}
+                  onClick={() => setShowCryptoModal(true)}
+                  className={`flex items-center justify-center gap-1 rounded-xl border px-2 py-3 text-xs font-bold transition-all sm:gap-2 sm:px-4 sm:text-sm ${'border-zinc-300 text-zinc-500 hover:border-zinc-400 dark:border-white/15 dark:text-gray-400'}`}
                 >
                   <span aria-hidden="true">₿</span>
                   {locale === 'es' ? 'Cripto' : 'Crypto'}
@@ -1195,18 +1410,12 @@ export default function CheckoutPage() {
                           : 'WhatsApp (required) — we confirm on this number'}
                       </label>
                       <div className="mt-1 flex gap-2">
-                        <select
-                          id="whatsapp-country"
+                        <CountrySearchSelect
                           value={phoneCountry}
-                          onChange={(e) => setPhoneCountry(e.target.value)}
-                          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-orange-500 focus:outline-none dark:border-white/10 dark:bg-zinc-900 dark:text-white sm:w-[170px]"
-                        >
-                          {sortCountries().map((c) => (
-                            <option key={c.code} value={c.code}>
-                              {countryFlag(c.code)} {c.es} (+{COUNTRY_PHONE_CODES[c.code] || ''})
-                            </option>
-                          ))}
-                        </select>
+                          onChange={setPhoneCountry}
+                          locale={locale}
+                          className="w-[92px] shrink-0 sm:w-[170px]"
+                        />
                         <input
                           id="whatsapp-number"
                           type="tel"
@@ -1451,27 +1660,6 @@ export default function CheckoutPage() {
                     )}
                   </p>
 
-                  {stripeMode && (
-                    <p className="mt-3 flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-200">
-                      <span aria-hidden className="mt-0.5 font-bold">
-                        ⚠
-                      </span>
-                      <span>
-                        {stripeMode.mode === 'mock'
-                          ? locale === 'es'
-                            ? 'Modo DEMO de Stripe: el pago se simula, no se cobra nada real.'
-                            : 'Stripe DEMO mode: the payment is simulated, nothing real is charged.'
-                          : stripeMode.mode === 'test'
-                          ? locale === 'es'
-                            ? 'Modo PRUEBA de Stripe (tarjetas de prueba): no se cobran amounts reales.'
-                            : 'Stripe TEST mode (test cards): no real amounts are charged.'
-                          : locale === 'es'
-                          ? 'Pago real con Stripe.'
-                          : 'Live payment with Stripe.'}
-                      </span>
-                    </p>
-                  )}
-
                   <div className="mt-4 rounded-xl border border-orange-500/20 bg-orange-500/10 p-4 text-xs text-orange-600 dark:text-orange-300">
                     {isGuest
                       ? locale === 'es'
@@ -1601,86 +1789,7 @@ export default function CheckoutPage() {
         amount={subtotal}
         currency={locale === 'es' ? 'MXN' : 'USD'}
         onClose={() => setShowCryptoModal(false)}
-        onConfirmed={async (reference, network) => {
-          setShowCryptoModal(false)
-          setSuccess(true)
-          try {
-            const raw = localStorage.getItem('amaxing_bookings')
-            const existing = raw ? JSON.parse(raw) : []
-            const now = new Date().toISOString()
-            const cryptoBookings = items.map((item, idx) => {
-              const pNames = participantNames[item.lineId] || []
-              return {
-                id: `crypto-${Date.now()}-${idx}`,
-                userId: user?.id || `guest_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-                experienceId: item.experienceId || item.id,
-                experienceTitle: item.title,
-                experienceImage: item.imageUrl || item.image,
-                date: item.date || now.slice(0, 10),
-                time: item.time || '10:00',
-                peopleCount: item.peopleCount || item.quantity || 1,
-                totalPrice: (item.price || 0) * (item.peopleCount || item.quantity || 1),
-                currency: locale === 'es' ? 'MXN' : 'USD',
-                status: 'confirmed',
-                createdAt: now,
-                updatedAt: now,
-                ticketCode: Math.random().toString(36).slice(2, 8).toUpperCase(),
-                customerName:
-                  pNames[0] ||
-                  (user?.firstName
-                    ? `${user.firstName} ${user.lastName || ''}`.trim()
-                    : isGuest
-                    ? 'Invitado'
-                    : 'Cliente cripto'),
-                customerEmail: user?.email || undefined,
-                participantNames: pNames.length ? pNames : undefined,
-                isGuest: !user,
-                paymentMethod: 'crypto',
-                paymentReference: reference,
-                cryptoNetwork: network,
-              }
-            })
-            localStorage.setItem(
-              'amaxing_bookings',
-              JSON.stringify([...existing, ...cryptoBookings])
-            )
-            setCreatedBookings(cryptoBookings)
-            // métrica cripto también
-            try {
-              const sid = sessionStorage.getItem('analytics_session_id')
-              await fetch('/api/analytics/track', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  eventType: 'purchase',
-                  conversionEvent: 'purchase',
-                  conversionValue: subtotal,
-                  sessionId: sid,
-                  userId: user?.id || null,
-                  pagePath: '/checkout',
-                  pageCategory: 'checkout',
-                  timeOnPage: 0,
-                  scrollDepth: 0,
-                  bounce: false,
-                  exitPage: false,
-                  userAgent: navigator.userAgent,
-                  referrerUrl: document.referrer || '',
-                  eventData: {
-                    isGuest: !user,
-                    paymentMethod: 'crypto',
-                    itemCount,
-                    currency: locale === 'es' ? 'MXN' : 'USD',
-                  },
-                }),
-              })
-            } catch (e) {
-              void 0
-            }
-          } catch (e) {
-            // storage error
-          }
-          clearCart()
-        }}
+        onConfirmed={confirmCryptoPayment}
       />
     </div>
   )

@@ -81,6 +81,15 @@ function parseTime(timeStr: string): string {
   return '20:30' // default
 }
 
+function localIsoDate(date: Date): string {
+  // La fecha del calendario local, sin pasar por UTC (toISOString puede
+  // devolver el día anterior en México).
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function extractLuchadores(text: string): string[] {
   // Extract wrestler names from cartelera text
   // Common patterns: "Nombre Apellido", "Nombre 'Apodo' Apellido"
@@ -177,7 +186,7 @@ function getStaticEvents(): any[] {
     events.push({
       arena: 'mexico',
       title: 'Función de Lucha Libre - Arena México',
-      date: tue.toISOString().split('T')[0],
+      date: localIsoDate(tue),
       time: '19:30',
       luchadores: ['Pendiente de cartelera oficial'],
       cartelera: 'Cartelera por confirmar en sitio oficial CMLL',
@@ -192,7 +201,7 @@ function getStaticEvents(): any[] {
     events.push({
       arena: 'mexico',
       title: 'Viernes Espectacular - Arena México',
-      date: fri.toISOString().split('T')[0],
+      date: localIsoDate(fri),
       time: '20:30',
       luchadores: ['Pendiente de cartelera oficial'],
       cartelera: 'Cartelera por confirmar en sitio oficial CMLL',
@@ -207,7 +216,7 @@ function getStaticEvents(): any[] {
     events.push({
       arena: 'mexico',
       title: 'Domingo Familiar - Arena México',
-      date: sun.toISOString().split('T')[0],
+      date: localIsoDate(sun),
       time: '17:00',
       luchadores: ['Pendiente de cartelera oficial'],
       cartelera: 'Cartelera por confirmar en sitio oficial CMLL',
@@ -223,7 +232,7 @@ function getStaticEvents(): any[] {
     events.push({
       arena: 'coliseo',
       title: 'Función de Lucha Libre - Arena Coliseo',
-      date: thu.toISOString().split('T')[0],
+      date: localIsoDate(thu),
       time: '19:00',
       luchadores: ['Pendiente de cartelera oficial'],
       cartelera: 'Cartelera por confirmar en sitio oficial CMLL',
@@ -238,7 +247,7 @@ function getStaticEvents(): any[] {
     events.push({
       arena: 'coliseo',
       title: 'Sábado de Lucha - Arena Coliseo',
-      date: sat.toISOString().split('T')[0],
+      date: localIsoDate(sat),
       time: '19:30',
       luchadores: ['Pendiente de cartelera oficial'],
       cartelera: 'Cartelera por confirmar en sitio oficial CMLL',

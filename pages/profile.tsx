@@ -91,6 +91,8 @@ const getRealBookings = async (userId: string) => {
       time: b.time,
       totalPrice: b.totalPrice,
       status: b.status,
+      paymentStatus: b.paymentStatus,
+      bookingReference: b.bookingReference,
       category: b.category,
       location: b.location,
       meetingPoint: b.meetingPoint,
@@ -153,8 +155,8 @@ export default function Profile() {
           (b.ticketCode || '').toUpperCase() === q ||
           (b.bookingReference || '').toUpperCase() === q ||
           (b.id || '').toUpperCase() === q ||
-          Array.isArray(b.tickets) &&
-            b.tickets.some((t: any) => (t.ticketCode || '').toUpperCase() === q)
+          (Array.isArray(b.tickets) &&
+            b.tickets.some((t: any) => (t.ticketCode || '').toUpperCase() === q))
       )
       if (found) {
         setShowTicket(found)
@@ -747,6 +749,10 @@ export default function Profile() {
                     t={t}
                     onViewBooking={(booking) => setShowTicket(booking)}
                     formatBookingDate={formatBookingDate}
+                    ticketSearch={ticketSearch}
+                    setTicketSearch={setTicketSearch}
+                    onOpenScanner={() => setShowScanner(true)}
+                    filteredBookings={filteredBookings}
                   />
                 </ErrorBoundary>
               )}
@@ -1433,6 +1439,10 @@ function BookingsContent({
   t,
   onViewBooking,
   formatBookingDate,
+  ticketSearch,
+  setTicketSearch,
+  onOpenScanner,
+  filteredBookings,
 }: any) {
   return (
     <motion.div
@@ -1524,7 +1534,7 @@ function BookingsContent({
             </div>
             <button
               type="button"
-              onClick={() => setShowScanner(true)}
+              onClick={onOpenScanner}
               className="rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
             >
               <QrCode className="mr-2 h-4 w-4" />

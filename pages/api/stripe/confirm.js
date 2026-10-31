@@ -1,9 +1,12 @@
 import { getStripeClient } from '@/lib/stripe'
-import { createBookingInTurso, findBookingsByStripeSession, countBookingsByExperienceAndIdentity } from '@/lib/booking/turso'
+import {
+  createBookingInTurso,
+  findBookingsByStripeSession,
+  countBookingsByExperienceAndIdentity,
+} from '@/lib/booking/turso'
 import { checkRateLimit, rateLimitHeaders } from '@/lib/booking/rateLimit'
 import { recordConversion } from '@/lib/referrals'
-import { trySend } from '@/lib/mail/service'
-import { BRAND } from '@/lib/brand'
+import { notifyBooking } from '@/lib/mail/bookingNotice'
 import { getSessionUser } from '@/lib/auth'
 import { getSessionOptional } from '@/lib/auth/session'
 
@@ -21,67 +24,6 @@ function normalizePhone(value) {
   return digits.length >= 10 ? digits : null
 }
 
-/** Escapa lo que va dentro del correo (nombres de personas). */
-function escapeHtml(value) {
-  return String(value || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
-
-/** Avisa al cliente segun como pago. Si falla el correo, la reserva sigue. */
-async function notifyBooking(booking, { paymentMethod, customerPhone, userEmail, userId }) {
-  const origin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, '') || ''
-  const digits = (customerPhone || '').replace(/\D/g, '')
-  const whatsappUrl = digits.length >= 10 ? `https://wa.me/${digits}` : BRAND.social.whatsapp
-
-  // Los tickets de cada persona, cada uno con su enlace. Al invitado (sin
-  // cuenta) el enlace va a la pagina publica del ticket, no a su perfil.
-  const tickets = Array.isArray(booking.tickets) ? booking.tickets : []
-  const ticketUrlFor = (ticket) => `${origin}/t/${encodeURIComponent(ticket.ticketCode)}`
-  const ticketsList = tickets.length
-    ? `<ul style="margin:16px 0 0;padding:0;list-style:none">${tickets
-        .map(
-          (ticket) =>
-            `<li style="padding:6px 0;border-bottom:1px solid #e7e5e4;font-size:14px">
-              <strong>${escapeHtml(ticket.participantName)}</strong>
-              ${
-                ticket.isResponsible
-                  ? '<span style="font-size:12px;color:#c1440e">(responsable)</span>'
-                  : ''
-              }
-              <br><a href="${ticketUrlFor(
-                ticket
-              )}" style="color:#c1440e;font-size:13px">${escapeHtml(ticket.ticketCode)}</a>
-            </li>`
-        )
-        .join('')}</ul>`
-    : ''
-
-  const vars = {
-    firstName: (booking.customerName || '').split(' ')[0] || 'viajera',
-    bookingReference: booking.bookingReference,
-    experienceTitle: booking.experienceTitle || 'Tu tour',
-    startDate: String(booking.startDate || '').slice(0, 10),
-    startTime: booking.time || '10:00',
-    guests: booking.guests,
-    total: booking.totalAmount,
-    currency: booking.currency,
-    meetingPoint: 'Te lo confirmamos por WhatsApp',
-    ticketUrl: tickets.length ? ticketUrlFor(tickets[0]) : `${origin}/profile`,
-    ticketsList,
-    whatsappUrl,
-  }
-
-  await trySend(
-    paymentMethod === 'cash' ? 'booking_cash_reserved' : 'booking_confirmed',
-    userEmail,
-    userId,
-    vars
-  )
-}
 /**
  * Crea las reservas en Turso (fuente de verdad) y devuelve los tickets con QR.
  * Idempotente: si la sesión de Stripe ya generó reservas, las devuelve tal cual.
@@ -201,6 +143,7 @@ export default async function handler(req, res) {
     customerPhone,
     guestPhone,
     responsiblePosition,
+    locale = 'es',
   } = req.body || {}
 
   if (typeof sessionId !== 'string' || !sessionId) {
@@ -290,6 +233,7 @@ export default async function handler(req, res) {
           customerPhone,
           userEmail: session?.user?.email || guestEmail || null,
           userId: session?.user?.id || null,
+          locale: locale === 'en' ? 'en' : 'es',
         })
       }
       return res.status(200).json({ ok: true, bookings: mockBookings, mock: true, isGuest })
@@ -361,6 +305,7 @@ export default async function handler(req, res) {
         customerPhone,
         userEmail: session?.user?.email || customerEmail || null,
         userId: session?.user?.id || null,
+        locale: locale === 'en' ? 'en' : 'es',
       })
     }
 

@@ -2,6 +2,7 @@
 // Referidos — modelo de Cripte adaptado a Turso/SQLite.
 import { randomBytes } from 'crypto'
 import { turso } from '../turso'
+import { trySend } from '../mail/service'
 
 /** Sin vocales ni caracteres ambiguos: se lee al teléfono sin equivocarse. */
 const ALPHABET = 'BCDFGHJKLMNPQRSTVWXYZ23456789'
@@ -193,7 +194,7 @@ export async function recordConversion(params: {
   const row: any = attribution.rows[0]
   if (!row) return false // la reserva no vino de un referido
 
-  await turso.execute({
+  const inserted = await turso.execute({
     sql: `INSERT OR IGNORE INTO referral_conversions
             (referral_code_id, referred_user_id, booking_id, referral_code,
              stripe_session_id, payment_intent_id, amount, currency, status)
@@ -210,6 +211,37 @@ export async function recordConversion(params: {
       params.status ?? 'paid',
     ],
   })
+
+  // Solo se avisa cuando la conversión es nueva: un reintento no debe
+  // volver a felicitar al referente por la misma reserva.
+  if (inserted.rowsAffected) {
+    try {
+      const [codeRow, bookingRow] = await Promise.all([
+        turso.execute({
+          sql: 'SELECT user_id, email, display_name FROM referral_codes WHERE id = ?',
+          args: [row.referral_code_id],
+        }),
+        turso.execute({
+          sql: 'SELECT booking_reference FROM bookings WHERE id = ?',
+          args: [params.bookingId],
+        }),
+      ])
+      const referrer: any = codeRow.rows[0]
+      const booking: any = bookingRow.rows[0]
+      if (referrer?.email) {
+        const displayName = String(referrer.display_name || referrer.email.split('@')[0])
+        await trySend('referral_converted', referrer.email, referrer.user_id, {
+          firstName: displayName.split(' ')[0],
+          referralCode: row.referral_code,
+          bookingReference: booking?.booking_reference || params.bookingId,
+          total: Number(params.amount) || 0,
+          currency: params.currency || 'USD',
+        })
+      }
+    } catch (error) {
+      console.error('[referrals] aviso de conversión no enviado:', error)
+    }
+  }
 
   return true
 }

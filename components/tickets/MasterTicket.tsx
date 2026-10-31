@@ -28,6 +28,7 @@ interface MasterTicketProps {
     currency: string
     status: string
     paymentMethod?: string
+    paymentStatus?: string
     journeyAmount?: number
     location?: string | null
   }>
@@ -45,8 +46,15 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
   const [isMobileDevice, setIsMobileDevice] = useState(false)
   const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
   const isAndroid = /android/i.test(ua)
-  const isIOS = /iphone|ipod|ipad/i.test(ua) || (/macintosh/i.test(ua) && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1)
-  const canShareNative = typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (isAndroid || isIOS)
+  const isIOS =
+    /iphone|ipod|ipad/i.test(ua) ||
+    (/macintosh/i.test(ua) &&
+      typeof navigator.maxTouchPoints === 'number' &&
+      navigator.maxTouchPoints > 1)
+  const canShareNative =
+    typeof navigator !== 'undefined' &&
+    typeof navigator.share === 'function' &&
+    (isAndroid || isIOS)
 
   useEffect(() => {
     setIsMobileDevice(isAndroid || isIOS)
@@ -73,6 +81,17 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
   })
 
   const totalAmount = bookings.reduce((sum, b) => sum + Number(b.totalAmount || 0), 0)
+
+  // Si alguna reserva de la compra no está pagada, el ticket padre lo dice.
+  const isPaid =
+    bookings.length > 0 &&
+    bookings.every((b) =>
+      b.paymentStatus
+        ? b.paymentStatus === 'paid'
+        : b.paymentMethod
+        ? b.paymentMethod !== 'cash'
+        : true
+    )
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return ''
@@ -235,14 +254,19 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
                   </span>
                   <div className="relative">
                     {/* QR placeholder */}
-                    <div className="w-16 h-16 bg-white border-4 border-orange-600 p-1">
-                      <svg className="w-full h-full" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="256" height="256" fill="white"/>
-                        <rect x="32" y="32" width="64" height="64" fill="black"/>
-                        <rect x="160" y="32" width="64" height="64" fill="black"/>
-                        <rect x="32" y="160" width="64" height="64" fill="black"/>
-                        <rect x="80" y="80" width="96" height="96" fill="black"/>
-                        <rect x="104" y="104" width="48" height="48" fill="white"/>
+                    <div className="h-16 w-16 border-4 border-orange-600 bg-white p-1">
+                      <svg
+                        className="h-full w-full"
+                        viewBox="0 0 256 256"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <rect width="256" height="256" fill="white" />
+                        <rect x="32" y="32" width="64" height="64" fill="black" />
+                        <rect x="160" y="32" width="64" height="64" fill="black" />
+                        <rect x="32" y="160" width="64" height="64" fill="black" />
+                        <rect x="80" y="80" width="96" height="96" fill="black" />
+                        <rect x="104" y="104" width="48" height="48" fill="white" />
                       </svg>
                     </div>
                   </div>
@@ -259,15 +283,34 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
             </div>
           </div>
 
+          {/* Estado del pago */}
+          <div
+            className={`rounded-xl border p-3 text-center text-sm font-semibold ${
+              isPaid
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300'
+                : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300'
+            }`}
+          >
+            {isPaid
+              ? isEs
+                ? 'Journey pagado'
+                : 'Journey paid'
+              : isEs
+              ? 'Pago pendiente'
+              : 'Payment pending'}
+          </div>
+
           {/* Responsable */}
           <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-500/30 dark:bg-orange-500/10">
             <div className="flex items-center gap-3">
               <Users className="h-5 w-5 text-orange-600" />
               <div>
-                <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                   {isEs ? 'Responsable de la reserva' : 'Reservation Responsible'}
                 </p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{responsibleName}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {responsibleName}
+                </p>
                 {responsiblePhone && (
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">{responsiblePhone}</p>
                 )}
@@ -280,24 +323,30 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
 
           {/* Tabla de participantes */}
           <div className="space-y-2">
-            <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               {isEs ? 'Participantes y Reservas' : 'Participants and Bookings'}
             </p>
-            <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-900/50 overflow-x-auto">
-              <table className="w-full text-sm border-collapse">
+            <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-900/50">
+              <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-white/10">
+                  <tr className="border-b border-zinc-200 text-zinc-500 dark:border-white/10 dark:text-zinc-400">
                     <th className="py-2 px-3 text-left">{isEs ? 'Nombre' : 'Name'}</th>
                     <th className="py-2 px-3 text-left">{isEs ? 'Actividad' : 'Activity'}</th>
                     <th className="py-2 px-3 text-left">{isEs ? 'Fecha / Hora' : 'Date / Time'}</th>
-                    <th className="py-2 px-3 text-left">{isEs ? 'Código Ticket' : 'Ticket Code'}</th>
+                    <th className="py-2 px-3 text-left">
+                      {isEs ? 'Código Ticket' : 'Ticket Code'}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {allParticipants.map((p, idx) => (
-                    <tr key={idx} className="border-b border-zinc-100 dark:border-white/5 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20">
+                    <tr
+                      key={idx}
+                      className="border-b border-zinc-100 hover:bg-zinc-50/50 dark:border-white/5 dark:hover:bg-zinc-900/20"
+                    >
                       <td className="py-2 px-3 text-gray-900 dark:text-white">
-                        {p.name}{p.isResponsible ? ' ⭐' : ''}
+                        {p.name}
+                        {p.isResponsible ? ' ⭐' : ''}
                       </td>
                       <td className="py-2 px-3 text-gray-900 dark:text-white">
                         {p.experienceTitle}
@@ -305,7 +354,7 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
                       <td className="py-2 px-3 text-gray-900 dark:text-white">
                         {formatDate(p.date)} {p.time ? '· ' + p.time : ''}
                       </td>
-                      <td className="py-2 px-3 text-gray-900 dark:text-white font-mono text-xs">
+                      <td className="py-2 px-3 font-mono text-xs text-gray-900 dark:text-white">
                         {p.ticketCode}
                       </td>
                     </tr>
@@ -316,9 +365,9 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
           </div>
 
           {/* Total */}
-          <div className="flex items-center justify-between rounded-xl bg-gray-50 p-4 dark:bg-zinc-800/50 mt-4">
+          <div className="mt-4 flex items-center justify-between rounded-xl bg-gray-50 p-4 dark:bg-zinc-800/50">
             <div>
-              <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                 {isEs ? 'Total de la compra' : 'Purchase Total'}
               </p>
               <p className="text-sm font-bold text-gray-900 dark:text-white">
@@ -340,13 +389,30 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
           >
             {isGenerating === 'png' ? (
               <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
               </svg>
             ) : (
               <Download className="h-5 w-5" />
             )}
-            {isGenerating === 'png' ? isEs ? 'Generando...' : 'Generating...' : isEs ? 'Descargar PNG' : 'Download PNG'}
+            {isGenerating === 'png'
+              ? isEs
+                ? 'Generando...'
+                : 'Generating...'
+              : isEs
+              ? 'Descargar PNG'
+              : 'Download PNG'}
           </button>
 
           <button
@@ -356,13 +422,30 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
           >
             {isGenerating === 'pdf' ? (
               <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
               </svg>
             ) : (
               <FileText className="h-5 w-5" />
             )}
-            {isGenerating === 'pdf' ? isEs ? 'Generando...' : 'Generating...' : isEs ? 'Descargar PDF' : 'Download PDF'}
+            {isGenerating === 'pdf'
+              ? isEs
+                ? 'Generando...'
+                : 'Generating...'
+              : isEs
+              ? 'Descargar PDF'
+              : 'Download PDF'}
           </button>
 
           {isMobileDevice && (
@@ -373,13 +456,30 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
             >
               {isSharing ? (
                 <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
                 </svg>
               ) : (
                 <Share className="h-5 w-5" />
               )}
-              {isSharing ? isEs ? 'Compartiendo...' : 'Sharing...' : isEs ? 'Compartir todo' : 'Share All'}
+              {isSharing
+                ? isEs
+                  ? 'Compartiendo...'
+                  : 'Sharing...'
+                : isEs
+                ? 'Compartir todo'
+                : 'Share All'}
             </button>
           )}
 

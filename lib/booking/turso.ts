@@ -37,6 +37,10 @@ export interface CreateBookingInput {
   }>
   /** Si el pago ya está confirmado, la reserva nace pagada. */
   paid?: boolean
+  /** Nombres de las personas; si faltan, se usa customerName. */
+  participants?: Array<{ name: string }>
+  /** Posición (1-based) de quien responde por la reserva. */
+  responsiblePosition?: number
 }
 
 /** Referencia legible y corta: CDMX-7K3QF9 */
@@ -146,8 +150,7 @@ export async function createBookingInTurso(input: CreateBookingInput): Promise<C
     (Array.isArray(input.items)
       ? input.items.reduce(
           (sum, item) =>
-            sum +
-            (Number(item.unitPrice || 0) * Math.max(1, Number(item.peopleCount) || 1)),
+            sum + Number(item.unitPrice || 0) * Math.max(1, Number(item.peopleCount) || 1),
           0
         )
       : 0)
@@ -345,7 +348,7 @@ export async function findBookingTicketByCode(code: string) {
     sql: `SELECT p.id, p.booking_id, p.booking_reference, p.position,
                  p.participant_name, p.ticket_code, p.is_responsible,
                  b.start_date, b.start_time, b.guests, b.total_amount,
-                 b.currency, b.status, b.is_guest,
+                 b.currency, b.status, b.payment_status, b.is_guest,
                  e.title_es, e.title_en, e.location_es, e.location_en, e.image_url
           FROM booking_participants p
           JOIN bookings b ON b.id = p.booking_id
@@ -370,6 +373,7 @@ export async function findBookingTicketByCode(code: string) {
     totalAmount: Number(row.total_amount) || 0,
     currency: row.currency || 'MXN',
     status: row.status || 'confirmed',
+    paymentStatus: row.payment_status || 'unpaid',
     isGuest: Number(row.is_guest) === 1,
     experienceTitle: row.title_es || row.title_en || 'Experiencia',
     experienceTitleEn: row.title_en || row.title_es || 'Experience',
@@ -566,7 +570,12 @@ export async function demographicsForUser(userId: string): Promise<Demographics>
  * Se usa para agrupar varios bookings bajo un "ticket padre" (responsable).
  */
 export interface GroupedBooking extends TicketLookup {
-  participants: Array<{ position: number; participantName: string; ticketCode: string; isResponsible: boolean }>
+  participants: Array<{
+    position: number
+    participantName: string
+    ticketCode: string
+    isResponsible: boolean
+  }>
 }
 
 export async function findBookingsByCustomerGroup({

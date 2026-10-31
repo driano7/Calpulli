@@ -121,7 +121,7 @@ export function HeroSection() {
   )
 
   const renderScrollHint = (locale) => (
-    <span className="dark:text-white/45 inline-block whitespace-nowrap text-xs uppercase tracking-[0.22em] text-zinc-500">
+    <span className="inline-block whitespace-nowrap text-xs uppercase tracking-[0.22em] text-zinc-500 dark:text-white">
       {t('hero.scrollHint', locale)}
     </span>
   )
@@ -133,6 +133,17 @@ export function HeroSection() {
     >
       {/* Background with fluid WebGL waves (Atmospheric Shader Transition) */}
       <HeroMouseBackground />
+
+      {/* Contrast protection for headline + subtitle over the shader (dark mode).
+           Radial gradient behind the text only, soft edges, no card/box look,
+           never blocks clicks or text selection. */}
+      <div
+        className="z-5 pointer-events-none absolute inset-0 hidden dark:block"
+        style={{
+          backgroundImage:
+            'radial-gradient(70% 60% at 50% 45%, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.25) 40%, transparent 70%)',
+        }}
+      />
 
       {/* Main hero typography & content */}
       <div className="container relative z-10 mx-auto flex min-h-[calc(100dvh-5rem)] flex-col items-center justify-center px-6 py-20 text-center">
@@ -223,7 +234,7 @@ export function HeroSection() {
           blur={0}
           reduced={reduced}
         >
-          <span className="dark:text-white/45 inline-block whitespace-nowrap text-xs uppercase tracking-[0.22em] text-zinc-500">
+          <span className="inline-block whitespace-nowrap text-xs uppercase tracking-[0.22em] text-zinc-500 dark:text-white">
             {scrollHint}
           </span>
         </EditorialCrossfade>
@@ -231,7 +242,7 @@ export function HeroSection() {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 28 }}
           transition={{ delay: 0.8, duration: 0.8 }}
-          className="w-[1.5px] bg-gradient-to-b from-zinc-400/40 via-[#E4007C]/40 to-transparent dark:from-white/40"
+          className="w-[1.5px] bg-gradient-to-b from-zinc-400/40 via-[#E4007C]/40 to-transparent dark:from-white dark:via-white/60 dark:to-transparent"
         />
       </div>
     </section>

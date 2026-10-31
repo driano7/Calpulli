@@ -12,6 +12,7 @@ import {
   LUCHAS_DEFAULT_VARIANT,
   luchasMoments,
   luchasRouteStops,
+  luchasUpcomingShows,
 } from '@/data/journeys/luchas'
 import { journeyVars } from '@/lib/journeyTheme'
 import { ChapterNav } from './ChapterNav'
@@ -57,6 +58,7 @@ export function LuchasJourney() {
 
   const moments = useMemo(() => luchasMoments(variant.id), [variant.id])
   const stops = useMemo(() => luchasRouteStops(variant.id), [variant.id])
+  const upcoming = useMemo(() => luchasUpcomingShows(variant.id, 4), [variant.id])
 
   const chapters = useMemo(
     () =>
@@ -85,11 +87,11 @@ export function LuchasJourney() {
           subtitle={isEs ? journey.subtitle_es : journey.subtitle_en}
           eyebrow={isEs ? journey.eyebrow_es : journey.eyebrow_en}
           meta={[
-            variantLabel(
-              variant,
-              `${variant.nombre_es} · ${variant.funciones_es}`,
-              `${variant.nombre_en} · ${variant.funciones_en}`
-            ),
+            `${variantLabel(variant, variant.nombre_es, variant.nombre_en)} · ${
+              upcoming[0]
+                ? variantLabel(variant, upcoming[0].label_es, upcoming[0].label_en)
+                : variantLabel(variant, variant.funciones_es, variant.funciones_en)
+            }`,
           ]}
           image={journey.heroImage}
           imageAlt="Mural sobre la historia de la lucha libre en la Arena Mexico."
@@ -147,6 +149,7 @@ export function LuchasJourney() {
             {LUCHAS_VARIANTS.map((v, index) => {
               const active = v.id === variant.id
               const photo = journey.photos[v.foto]
+              const shows = luchasUpcomingShows(v.id, 3)
               return (
                 <Reveal key={v.id} delay={0.05 * index}>
                   <button
@@ -193,20 +196,33 @@ export function LuchasJourney() {
                             {isEs ? 'Funciones' : 'Shows'}:
                           </dt>
                           <dd className="flex flex-wrap gap-2">
-                            {variantLabel(v, v.funciones_es, v.funciones_en)
-                              .split(',')
-                              .map((parte, i) => (
-                                <span
-                                  key={i}
-                                  className="font-bold underline underline-offset-2"
-                                  style={{
-                                    color: TERRACOTA,
-                                    textDecorationColor: TERRACOTA,
-                                  }}
-                                >
-                                  {parte.trim()}
-                                </span>
-                              ))}
+                            {shows.length > 0
+                              ? shows.map((show) => (
+                                  <span
+                                    key={`${show.iso}-${show.time}`}
+                                    className="font-bold underline underline-offset-2"
+                                    style={{
+                                      color: TERRACOTA,
+                                      textDecorationColor: TERRACOTA,
+                                    }}
+                                  >
+                                    {variantLabel(v, show.label_es, show.label_en)}
+                                  </span>
+                                ))
+                              : variantLabel(v, v.funciones_es, v.funciones_en)
+                                  .split(',')
+                                  .map((parte, i) => (
+                                    <span
+                                      key={i}
+                                      className="font-bold underline underline-offset-2"
+                                      style={{
+                                        color: TERRACOTA,
+                                        textDecorationColor: TERRACOTA,
+                                      }}
+                                    >
+                                      {parte.trim()}
+                                    </span>
+                                  ))}
                           </dd>
                         </div>
                       </dl>
