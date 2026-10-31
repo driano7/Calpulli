@@ -13,6 +13,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { turso } from '@/lib/turso'
 import { trySend } from '@/lib/mail/service'
+import { runPartnerReports } from '@/lib/reports/cron'
 
 const MEXICO_TZ = 'America/Mexico_City'
 
@@ -106,7 +107,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     console.log(`⏰ Recordatorios ${tomorrow}: ${sent} enviados, ${skipped} sin correo`)
-    return res.status(200).json({ success: true, date: tomorrow, sent, skipped })
+
+    // Vercel Hobby permite 2 crons: este cron diario también dispara los
+    // reportes de socios/equipo. Un fallo en reportes no debe romper los
+    // recordatorios, así que se aísla en su propio try/catch.
+    let reports: Awaited<ReturnType<typeof runPartnerReports>> | { error: string }
+    try {
+      reports = await runPartnerReports({ now: new Date() })
+    } catch (reportError) {
+      console.error('Partner reports from reminders cron failed:', reportError)
+      reports = { error: 'No se pudieron generar los reportes' }
+    }
+
+    return res.status(200).json({ success: true, date: tomorrow, sent, skipped, reports })
   } catch (error) {
     console.error('Booking reminders cron failed:', error)
     return res.status(500).json({ error: 'No se pudieron enviar los recordatorios' })

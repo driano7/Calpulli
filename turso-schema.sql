@@ -487,6 +487,27 @@ CREATE TABLE IF NOT EXISTS email_templates (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Bitácora de reportes de socios/equipo. La unicidad por periodo y
+-- destinatario es la garantía de no enviar dos veces el mismo reporte.
+CREATE TABLE IF NOT EXISTS partner_report_log (
+  id TEXT PRIMARY KEY,
+  period_type TEXT NOT NULL CHECK (period_type IN ('daily', 'weekly', 'monthly')),
+  period_key TEXT NOT NULL,
+  recipient_email TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'employee')),
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'sent', 'failed', 'skipped')),
+  subject TEXT,
+  error TEXT,
+  provider_id TEXT,
+  generated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  sent_at TEXT,
+  UNIQUE (period_type, period_key, recipient_email)
+);
+
+CREATE INDEX IF NOT EXISTS idx_partner_report_period
+  ON partner_report_log (period_type, period_key, status);
+
 CREATE TABLE IF NOT EXISTS local_picks (
   id            TEXT PRIMARY KEY,
   slug          TEXT NOT NULL,

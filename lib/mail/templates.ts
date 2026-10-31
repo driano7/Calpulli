@@ -143,6 +143,20 @@ export const TEMPLATE_META: TemplateMeta[] = [
     description: 'Enlace temporal para restablecer la contraseña.',
     variables: ['firstName', 'resetUrl', 'expiresMinutes', 'lang'],
   },
+  {
+    key: 'partner_report',
+    label: 'Reporte de socios y equipo',
+    description: 'Reporte diario, semanal o mensual con datos reales de Turso.',
+    variables: [
+      'recipientName',
+      'audienceLabel',
+      'periodLabel',
+      'periodTypeLabel',
+      'sections',
+      'sectionsText',
+      'dashboardUrl',
+    ],
+  },
 ]
 
 export const TEMPLATE_KEYS = TEMPLATE_META.map((t) => t.key)
@@ -291,6 +305,25 @@ export const DEFAULT_TEMPLATES: Record<string, LocalizedTemplate> = {
       es: `Restablecer contraseña (expira en {{expiresMinutes}} min): {{resetUrl}}`,
       en: `Reset your password (expires in {{expiresMinutes}} min): {{resetUrl}}`,
     },
+  },
+  partner_report: {
+    subject: 'Reporte {{periodTypeLabel}} · {{periodLabel}}',
+    html: wrap(`
+      <h2 style="margin:0 0 4px;font-size:20px">Reporte {{periodTypeLabel}}</h2>
+      <p style="margin:0 0 20px;color:#78716c;font-size:13px">{{periodLabel}} · {{audienceLabel}}</p>
+      <p style="margin:0 0 20px;color:#57534e;line-height:1.7">Hola {{recipientName}}, este es el reporte de operación y ventas del periodo.</p>
+      {{sections}}
+      ${btn('{{dashboardUrl}}', 'Abrir panel')}
+      <p style="margin:18px 0 0;font-size:12px;color:#a8a29e">Reporte interno generado automáticamente con datos de Turso.</p>
+    `),
+    text: `Hola {{recipientName}}
+
+Reporte {{periodTypeLabel}} · {{periodLabel}}
+{{audienceLabel}}
+
+{{sectionsText}}
+
+Panel: {{dashboardUrl}}`,
   },
 }
 

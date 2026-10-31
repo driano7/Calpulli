@@ -12,6 +12,7 @@ import { ScanResultDisplay } from '@/components/ScanResultDisplay'
 import { type QrType } from '@/lib/qr/types'
 import { AdvancedMetricsPanel, PassiveAnalyticsPanel } from '@/components/analytics/SocioPanels'
 import { EmailTemplatesPanel } from '@/components/admin/EmailTemplatesPanel'
+import { PartnerReportsPanel } from '@/components/admin/PartnerReportsPanel'
 import { getLocalAnalytics, type AnalyticsEntry } from '@/lib/analytics/track'
 import { BRAND, getAdminConfig } from '@/lib/brand'
 import {
@@ -456,6 +457,8 @@ export default function AdminPanel() {
           {/* SOCIOS ONLY: Métricas ML + Analítica pasiva */}
           {me.role === 'admin' && me.permissions.canViewAdvancedMetrics && (
             <>
+              <PartnerReportsPanel isEs={isEs} />
+
               <motion.section
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -472,7 +475,7 @@ export default function AdminPanel() {
                       ? 'Segmentación de clientes, proyección de ingresos, demanda por tour y detección de anomalías. Exclusivo para socios.'
                       : 'Client segmentation, revenue projection, tour demand and anomaly detection. Partners only.'}
                   </p>
-                  <span className="bg-orange-500/15 mt-2 inline-block rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-orange-600 dark:text-orange-400">
+                  <span className="mt-2 inline-block rounded-full bg-orange-500/15 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-orange-600 dark:text-orange-400">
                     🔒 Solo socios
                   </span>
                 </div>
@@ -495,7 +498,7 @@ export default function AdminPanel() {
                       ? 'Visitas, dispositivos, navegadores y flujo del sitio. Recolectado automáticamente.'
                       : 'Visits, devices, browsers and site flow. Collected automatically.'}
                   </p>
-                  <span className="bg-blue-500/15 mt-2 inline-block rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
+                  <span className="mt-2 inline-block rounded-full bg-blue-500/15 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
                     🔒 Solo socios
                   </span>
                 </div>
