@@ -1379,7 +1379,7 @@ export default function CheckoutPage() {
             <div className="mb-6 w-full min-w-0 overflow-hidden rounded-2xl border border-orange-500/20 bg-orange-500/5 p-4 dark:border-orange-500/20 sm:p-6">
               <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
                 <Calendar className="h-5 w-5 text-orange-500" />
-                {t('checkout.schedule', 'Fecha y hora de tus experiencias')}
+                {t('checkout.schedule', 'Cuando deseas agendar con nosotros')}
               </h2>
               <p className="mb-4 text-xs text-zinc-500 dark:text-gray-400">
                 {locale === 'es'
