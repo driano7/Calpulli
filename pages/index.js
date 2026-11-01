@@ -59,8 +59,8 @@ export default function Home() {
             </h2>
             <p className="mb-6 text-gray-600 dark:text-gray-300">
               {isEn
-                ? 'What’s happening this month in Mexico City: seasonal events, openings, pop-ups and things to do right now.'
-                : 'Lo que pasa este mes en la CDMX: eventos de temporada, aperturas, pop-ups y cosas que hacer ahora mismo.'}
+                ? 'What’s happening this month in Mexico City: seasonal events, new openings and things to do right now.'
+                : 'Lo que pasa este mes en la CDMX: eventos de temporada, nuevas aperturas y cosas que hacer ahora mismo.'}
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
