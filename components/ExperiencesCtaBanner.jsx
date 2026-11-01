@@ -39,10 +39,58 @@ export default function ExperiencesCtaBanner() {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4">
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200/50 bg-gradient-to-br from-slate-900/70 via-slate-800/70 to-slate-900/70 p-8 shadow-xl backdrop-blur-md dark:border-slate-800/50 md:p-10">
-        {/* subtle glow */}
-        <div className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 rounded-full bg-orange-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -left-10 -bottom-10 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl" />
+      <div
+        className="relative overflow-hidden rounded-3xl border border-slate-200/50 p-8 shadow-2xl backdrop-blur-md dark:border-slate-800/50 md:p-10"
+        style={{
+          background: 'linear-gradient(135deg, #064e3b 0%, #1e1b4b 35%, #064e3b 60%, #1e1b4b 100%)',
+          backgroundSize: '200% 200%',
+          animation: 'gradientMove 8s ease infinite',
+        }}
+      >
+        {/* Animated shader-like glow orbs */}
+        <div className="pointer-events-none absolute -right-14 -top-14 h-72 w-72 animate-pulse rounded-full bg-emerald-500/25 blur-[120px]" />
+        <div className="pointer-events-none absolute -left-14 -bottom-14 h-72 w-72 animate-[orbit_10s_ease-in-out_infinite] rounded-full bg-violet-500/25 blur-[120px]" />
+        <div className="pointer-events-none absolute top-1/3 left-1/4 h-48 w-48 animate-[float_6s_ease-in-out_infinite] rounded-full bg-emerald-400/15 blur-[80px]" />
+        <div className="animate-[float_8s_ease-in-out_infinite reverse] pointer-events-none absolute bottom-1/4 right-1/3 h-48 w-48 rounded-full bg-violet-400/15 blur-[80px]" />
+
+        <style jsx>{`
+          @keyframes gradientMove {
+            0% {
+              background-position: 0% 50%;
+            }
+            50% {
+              background-position: 100% 50%;
+            }
+            100% {
+              background-position: 0% 50%;
+            }
+          }
+          @keyframes orbit {
+            0% {
+              transform: translate(0, 0) scale(1);
+            }
+            33% {
+              transform: translate(20px, -30px) scale(1.1);
+            }
+            66% {
+              transform: translate(-20px, 30px) scale(0.9);
+            }
+            100% {
+              transform: translate(0, 0) scale(1);
+            }
+          }
+          @keyframes float {
+            0% {
+              transform: translateY(0);
+            }
+            50% {
+              transform: translateY(-15px);
+            }
+            100% {
+              transform: translateY(0);
+            }
+          }
+        `}</style>
 
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">

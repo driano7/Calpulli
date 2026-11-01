@@ -46,28 +46,28 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Local Picks chip — acceso rápido a recomendaciones del mes */}
+          {/* Local Picks chip — actividades del mes */}
           <div className="mb-8 rounded-xl border border-amber-500/20 bg-amber-500/10 p-8 dark:border-amber-500/20 dark:bg-amber-500/5">
             <div className="mb-2 flex items-center gap-2 text-amber-600 dark:text-amber-400">
-              <span className="text-2xl">★</span>
+              <span className="text-2xl">📅</span>
               <span className="text-xs font-bold uppercase tracking-widest">
-                {isEn ? 'Local Picks' : 'Selección Local'}
+                {isEn ? 'Activities of the Month' : 'Actividades del Mes'}
               </span>
             </div>
             <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">
-              {isEn ? 'Local Picks — This Month in CDMX' : 'Selección Local — Este Mes en CDMX'}
+              {isEn ? 'Activities of the Month in CDMX' : 'Actividades del Mes en CDMX'}
             </h2>
             <p className="mb-6 text-gray-600 dark:text-gray-300">
               {isEn
-                ? 'Monthly local guide for visitors staying 2-7 days. New openings, seasonal events and hidden gems curated by chilangos.'
-                : 'Guía local mensual para visitantes de 2 a 7 días. Nuevas aperturas, eventos de temporada y joyas ocultas curadas por chilangos.'}
+                ? 'What’s happening this month in Mexico City: seasonal events, openings, pop-ups and things to do right now.'
+                : 'Lo que pasa este mes en la CDMX: eventos de temporada, aperturas, pop-ups y cosas que hacer ahora mismo.'}
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
                 href="/local"
                 className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/20 px-6 py-2 font-medium text-amber-600 backdrop-blur-sm transition-all duration-300 hover:bg-amber-500 hover:text-white dark:text-amber-400"
               >
-                {isEn ? 'View Local Picks' : 'Ver Selección Local'}
+                {isEn ? 'See This Month’s Activities' : 'Ver Actividades del Mes'}
               </Link>
             </div>
           </div>
