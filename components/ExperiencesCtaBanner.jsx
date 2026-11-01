@@ -113,12 +113,7 @@ export default function ExperiencesCtaBanner() {
               className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-sm font-bold text-slate-900 shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95"
             >
               {content.cta}
-              <span className="relative inline-block">
-                <ArrowRight className="h-4 w-4 font-bold" />
-                <ArrowRight className="-ml-1 h-4 w-4 font-bold" />
-                <ArrowRight className="-ml-1 h-4 w-4 font-bold" />
-                <ArrowRight className="-ml-1 h-4 w-4 font-bold" />
-              </span>
+              <ArrowRight className="h-4 w-4 font-bold" />
             </Link>
             <a
               href={content.whatsappHref}
