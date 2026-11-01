@@ -103,7 +103,7 @@ export default function Home() {
             <ExperiencesCtaBanner />
           </div>
 
-          {/* Local Picks chip — acceso al final de la lista */}
+          {/* Local Picks chip — recomendaciones de locales */}
           <div className="mb-8 rounded-xl border border-amber-500/20 bg-amber-500/10 p-8 dark:border-amber-500/20 dark:bg-amber-500/5">
             <div className="mb-2 flex items-center gap-2 text-amber-600 dark:text-amber-400">
               <span className="text-2xl">★</span>
@@ -112,12 +112,14 @@ export default function Home() {
               </span>
             </div>
             <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">
-              {isEn ? 'Local Picks — This Month in CDMX' : 'Selección Local — Este Mes en CDMX'}
+              {isEn
+                ? 'Local Picks — Recommendations from Locals'
+                : 'Selección Local — Recomendaciones de Chilangos'}
             </h2>
             <p className="mb-6 text-gray-600 dark:text-gray-300">
               {isEn
-                ? 'Monthly local guide for visitors staying 2-7 days. New openings, seasonal events and hidden gems curated by chilangos.'
-                : 'Guía local mensual para visitantes de 2 a 7 días. Nuevas aperturas, eventos de temporada y joyas ocultas curadas por chilangos.'}
+                ? 'Real recommendations from people who live here. Ideal for visitors staying 2-7 days.'
+                : 'Recomendaciones reales de quienes viven aquí. Ideal para visitantes de 2 a 7 días.'}
             </p>
             <div className="flex flex-wrap gap-4">
               <Link

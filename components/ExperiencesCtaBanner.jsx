@@ -14,26 +14,24 @@ export default function ExperiencesCtaBanner() {
     es: {
       badge: 'Tours & Experiencias',
       title: '¿Listo para vivir la ciudad en persona?',
-      titleAlt: '¿No encuentras la experiencia que buscabas?',
       description:
         'Explora nuestras experiencias inmersivas, rutas gastronómicas de barrio y tours privados guiados en la CDMX.',
-      cta: 'Explorar Experiencias →',
-      ctaHref: '/experiences',
-      secondary: 'Tour a la medida',
-      secondaryHref:
-        'https://wa.me/525512291607?text=Hola%20Amaxing%2C%20quiero%20un%20tour%20a%20la%20medida',
+      cta: 'Explorar Journeys →→',
+      ctaHref: '/journeys',
+      whatsapp: 'Preguntas, acércate a nosotros',
+      whatsappHref:
+        'https://wa.me/525512291607?text=Hola%20Amaxing%2C%20tengo%20preguntas%20sobre%20sus%20tours',
     },
     en: {
       badge: 'Tours & Experiences',
       title: 'Ready to experience the city in person?',
-      titleAlt: "Can't find the experience you're looking for?",
       description:
         'Explore our immersive experiences, neighborhood food routes and private guided tours in CDMX.',
-      cta: 'Explore Experiences →',
-      ctaHref: '/experiences',
-      secondary: 'Custom tour',
-      secondaryHref:
-        'https://wa.me/525512291607?text=Hello%20Amaxing%2C%20I%20want%20a%20custom%20tour',
+      cta: 'Explore Journeys →→',
+      ctaHref: '/journeys',
+      whatsapp: 'Questions, get in touch with us',
+      whatsappHref:
+        'https://wa.me/525512291607?text=Hello%20Amaxing%2C%20I%20have%20questions%20about%20your%20tours',
     },
   }[lang]
 
@@ -47,11 +45,11 @@ export default function ExperiencesCtaBanner() {
           animation: 'gradientMove 8s ease infinite',
         }}
       >
-        {/* Animated shader-like glow orbs */}
-        <div className="pointer-events-none absolute -right-14 -top-14 h-72 w-72 animate-pulse rounded-full bg-emerald-500/25 blur-[120px]" />
-        <div className="pointer-events-none absolute -left-14 -bottom-14 h-72 w-72 animate-[orbit_10s_ease-in-out_infinite] rounded-full bg-violet-500/25 blur-[120px]" />
-        <div className="pointer-events-none absolute top-1/3 left-1/4 h-48 w-48 animate-[float_6s_ease-in-out_infinite] rounded-full bg-emerald-400/15 blur-[80px]" />
-        <div className="animate-[float_8s_ease-in-out_infinite reverse] pointer-events-none absolute bottom-1/4 right-1/3 h-48 w-48 rounded-full bg-violet-400/15 blur-[80px]" />
+        {/* Wave-like background orbs, similar to hero shader */}
+        <div className="pointer-events-none absolute -right-20 -top-20 h-96 w-96 animate-pulse rounded-full bg-emerald-500/20 blur-[140px]" />
+        <div className="pointer-events-none absolute -left-20 -bottom-20 h-96 w-96 animate-[orbit_12s_ease-in-out_infinite] rounded-full bg-violet-500/20 blur-[140px]" />
+        <div className="left-1/5 pointer-events-none absolute top-1/4 h-64 w-64 animate-[float_7s_ease-in-out_infinite] rounded-full bg-emerald-400/15 blur-[100px]" />
+        <div className="bottom-1/5 animate-[float_9s_ease-in-out_infinite reverse] pointer-events-none absolute right-1/4 h-64 w-64 rounded-full bg-violet-400/15 blur-[100px]" />
 
         <style jsx>{`
           @keyframes gradientMove {
@@ -70,10 +68,10 @@ export default function ExperiencesCtaBanner() {
               transform: translate(0, 0) scale(1);
             }
             33% {
-              transform: translate(20px, -30px) scale(1.1);
+              transform: translate(25px, -35px) scale(1.15);
             }
             66% {
-              transform: translate(-20px, 30px) scale(0.9);
+              transform: translate(-25px, 35px) scale(0.85);
             }
             100% {
               transform: translate(0, 0) scale(1);
@@ -84,7 +82,7 @@ export default function ExperiencesCtaBanner() {
               transform: translateY(0);
             }
             50% {
-              transform: translateY(-15px);
+              transform: translateY(-18px);
             }
             100% {
               transform: translateY(0);
@@ -107,22 +105,25 @@ export default function ExperiencesCtaBanner() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
+          <div className="flex flex-col items-end gap-3 sm:flex-row lg:flex-col xl:flex-row">
             <Link
               href={content.ctaHref}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-900 shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-slate-900 shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95"
             >
               {content.cta}
-              <ArrowRight className="h-4 w-4" />
+              <span className="relative inline-block">
+                <ArrowRight className="h-4 w-4 font-bold" />
+                <ArrowRight className="-ml-1 h-4 w-4 font-bold" />
+              </span>
             </Link>
             <a
-              href={content.secondaryHref}
+              href={content.whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur transition-all hover:scale-105 hover:bg-white/20 active:scale-95"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-7 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:bg-[#1eb253] hover:shadow-xl active:scale-95"
             >
-              <MessageCircle className="h-4 w-4" />
-              {content.secondary}
+              <MessageCircle className="h-4 w-4 text-[#1eb253]" />
+              {content.whatsapp}
             </a>
           </div>
         </div>

@@ -79,7 +79,7 @@ function pad2(value: number): string {
   return String(value).padStart(2, '0')
 }
 
-function parseDateParts(date: string): { year: number; month: number; day: number } {
+export function parseDateParts(date: string): { year: number; month: number; day: number } {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date)
   if (!match) throw new Error(`Fecha inválida: ${date}`)
   return { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) }
