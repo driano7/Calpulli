@@ -17,6 +17,7 @@ import {
   Trash2,
   Plus,
   X,
+  Calendar,
 } from 'lucide-react'
 import { useCartStore } from '@/lib/store/useCartStore'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -1323,14 +1324,6 @@ export default function CheckoutPage() {
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
-
-                    <div className="mt-3 w-full">
-                      <JourneyDateTimePicker
-                        item={item}
-                        onChange={(date, time) => updateItem(item.lineId, { date, time })}
-                        locale={locale}
-                      />
-                    </div>
                   </div>
                 ))}
               </div>
@@ -1379,6 +1372,57 @@ export default function CheckoutPage() {
                   <Plus className="h-3 w-3" />
                   {locale === 'es' ? 'Agregar más journeys' : 'Add more journeys'}
                 </button>
+              </div>
+            </div>
+
+            {/* Fecha y hora de tus experiencias */}
+            <div className="mb-6 w-full min-w-0 overflow-hidden rounded-2xl border border-orange-500/20 bg-orange-500/5 p-4 dark:border-orange-500/20 sm:p-6">
+              <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
+                <Calendar className="h-5 w-5 text-orange-500" />
+                {t('checkout.schedule', 'Fecha y hora de tus experiencias')}
+              </h2>
+              <p className="mb-4 text-xs text-zinc-500 dark:text-gray-400">
+                {locale === 'es'
+                  ? 'Elige día y hora para cada tour antes de continuar.'
+                  : 'Choose date and time for every experience before continuing.'}
+              </p>
+              <div className="space-y-3">
+                {items.map((item) => (
+                  <div
+                    key={item.lineId}
+                    className="flex items-center justify-between gap-2 overflow-hidden rounded-xl bg-white/20 p-3 backdrop-blur-sm dark:bg-white/5"
+                  >
+                    <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+                      <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg">
+                        <Image
+                          src={item.imageUrl || '/static/images/jaguarBaja.png'}
+                          alt={item.title}
+                          fill
+                          sizes="40px"
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        <p className="truncate text-sm font-semibold text-gray-900 dark:text-white sm:text-base">
+                          {item.title}
+                        </p>
+                        <p className="text-xs text-zinc-500 dark:text-gray-400">
+                          {item.date || '—'} • {item.time || '--'} • {item.peopleCount}{' '}
+                          {item.peopleCount === 1
+                            ? t('checkout.person', 'persona')
+                            : t('checkout.persons', 'personas')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-0 w-full">
+                      <JourneyDateTimePicker
+                        item={item}
+                        onChange={(date, time) => updateItem(item.lineId, { date, time })}
+                        locale={locale}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -1455,9 +1499,14 @@ export default function CheckoutPage() {
                           type="tel"
                           inputMode="tel"
                           autoComplete="tel"
-                          placeholder="55 1234 5678"
+                          placeholder="5512345678"
+                          maxLength={10}
+                          pattern="[0-9]*"
                           value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 10)
+                            setPhoneNumber(value)
+                          }}
                           className="flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-orange-500 focus:outline-none dark:border-white/10 dark:bg-zinc-900 dark:text-white"
                         />
                       </div>
@@ -1509,6 +1558,7 @@ export default function CheckoutPage() {
                       if (
                         !allNamesValid ||
                         (isGuest && !emailOk) ||
+                        (isGuest && phoneNumber.replace(/\D/g, '').length !== 10) ||
                         items.some((it) => !it.date || !it.time)
                       ) {
                         if (isGuest && !emailOk) setGuestEmailTouched(true)
@@ -1521,6 +1571,10 @@ export default function CheckoutPage() {
                             ? locale === 'es'
                               ? 'Ingresa tu email'
                               : 'Enter your email'
+                            : isGuest && phoneNumber.replace(/\D/g, '').length !== 10
+                            ? locale === 'es'
+                              ? 'El celular debe tener 10 dígitos y solo números'
+                              : 'Phone number must be 10 digits and numbers only'
                             : locale === 'es'
                             ? 'Selecciona fecha y hora para cada tour'
                             : 'Select date and time for every tour'
