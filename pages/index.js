@@ -10,7 +10,6 @@ import { HeroPhoneWalletScroll } from '@/components/PhoneWalletShowcase'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 
 import ExperiencesCtaBanner from '@/components/ExperiencesCtaBanner'
-import { LocalPicksMonthly } from '@/components/local-picks/LocalPicksMonthly'
 
 export default function Home() {
   const { currentLanguage } = useLanguage()
@@ -47,8 +46,31 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Local Picks Preview — recomendaciones del mes */}
-          <LocalPicksMonthly className="mb-8" />
+          {/* Local Picks chip — acceso rápido a recomendaciones del mes */}
+          <div className="mb-8 rounded-xl border border-amber-500/20 bg-amber-500/10 p-8 dark:border-amber-500/20 dark:bg-amber-500/5">
+            <div className="mb-2 flex items-center gap-2 text-amber-600 dark:text-amber-400">
+              <span className="text-2xl">★</span>
+              <span className="text-xs font-bold uppercase tracking-widest">
+                {isEn ? 'Local Picks' : 'Selección Local'}
+              </span>
+            </div>
+            <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">
+              {isEn ? 'Local Picks — This Month in CDMX' : 'Selección Local — Este Mes en CDMX'}
+            </h2>
+            <p className="mb-6 text-gray-600 dark:text-gray-300">
+              {isEn
+                ? 'Monthly local guide for visitors staying 2-7 days. New openings, seasonal events and hidden gems curated by chilangos.'
+                : 'Guía local mensual para visitantes de 2 a 7 días. Nuevas aperturas, eventos de temporada y joyas ocultas curadas por chilangos.'}
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                href="/local"
+                className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/20 px-6 py-2 font-medium text-amber-600 backdrop-blur-sm transition-all duration-300 hover:bg-amber-500 hover:text-white dark:text-amber-400"
+              >
+                {isEn ? 'View Local Picks' : 'Ver Selección Local'}
+              </Link>
+            </div>
+          </div>
 
           {/* Maps Preview — similar UI */}
           <div className="mb-8 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-8 dark:border-emerald-500/20 dark:bg-emerald-500/5">
@@ -79,6 +101,32 @@ export default function Home() {
           {/* CTA Banner Experiences — entre mapas y selección local */}
           <div className="mb-8">
             <ExperiencesCtaBanner />
+          </div>
+
+          {/* Local Picks chip — acceso al final de la lista */}
+          <div className="mb-8 rounded-xl border border-amber-500/20 bg-amber-500/10 p-8 dark:border-amber-500/20 dark:bg-amber-500/5">
+            <div className="mb-2 flex items-center gap-2 text-amber-600 dark:text-amber-400">
+              <span className="text-2xl">★</span>
+              <span className="text-xs font-bold uppercase tracking-widest">
+                {isEn ? 'Local Picks' : 'Selección Local'}
+              </span>
+            </div>
+            <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">
+              {isEn ? 'Local Picks — This Month in CDMX' : 'Selección Local — Este Mes en CDMX'}
+            </h2>
+            <p className="mb-6 text-gray-600 dark:text-gray-300">
+              {isEn
+                ? 'Monthly local guide for visitors staying 2-7 days. New openings, seasonal events and hidden gems curated by chilangos.'
+                : 'Guía local mensual para visitantes de 2 a 7 días. Nuevas aperturas, eventos de temporada y joyas ocultas curadas por chilangos.'}
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                href="/local"
+                className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/20 px-6 py-2 font-medium text-amber-600 backdrop-blur-sm transition-all duration-300 hover:bg-amber-500 hover:text-white dark:text-amber-400"
+              >
+                {isEn ? 'View Local Picks' : 'Ver Selección Local'}
+              </Link>
+            </div>
           </div>
         </div>
 

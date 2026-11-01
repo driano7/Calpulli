@@ -249,9 +249,21 @@ export function resolvePeriod(type: ReportPeriodType, now: Date = new Date()): R
   }
 
   const { year, month } = parseDateParts(today)
-  const previousMonth = new Date(Date.UTC(year, month - 2, 1))
-  const start = dateFromParts(previousMonth.getUTCFullYear(), previousMonth.getUTCMonth() + 1, 1)
-  const end = addDays(dateFromParts(year, month, 1), -1)
+
+  // Último día del mes: cierra el mes actual (no el anterior).
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate()
+  const isMonthEnd = Number(today.slice(8, 10)) === lastDay
+
+  let start: string
+  let end: string
+  if (isMonthEnd) {
+    start = `${year}-${pad2(month)}-01`
+    end = today
+  } else {
+    const previousMonth = new Date(Date.UTC(year, month - 2, 1))
+    start = dateFromParts(previousMonth.getUTCFullYear(), previousMonth.getUTCMonth() + 1, 1)
+    end = addDays(dateFromParts(year, month, 1), -1)
+  }
   return buildPeriod(type, start, end, `${start.slice(0, 7)}`)
 }
 

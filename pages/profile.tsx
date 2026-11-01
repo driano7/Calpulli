@@ -52,8 +52,13 @@ import {
   Camera,
   QrCode,
   Search,
+  Mail,
+  Plus,
+  AlertCircle,
+  Check,
 } from 'lucide-react'
 import { CoffeeBackground } from '@/components/CoffeeBackground'
+import { cn } from '@/lib/utils'
 import { GrecaOjoFelino } from '@/components/moodboard/Icons'
 import {
   SequentialBarChart,
@@ -170,6 +175,25 @@ export default function Profile() {
   )
 
   const [role, setRole] = useState<'admin' | 'employee' | 'client' | null>(null)
+
+  // Lista de distribución de reportes (solo admin)
+  const [distribution, setDistribution] = useState<
+    {
+      id: string
+      email: string
+      role: string
+      isActive: boolean
+      addedBy: string | null
+      createdAt: string | null
+      updatedAt: string | null
+    }[]
+  >([])
+  const [distNewEmail, setDistNewEmail] = useState('')
+  const [distNewRole, setDistNewRole] = useState<'admin' | 'employee'>('employee')
+  const [distLoading, setDistLoading] = useState(false)
+  const [distNotice, setDistNotice] = useState<string | null>(null)
+  const [distError, setDistError] = useState<string | null>(null)
+
   const [form, setForm] = useState<ProfileData>({
     firstName: '',
     lastName: '',
@@ -200,6 +224,98 @@ export default function Profile() {
       })
       .catch(() => setRole('client'))
   }, [user?.email])
+
+  // ── Lista de distribución de reportes (solo admin) ──
+  const fetchDistribution = useCallback(async () => {
+    if (role !== 'admin') return
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
+    if (!token) return
+    try {
+      setDistLoading(true)
+      setDistError(null)
+      const res = await fetch('/api/admin/report-distribution', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('No se pudo cargar la lista de distribución')
+      const data = await res.json()
+      setDistribution(data.distribution || [])
+    } catch (e) {
+      setDistError(e instanceof Error ? e.message : 'Error cargando distribución')
+    } finally {
+      setDistLoading(false)
+    }
+  }, [role])
+
+  const addDistribution = useCallback(async () => {
+    const email = distNewEmail.trim()
+    if (!email || !email.includes('@')) {
+      setDistError('Ingresa un email válido')
+      return
+    }
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
+    if (!token) return
+    try {
+      setDistLoading(true)
+      setDistError(null)
+      setDistNotice(null)
+      const res = await fetch('/api/admin/report-distribution', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email, role: distNewRole }),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error(d.error || 'No se pudo agregar el email')
+      }
+      setDistNewEmail('')
+      setDistNotice(`Email agregado: ${email}`)
+      await fetchDistribution()
+    } catch (e) {
+      setDistError(e instanceof Error ? e.message : 'Error agregando email')
+    } finally {
+      setDistLoading(false)
+    }
+  }, [distNewEmail, distNewRole, fetchDistribution])
+
+  const removeDistribution = useCallback(
+    async (email: string) => {
+      if (
+        !window.confirm(
+          isEs ? `¿Eliminar ${email} de la distribución?` : `Remove ${email} from distribution?`
+        )
+      )
+        return
+      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
+      if (!token) return
+      try {
+        setDistLoading(true)
+        setDistError(null)
+        const res = await fetch('/api/admin/report-distribution', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ email }),
+        })
+        if (!res.ok) throw new Error('No se pudo eliminar el email')
+        setDistNotice(`Email eliminado: ${email}`)
+        await fetchDistribution()
+      } catch (e) {
+        setDistError(e instanceof Error ? e.message : 'Error eliminando email')
+      } finally {
+        setDistLoading(false)
+      }
+    },
+    [isEs, fetchDistribution]
+  )
+
+  useEffect(() => {
+    void fetchDistribution()
+  }, [fetchDistribution])
 
   const fetchBookings = useCallback(async () => {
     setIsLoadingBookings(true)

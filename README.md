@@ -10,7 +10,7 @@ Plataforma de turismo local para descubrir la CDMX como un chilango: tours gastr
 | **Journeys**           | Caminatas editoriales culturales (Lucha Libre, Centro Histórico, Chapultepec, Roma-Condesa, Jamaica, Antropología) para leer y recorrer a tu ritmo. No se reservan: son contenido para disfrutar. |
 | **Guías interactivas** | Recorridos autoguiados con mapa y audio: Condesa, Centro, Chapultepec, Chimalistac, UNAM.                                                                                                         |
 | **Mapas de la ciudad** | 5 mapas curados: comida tradicional, zonas con precaución, vida nocturna, joyas escondidas y top atracciones.                                                                                     |
-| **Local Picks**        | Guía mensual curada por chilangos con 3 festividades fijadas todo el año (Año Nuevo, 16 de Septiembre, Día de Muertos) y 6 recomendaciones que rotan cada mes.                                    |
+| **Local Picks**        | Guía mensual curada por chilangos con 3 festividades fijadas todo el año (Año Nuevo, 16 de Septiembre, Día de Muertos) y 8 recomendaciones que rotan cada mes (generadas el día 1 de cada mes).   |
 | **Blog de emergencia** | Teléfonos de emergencia (911, Policía Turística +52 55 4891 1116, Protección Civil), qué hacer en caso de sismo, zonas con precaución y dónde encontrar a la Policía Turística.                   |
 | **Reservas**           | Reserva tours y experiencias con tarjeta (Stripe), efectivo o cripto. Recibe tu ticket con QR por email o descárgalo. Puedes pagar como invitado sin crear cuenta.                                |
 | **Mi perfil**          | Ve tus reservas, descarga tickets con QR, edita tu perfil y gestiona tu seguridad y datos (GDPR).                                                                                                 |
@@ -26,7 +26,7 @@ Plataforma de turismo local para descubrir la CDMX como un chilango: tours gastr
 
 ## Para desarrolladores
 
-El sitio usa Next.js 12, React 17, Tailwind CSS y Framer Motion. Los datos de tours y journeys viven en `data/`. Las reservas se guardan en Turso/Supabase. Las noticias y local picks se generan mensualmente con OpenRouter.
+El sitio usa Next.js 12, React 17, Tailwind CSS y Framer Motion. Los datos de tours y journeys viven en `data/`. Las reservas se guardan en Turso/Supabase. Las noticias y local picks (8 actividades/mes) se generan el día 1 de cada mes con OpenRouter. Los reportes de socios (diarios/semanales/mensuales) se envían mediante cron diario con Brevo y su lista de distribución se gestiona desde `/profile` (solo admin).
 
 ```bash
 npm run dev      # servidor de desarrollo

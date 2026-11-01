@@ -5,7 +5,13 @@
 // de recordatorios también dispara los reportes. El endpoint dedicado sigue
 // existiendo para pruebas manuales y para planes que permitan más crons.
 
-import { isReportPeriodType, localDateString, resolvePeriod, type ReportPeriodType } from './period'
+import {
+  isReportPeriodType,
+  localDateString,
+  parseDateParts,
+  resolvePeriod,
+  type ReportPeriodType,
+} from './period'
 import { resolveReportRecipients } from './recipients'
 import { reportsEnabled, sendPartnerReports, summarizeResults } from './send'
 
@@ -15,14 +21,20 @@ export interface PartnerReportRun {
   reports: Record<string, unknown>
 }
 
+function isLastDayOfMonth(dateStr: string): boolean {
+  const { year, month } = parseDateParts(dateStr)
+  // Último día del mes: día 0 del mes siguiente (retrocede un día)
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate()
+  return Number(dateStr.slice(8, 10)) === lastDay
+}
+
 export function dueReportTypes(now: Date = new Date()): ReportPeriodType[] {
   const today = localDateString(now)
   const weekday = new Date(`${today}T12:00:00Z`).getUTCDay()
-  const dayOfMonth = Number(today.slice(8, 10))
 
   const types: ReportPeriodType[] = ['daily']
   if (weekday === 1) types.push('weekly')
-  if (dayOfMonth === 1) types.push('monthly')
+  if (isLastDayOfMonth(today)) types.push('monthly')
   return types
 }
 

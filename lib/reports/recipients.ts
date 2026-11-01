@@ -89,6 +89,25 @@ export async function resolveReportRecipients(): Promise<ReportRecipient[]> {
     console.error('[reports] no se pudo leer users.role:', error)
   }
 
+  // Lista de distribución adicional gestionada desde /profile (solo admin).
+  try {
+    const result = await turso.execute({
+      sql: `SELECT email, role, is_active
+            FROM report_distribution_list
+            WHERE is_active = 1`,
+      args: [],
+    })
+
+    for (const raw of result.rows) {
+      const row: any = raw
+      const email = row.email
+      if (!email || !email.includes('@')) continue
+      add(email, row.role === 'admin' ? 'admin' : 'employee', null, null)
+    }
+  } catch (error) {
+    console.error('[reports] no se pudo leer report_distribution_list:', error)
+  }
+
   return [...byEmail.values()].sort((a, b) => {
     if (a.role !== b.role) return a.role === 'admin' ? -1 : 1
     return a.email.localeCompare(b.email)
