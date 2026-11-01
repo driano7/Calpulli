@@ -1,15 +1,12 @@
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
 /**
- * Genera los 3 Local Picks que rotan cada mes, con OpenRouter.
+ * Genera los 8 Local Picks que rotan cada mes, con OpenRouter.
  *
  *   node scripts/generate-local-picks.mjs [YYYY-MM]
  *
- * Los 3 fijados (Año Nuevo, 16 de Septiembre, Día de Muertos) NO se tocan:
- * viven en data/local-picks/fiesta-*.mdx y estan siempre.
- *
- * El generador escribe un archivo por pick y por idioma, descarga una foto
- * iconicica para cada uno, y poda los meses viejos que ya no salen en el
- * listado (el listado muestra 6 rotados: el mes actual y el anterior).
+ * El generador escribe un archivo por pick y por idioma (8 picks x 2 idiomas
+ * = 16 archivos + guía mensual), descarga una foto iconica de Unsplash para
+ * cada uno, y poda los meses viejos que ya no salen en el listado.
  */
 import { generateLocalPicks } from '../lib/localPicks/generator.js'
 

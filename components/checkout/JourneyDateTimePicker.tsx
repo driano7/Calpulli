@@ -5,8 +5,12 @@
 // UI "liquid glass" de lujo con Framer Motion, colores terracota / cempasuchil,
 // y las reglas de negocio de Xoco Café:
 //   - mínimo 3 días de anticipación
-//   - máximo 2 meses de anticipación
+//   - máximo 2 meses de anticipación (excepto luchas: 1 semana)
 //   - horarios de 09:00 a 19:00, de una hora en una hora.
+//
+// Para luchas: se puede pasar `dateTimeMap` (Record<fecha, hora>) para que el
+// calendario solo habilite las fechas del scraper, la hora se fija a 2 horas
+// antes de la función, y el alcance se limita a 1 semana.
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, Clock, ChevronDown, Check } from 'lucide-react'
@@ -28,11 +32,19 @@ interface JourneyDateTimePickerProps {
   }
   onChange: (lineId: string, date: string | null, time: string | null) => void
   locale: string
+  /** Luchas: mapa de fecha (YYYY-MM-DD) -> hora (HH:MM) permitida. Si se pasa,
+   * el calendario solo habilita esas fechas y la hora se fija automáticamente. */
+  dateTimeMap?: Record<string, string>
 }
 
 const TIME_SLOTS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 
-export function JourneyDateTimePicker({ item, onChange, locale }: JourneyDateTimePickerProps) {
+export function JourneyDateTimePicker({
+  item,
+  onChange,
+  locale,
+  dateTimeMap,
+}: JourneyDateTimePickerProps) {
   const { currentLanguage } = useLanguage()
   const isEs = locale === 'es' || currentLanguage === 'es'
   const dateLocale = isEs ? es : enUS
@@ -41,15 +53,30 @@ export function JourneyDateTimePicker({ item, onChange, locale }: JourneyDateTim
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     item.date ? new Date(`${item.date}T12:00:00`) : undefined
   )
-  const [selectedTime, setSelectedTime] = useState<string>(item.time || '09:00')
+  const defaultTime = dateTimeMap && item.date ? dateTimeMap[item.date] : item.time || '09:00'
+  const [selectedTime, setSelectedTime] = useState<string>(defaultTime)
 
   // Reglas Xoco Café: mínimo 3 días, máximo 2 meses.
+  // Para luchas: máximo 1 semana (7 días).
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const minDate = new Date(today)
   minDate.setDate(today.getDate() + 3)
-  const maxDate = new Date(today)
-  maxDate.setMonth(today.getMonth() + 2)
+  const maxDate = dateTimeMap
+    ? new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
+    : new Date(today.setMonth(today.getMonth() + 2))
+
+  // Para luchas: las fechas permitidas son las del scraper.
+  const allowedDatesSet = useMemo(() => {
+    if (!dateTimeMap) return null
+    return new Set(Object.keys(dateTimeMap))
+  }, [dateTimeMap])
+
+  const isDateAllowed = (d: Date): boolean => {
+    if (!allowedDatesSet) return true
+    const iso = d.toISOString().slice(0, 10)
+    return allowedDatesSet.has(iso)
+  }
 
   const hasSelection = Boolean(selectedDate && selectedTime)
 
@@ -62,13 +89,16 @@ export function JourneyDateTimePicker({ item, onChange, locale }: JourneyDateTim
 
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return
-    setSelectedDate(date)
     const iso = date.toISOString().slice(0, 10)
-    onChange(item.lineId, iso, selectedTime)
+    setSelectedDate(date)
+    const time = dateTimeMap?.[iso] || selectedTime
+    setSelectedTime(time)
+    onChange(item.lineId, iso, time)
     setOpen(false)
   }
 
   const handleTimeSelect = (time: string) => {
+    if (dateTimeMap) return
     setSelectedTime(time)
     if (selectedDate) {
       const iso = selectedDate.toISOString().slice(0, 10)
@@ -79,14 +109,15 @@ export function JourneyDateTimePicker({ item, onChange, locale }: JourneyDateTim
 
   const clearSelection = () => {
     setSelectedDate(undefined)
-    setSelectedTime('09:00')
+    setSelectedTime(defaultTime)
     onChange(item.lineId, null, null)
     setOpen(false)
   }
 
+  const isLuchaMode = Boolean(dateTimeMap)
+
   return (
     <div className="relative w-full">
-      {/* Trigger: resumen de la selección */}
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -118,7 +149,6 @@ export function JourneyDateTimePicker({ item, onChange, locale }: JourneyDateTim
         />
       </button>
 
-      {/* Panel desplegable: calendario (izq) + horarios (der) */}
       {open && (
         <motion.div
           initial={{ opacity: 0, y: -10, scale: 0.97 }}
@@ -134,6 +164,11 @@ export function JourneyDateTimePicker({ item, onChange, locale }: JourneyDateTim
                 <p className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
                   {isEs ? 'Fecha' : 'Date'}
                 </p>
+                {isLuchaMode && (
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-orange-500 dark:text-orange-400">
+                    {isEs ? 'Solo fechas de función' : 'Show dates only'}
+                  </p>
+                )}
                 {hasSelection && (
                   <button
                     type="button"
@@ -144,12 +179,15 @@ export function JourneyDateTimePicker({ item, onChange, locale }: JourneyDateTim
                   </button>
                 )}
               </div>
-
               <DayPicker
                 mode="single"
                 selected={selectedDate}
                 onSelect={handleDateSelect}
-                disabled={{ before: minDate, after: maxDate }}
+                disabled={{
+                  before: minDate,
+                  after: maxDate,
+                  filter: (day) => !isDateAllowed(day),
+                }}
                 fromDate={minDate}
                 toDate={maxDate}
                 month={selectedDate || minDate}
@@ -184,53 +222,88 @@ export function JourneyDateTimePicker({ item, onChange, locale }: JourneyDateTim
                 <p className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
                   {isEs ? 'Hora' : 'Time'}
                 </p>
+                {isLuchaMode && (
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-orange-500 dark:text-orange-400">
+                    {isEs ? '2 h antes de la función' : '2 h before show'}
+                  </p>
+                )}
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                {TIME_SLOTS.map((slot) => {
-                  const isSelected = selectedTime === slot
-                  return (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => handleTimeSelect(slot)}
-                      disabled={
-                        selectedDate && isSameDay(selectedDate, minDate) && isTimeBeforeNow(slot)
-                      }
-                      className={cn(
-                        'flex h-12 flex-col items-center justify-center rounded-xl border text-sm transition-all duration-200',
-                        isSelected
-                          ? cn(
-                              'border-orange-500 bg-orange-500 text-white shadow-lg shadow-orange-500/40',
-                              'hover:scale-[1.02]'
-                            )
-                          : cn(
-                              'border-zinc-200 text-zinc-700 hover:bg-orange-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-orange-900/20 dark:hover:text-orange-400',
-                              item.time === slot
-                                ? 'ring-2 ring-orange-500 dark:ring-orange-400'
-                                : ''
-                            )
-                      )}
-                    >
-                      <Clock className="mb-1 h-4 w-4" />
-                      <span
-                        className={cn(
-                          'font-medium leading-tight',
-                          isSelected
-                            ? 'text-orange-900 dark:text-white'
-                            : 'text-zinc-900 dark:text-zinc-100'
-                        )}
-                      >
-                        {slot}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
+              {isLuchaMode ? (
+                <div className="rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-4 text-center">
+                  <Clock className="mx-auto mb-2 h-5 w-5 text-orange-500 dark:text-orange-400" />
+                  <span className="text-sm font-semibold text-orange-900 dark:text-orange-100">
+                    {selectedTime}
+                  </span>
+                  <p className="mt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+                    {isEs
+                      ? 'Horario fijo: 2 horas antes de la función'
+                      : 'Fixed time: 2 hours before the show'}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-3 gap-2">
+                    {TIME_SLOTS.map((slot) => {
+                      const isSelected = selectedTime === slot
+                      return (
+                        <button
+                          key={slot}
+                          type="button"
+                          onClick={() => handleTimeSelect(slot)}
+                          disabled={
+                            selectedDate &&
+                            isSameDay(selectedDate, minDate) &&
+                            isTimeBeforeNow(slot)
+                          }
+                          className={cn(
+                            'flex h-12 flex-col items-center justify-center rounded-xl border text-sm transition-all duration-200',
+                            isSelected
+                              ? cn(
+                                  'border-orange-500 bg-orange-500 text-white shadow-lg shadow-orange-500/40',
+                                  'hover:scale-[1.02]'
+                                )
+                              : cn(
+                                  'border-zinc-200 text-zinc-700 hover:bg-orange-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-orange-900/20 dark:hover:text-orange-400',
+                                  item.time === slot
+                                    ? 'ring-2 ring-orange-500 dark:ring-orange-400'
+                                    : ''
+                                )
+                          )}
+                        >
+                          <Clock className="mb-1 h-4 w-4" />
+                          <span
+                            className={cn(
+                              'font-medium leading-tight',
+                              isSelected
+                                ? 'text-orange-900 dark:text-white'
+                                : 'text-zinc-900 dark:text-zinc-100'
+                            )}
+                          >
+                            {slot}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {!selectedDate && (
+                    <div className="mt-4 rounded-xl border border-zinc-100 bg-zinc-50/50 px-3 py-2 text-xs text-zinc-500 dark:border-white/10 dark:bg-zinc-900/30 dark:text-zinc-500">
+                      {isEs ? 'Selecciona una fecha primero' : 'Select a date first'}
+                    </div>
+                  )}
+                </>
+              )}
 
-              {!selectedDate && (
-                <div className="mt-4 rounded-xl border border-zinc-100 bg-zinc-50/50 px-3 py-2 text-xs text-zinc-500 dark:border-white/10 dark:bg-zinc-900/30 dark:text-zinc-500">
-                  {isEs ? 'Selecciona una fecha primero' : 'Select a date first'}
+              {isLuchaMode && selectedDate && (
+                <div className="mt-3 rounded-xl border border-orange-500/20 bg-orange-500/5 p-3 dark:border-orange-500/10 dark:bg-orange-900/5">
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-orange-600 dark:text-orange-400">
+                    {isEs ? 'Función confirmada' : 'Show confirmed'}
+                  </p>
+                  <p className="text-xs leading-relaxed text-zinc-700 dark:text-zinc-300">
+                    {isEs
+                      ? `Entrada disponible a las ${selectedTime}, dos horas antes del inicio de la función.`
+                      : `Doors open at ${selectedTime}, two hours before the show starts.`}
+                  </p>
                 </div>
               )}
             </div>

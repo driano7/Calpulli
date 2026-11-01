@@ -34,6 +34,14 @@ import { CountrySearchSelect } from '@/components/checkout/CountrySearchSelect'
 import { JourneyDateTimePicker } from '@/components/checkout/JourneyDateTimePicker'
 import { JOURNEYS, pickLocalized } from '@/data/journeysData'
 
+/** Resta horas a un string HH:MM (para calcular 2h antes de una función). */
+function subtractHours(time, hours) {
+  const [h, m] = String(time).split(':').map(Number)
+  let newH = h - hours
+  if (newH < 0) newH += 24
+  return `${String(newH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
 export default function CheckoutPage() {
   const { items, subtotal, itemCount, clearCart, updateItem, removeItem, addItem } = useCartStore()
   const { user, token, isLoading } = useAuth()
@@ -154,6 +162,9 @@ export default function CheckoutPage() {
   const [guestPeople, setGuestPeople] = useState([])
   // Quien responde por la reserva (una de las fichas). Por defecto, la primera.
   const [responsibleId, setResponsibleId] = useState(null)
+  // Luchas: mapa de fecha (YYYY-MM-DD) -> hora (HH:MM, 2h antes de la función) desde el scraper
+  const [luchaDateTimeMap, setLuchaDateTimeMap] = useState({})
+  const [luchaEventsLoaded, setLuchaEventsLoaded] = useState(false)
   // El correo ya esta registrado: se ofrece entrar, sin bloquear.
   const [emailRegistered, setEmailRegistered] = useState(false)
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
@@ -228,6 +239,50 @@ export default function CheckoutPage() {
     setResponsibleId('gp_buyer')
     buyerCreatedRef.current = true
   }, [isGuest, guestEmail, guestName, items.length, guestPeople.length])
+
+  /**
+   * Luchas: cuando el carrito tiene items de lucha, trae los eventos del
+   * scraper y construye un mapa fecha -> hora (2h antes de la función) para
+   * que el calendario solo habilite esas fechas y la hora se fije automático.
+   */
+  useEffect(() => {
+    const hasLuchaItems = items.some((it) => it.experienceId === 'luchas')
+    if (!hasLuchaItems || luchaEventsLoaded) return
+
+    const fetchLuchaEvents = async () => {
+      try {
+        const from = new Date().toISOString().slice(0, 10)
+        const to = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+        const res = await fetch(`/api/lucha/events?from=${from}&to=${to}`)
+        if (!res.ok) return
+        const data = await res.json()
+        const events = data.events || []
+
+        const map = {}
+        for (const event of events) {
+          if (!event.date || !event.time) continue
+          const isoDate = String(event.date).slice(0, 10)
+          const existing = map[isoDate]
+          if (!existing || String(event.time) < existing) {
+            map[isoDate] = String(event.time)
+          }
+        }
+
+        const result = {}
+        for (const [date, time] of Object.entries(map)) {
+          result[date] = subtractHours(time, 2)
+        }
+
+        setLuchaDateTimeMap(result)
+      } catch (e) {
+        console.error('Lucha events fetch failed:', e)
+      } finally {
+        setLuchaEventsLoaded(true)
+      }
+    }
+
+    void fetchLuchaEvents()
+  }, [items, luchaEventsLoaded])
 
   /**
    * Los chips son la fuente de verdad de las personas: al agregar o quitar
@@ -1419,6 +1474,7 @@ export default function CheckoutPage() {
                         item={item}
                         onChange={(date, time) => updateItem(item.lineId, { date, time })}
                         locale={locale}
+                        dateTimeMap={item.experienceId === 'luchas' ? luchaDateTimeMap : undefined}
                       />
                     </div>
                   </div>
@@ -1555,11 +1611,16 @@ export default function CheckoutPage() {
                   </div>
                   <button
                     onClick={async () => {
+                      const luchaInvalid = items.some(
+                        (it) =>
+                          it.experienceId === 'luchas' && (!it.date || !luchaDateTimeMap[it.date])
+                      )
                       if (
                         !allNamesValid ||
                         (isGuest && !emailOk) ||
                         (isGuest && phoneNumber.replace(/\D/g, '').length !== 10) ||
-                        items.some((it) => !it.date || !it.time)
+                        items.some((it) => !it.date || !it.time) ||
+                        luchaInvalid
                       ) {
                         if (isGuest && !emailOk) setGuestEmailTouched(true)
                         setError(
@@ -1575,6 +1636,10 @@ export default function CheckoutPage() {
                             ? locale === 'es'
                               ? 'El celular debe tener 10 dígitos y solo números'
                               : 'Phone number must be 10 digits and numbers only'
+                            : luchaInvalid
+                            ? locale === 'es'
+                              ? 'Selecciona una fecha de función válida para Lucha Libre'
+                              : 'Select a valid Lucha Libre show date'
                             : locale === 'es'
                             ? 'Selecciona fecha y hora para cada tour'
                             : 'Select date and time for every tour'
