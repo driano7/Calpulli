@@ -30,6 +30,7 @@ import { formatPriceMXN } from '@/lib/currency'
 import { captureAcquisitionChannel, getAcquisitionChannel } from '@/lib/booking/utm'
 import { GuestPeopleField, MAX_GUESTS } from '@/components/checkout/GuestPeopleField'
 import { CountrySearchSelect } from '@/components/checkout/CountrySearchSelect'
+import { JourneyDateTimePicker } from '@/components/checkout/JourneyDateTimePicker'
 import { JOURNEYS, pickLocalized } from '@/data/journeysData'
 
 export default function CheckoutPage() {
@@ -201,6 +202,31 @@ export default function CheckoutPage() {
       return changed ? next : prev
     })
   }, [items, user, authDisplayName])
+
+  /**
+   * Modo invitado: al escribir el nombre (y email válido) del comprador,
+   * se autocompleta la primera persona de "¿quien va al tour?" para que no
+   * tenga que teclearla dos veces. El campo sigue siendo editable: el usuario
+   * puede cambiar cada nombre desde los inputs de cada ticket o desde la ficha.
+   * Se crea solo una vez (cuando aún no hay personas agregadas).
+   */
+  const buyerCreatedRef = useRef(false)
+  useEffect(() => {
+    if (!isGuest || buyerCreatedRef.current) return
+    const email = guestEmail.trim()
+    const name = guestName.trim()
+    const emailOk = /^[^\s@]+@[^\s@]+$/.test(email)
+    const nameOk = name.length >= 2
+    if (!emailOk || !nameOk) return
+    if (guestPeople.length > 0) {
+      buyerCreatedRef.current = true
+      return
+    }
+    const created = { id: 'gp_buyer', email, name }
+    setGuestPeople([created])
+    setResponsibleId('gp_buyer')
+    buyerCreatedRef.current = true
+  }, [isGuest, guestEmail, guestName, items.length, guestPeople.length])
 
   /**
    * Los chips son la fuente de verdad de las personas: al agregar o quitar
@@ -1296,6 +1322,14 @@ export default function CheckoutPage() {
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
+                    </div>
+
+                    <div className="mt-3 w-full">
+                      <JourneyDateTimePicker
+                        item={item}
+                        onChange={(date, time) => updateItem(item.lineId, { date, time })}
+                        locale={locale}
+                      />
                     </div>
                   </div>
                 ))}
