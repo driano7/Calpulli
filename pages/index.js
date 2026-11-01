@@ -64,7 +64,7 @@ export default function Home() {
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
-                href="/local"
+                href="/local/recomendaciones-mes"
                 className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/20 px-6 py-2 font-medium text-amber-600 backdrop-blur-sm transition-all duration-300 hover:bg-amber-500 hover:text-white dark:text-amber-400"
               >
                 {isEn ? 'See This Month’s Activities' : 'Ver Actividades del Mes'}
