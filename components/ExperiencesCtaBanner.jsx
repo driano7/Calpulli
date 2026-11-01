@@ -3,7 +3,7 @@
 
 import Link from '@/components/Link'
 import { useLanguage } from '@/lib/hooks/useLanguage'
-import { Compass, Sparkles, ArrowRight, MessageCircle } from 'lucide-react'
+import { ArrowRight, Compass, Phone, Sparkles } from 'lucide-react'
 
 export default function ExperiencesCtaBanner() {
   const { currentLanguage } = useLanguage()
@@ -16,7 +16,7 @@ export default function ExperiencesCtaBanner() {
       title: '¿Listo para vivir la ciudad en persona?',
       description:
         'Explora nuestras experiencias inmersivas, rutas gastronómicas de barrio y tours privados guiados en la CDMX.',
-      cta: 'Explorar Journeys →→',
+      cta: 'Explorar Journeys →→→→',
       ctaHref: '/journeys',
       whatsapp: 'Preguntas, acércate a nosotros',
       whatsappHref:
@@ -27,7 +27,7 @@ export default function ExperiencesCtaBanner() {
       title: 'Ready to experience the city in person?',
       description:
         'Explore our immersive experiences, neighborhood food routes and private guided tours in CDMX.',
-      cta: 'Explore Journeys →→',
+      cta: 'Explore Journeys →→→→',
       ctaHref: '/journeys',
       whatsapp: 'Questions, get in touch with us',
       whatsappHref:
@@ -46,10 +46,12 @@ export default function ExperiencesCtaBanner() {
         }}
       >
         {/* Wave-like background orbs, similar to hero shader */}
-        <div className="pointer-events-none absolute -right-20 -top-20 h-96 w-96 animate-pulse rounded-full bg-emerald-500/20 blur-[140px]" />
-        <div className="pointer-events-none absolute -left-20 -bottom-20 h-96 w-96 animate-[orbit_12s_ease-in-out_infinite] rounded-full bg-violet-500/20 blur-[140px]" />
-        <div className="left-1/5 pointer-events-none absolute top-1/4 h-64 w-64 animate-[float_7s_ease-in-out_infinite] rounded-full bg-emerald-400/15 blur-[100px]" />
-        <div className="bottom-1/5 animate-[float_9s_ease-in-out_infinite reverse] pointer-events-none absolute right-1/4 h-64 w-64 rounded-full bg-violet-400/15 blur-[100px]" />
+        <div className="pointer-events-none absolute -right-24 -top-24 h-[700px] w-[700px] animate-pulse rounded-full bg-emerald-500/25 blur-[200px]" />
+        <div className="pointer-events-none absolute -left-24 -bottom-24 h-[700px] w-[700px] animate-[orbit_14s_ease-in-out_infinite] rounded-full bg-violet-500/25 blur-[200px]" />
+        <div className="top-1/5 left-1/6 pointer-events-none absolute h-[500px] w-[500px] animate-[float_8s_ease-in-out_infinite] rounded-full bg-emerald-400/20 blur-[160px]" />
+        <div className="bottom-1/6 right-1/5 animate-[float_10s_ease-in-out_infinite reverse] pointer-events-none absolute h-[500px] w-[500px] rounded-full bg-violet-400/20 blur-[160px]" />
+        <div className="animate-[orbit_11s_ease-in-out_infinite reverse] pointer-events-none absolute top-1/3 right-1/3 h-[400px] w-[400px] rounded-full bg-emerald-500/15 blur-[120px]" />
+        <div className="pointer-events-none absolute bottom-1/3 left-1/3 h-[400px] w-[400px] animate-[float_6s_ease-in-out_infinite] rounded-full bg-violet-500/15 blur-[120px]" />
 
         <style jsx>{`
           @keyframes gradientMove {
@@ -68,10 +70,10 @@ export default function ExperiencesCtaBanner() {
               transform: translate(0, 0) scale(1);
             }
             33% {
-              transform: translate(25px, -35px) scale(1.15);
+              transform: translate(30px, -40px) scale(1.2);
             }
             66% {
-              transform: translate(-25px, 35px) scale(0.85);
+              transform: translate(-30px, 40px) scale(0.8);
             }
             100% {
               transform: translate(0, 0) scale(1);
@@ -82,7 +84,7 @@ export default function ExperiencesCtaBanner() {
               transform: translateY(0);
             }
             50% {
-              transform: translateY(-18px);
+              transform: translateY(-22px);
             }
             100% {
               transform: translateY(0);
@@ -108,11 +110,13 @@ export default function ExperiencesCtaBanner() {
           <div className="flex flex-col items-end gap-3 sm:flex-row lg:flex-col xl:flex-row">
             <Link
               href={content.ctaHref}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-slate-900 shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-sm font-bold text-slate-900 shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95"
             >
               {content.cta}
               <span className="relative inline-block">
                 <ArrowRight className="h-4 w-4 font-bold" />
+                <ArrowRight className="-ml-1 h-4 w-4 font-bold" />
+                <ArrowRight className="-ml-1 h-4 w-4 font-bold" />
                 <ArrowRight className="-ml-1 h-4 w-4 font-bold" />
               </span>
             </Link>
@@ -122,7 +126,7 @@ export default function ExperiencesCtaBanner() {
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-7 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:bg-[#1eb253] hover:shadow-xl active:scale-95"
             >
-              <MessageCircle className="h-4 w-4 text-[#1eb253]" />
+              <Phone className="h-4 w-4 text-[#1eb253]" />
               {content.whatsapp}
             </a>
           </div>
