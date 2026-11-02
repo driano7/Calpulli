@@ -46,11 +46,15 @@ export default function ExperiencesCtaBanner() {
           animation: 'gradientMove 8s ease infinite',
         }}
       >
-        {/* White decorative lines like hero shader */}
-        <div className="pointer-events-none absolute top-0 left-0 h-[1px] w-full animate-[lineMove_4s_ease-in-out_infinite] bg-white/30" />
-        <div className="pointer-events-none absolute bottom-0 left-0 h-[1px] w-full animate-[lineMove_6s_ease-in-out_infinite_reverse] bg-white/20" />
-        <div className="pointer-events-none absolute left-0 top-0 h-full w-[1px] animate-[lineMove_5s_ease-in-out_infinite] bg-white/15" />
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-[1px] animate-[lineMove_7s_ease-in-out_infinite_reverse] bg-white/10" />
+        {/* White decorative lines moving like hero */}
+        <div className="pointer-events-none absolute top-0 left-0 h-[1px] w-full animate-[lineMove_4s_ease-in-out_infinite] bg-white/40" />
+        <div className="pointer-events-none absolute bottom-0 left-0 h-[1px] w-full animate-[lineMove_6s_ease-in-out_infinite_reverse] bg-white/30" />
+        <div className="bg-white/35 pointer-events-none absolute left-0 top-0 h-full w-[1px] animate-[lineMove_5s_ease-in-out_infinite]" />
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-[1px] animate-[lineMove_7s_ease-in-out_infinite_reverse] bg-white/25" />
+
+        {/* Black decorative lines on lighter gradient zones */}
+        <div className="pointer-events-none absolute top-1/4 left-1/4 h-full w-[1px] animate-[lineMove_5s_ease-in-out_infinite_reverse] bg-black/30" />
+        <div className="pointer-events-none absolute bottom-1/4 right-1/4 h-full w-[1px] animate-[lineMove_7s_ease-in-out_infinite] bg-black/20" />
 
         {/* Ambient glows: terracotta / rosa / marrón */}
         <div className="pointer-events-none absolute -right-24 -top-24 h-[700px] w-[700px] animate-pulse rounded-full bg-[#DE1D8D]/25 blur-[200px]" />
@@ -75,29 +79,29 @@ export default function ExperiencesCtaBanner() {
           @keyframes lineMove {
             0% {
               transform: translateX(-100%);
-              opacity: 0.3;
+              opacity: 0.25;
             }
             50% {
-              transform: translateX(100%);
-              opacity: 0.7;
+              transform: translateX(200%);
+              opacity: 0.8;
             }
             100% {
               transform: translateX(-100%);
-              opacity: 0.3;
+              opacity: 0.25;
             }
           }
           @keyframes lineMove_reverse {
             0% {
-              transform: translateX(100%);
-              opacity: 0.3;
+              transform: translateX(200%);
+              opacity: 0.25;
             }
             50% {
               transform: translateX(-100%);
-              opacity: 0.7;
+              opacity: 0.8;
             }
             100% {
-              transform: translateX(100%);
-              opacity: 0.3;
+              transform: translateX(200%);
+              opacity: 0.25;
             }
           }
           @keyframes orbit {
@@ -143,7 +147,7 @@ export default function ExperiencesCtaBanner() {
           </div>
 
           <div className="flex flex-col items-end gap-3 sm:flex-row lg:flex-col xl:flex-row">
-            {/* Journeys button: black chip, single arrow, text lowered */}
+            {/* Journeys button: black chip, single arrow */}
             <Link
               href={content.ctaHref}
               className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-black px-8 py-4 text-sm font-bold text-white shadow-lg transition-all hover:bg-white hover:text-black active:scale-95"
