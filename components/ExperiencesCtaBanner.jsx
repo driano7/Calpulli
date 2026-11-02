@@ -40,19 +40,20 @@ export default function ExperiencesCtaBanner() {
       <div
         className="relative overflow-hidden rounded-3xl border border-white/20 p-8 shadow-2xl backdrop-blur-md dark:border-white/10 md:p-10"
         style={{
-          background: 'linear-gradient(135deg, #7B2BD9 0%, #C1440E 30%, #DE1D8D 60%, #7B2BD9 100%)',
+          background:
+            'linear-gradient(135deg, #2A1A1A 0%, #7B2BD9 25%, #C1440E 50%, #DE1D8D 75%, #1A0A0A 100%)',
           backgroundSize: '200% 200%',
           animation: 'gradientMove 8s ease infinite',
         }}
       >
         {/* White decorative lines like hero shader */}
-        <div className="pointer-events-none absolute top-0 left-1/4 h-[1px] w-full animate-[lineMove_4s_ease-in-out_infinite] bg-white/20" />
-        <div className="pointer-events-none absolute bottom-0 left-1/3 h-[1px] w-full animate-[lineMove_6s_ease-in-out_infinite_reverse] bg-white/20" />
-        <div className="pointer-events-none absolute left-0 top-1/3 h-full w-[1px] animate-[lineMove_5s_ease-in-out_infinite] bg-white/20" />
-        <div className="pointer-events-none absolute right-0 top-1/4 h-full w-[1px] animate-[lineMove_7s_ease-in-out_infinite_reverse] bg-white/20" />
+        <div className="pointer-events-none absolute top-0 left-0 h-[1px] w-full animate-[lineMove_4s_ease-in-out_infinite] bg-white/30" />
+        <div className="pointer-events-none absolute bottom-0 left-0 h-[1px] w-full animate-[lineMove_6s_ease-in-out_infinite_reverse] bg-white/20" />
+        <div className="pointer-events-none absolute left-0 top-0 h-full w-[1px] animate-[lineMove_5s_ease-in-out_infinite] bg-white/15" />
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-[1px] animate-[lineMove_7s_ease-in-out_infinite_reverse] bg-white/10" />
 
         {/* Ambient glows: terracotta / rosa / marrón */}
-        <div className="pointer-events-none absolute -right-24 -top-24 h-[700px] w-[700px] animate-pulse rounded-full bg-[#DE1D8D]/20 blur-[200px]" />
+        <div className="pointer-events-none absolute -right-24 -top-24 h-[700px] w-[700px] animate-pulse rounded-full bg-[#DE1D8D]/25 blur-[200px]" />
         <div className="pointer-events-none absolute -left-24 -bottom-24 h-[700px] w-[700px] animate-[orbit_14s_ease-in-out_infinite] rounded-full bg-[#C1440E]/20 blur-[200px]" />
         <div className="top-1/5 left-1/6 pointer-events-none absolute h-[500px] w-[500px] animate-[float_8s_ease-in-out_infinite] rounded-full bg-[#7B2BD9]/25 blur-[160px]" />
         <div className="bottom-1/6 right-1/5 animate-[float_10s_ease-in-out_infinite reverse] pointer-events-none absolute h-[500px] w-[500px] rounded-full bg-[#DE1D8D]/20 blur-[160px]" />
@@ -142,18 +143,19 @@ export default function ExperiencesCtaBanner() {
           </div>
 
           <div className="flex flex-col items-end gap-3 sm:flex-row lg:flex-col xl:flex-row">
+            {/* Journeys button: black chip, single arrow, text lowered */}
             <Link
               href={content.ctaHref}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-sm font-bold text-slate-900 shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95"
+              className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-black px-8 py-4 text-sm font-bold text-white shadow-lg transition-all hover:bg-white hover:text-black active:scale-95"
             >
               {content.cta}
-              <ArrowRight className="h-4 w-4 font-bold" />
+              <ArrowRight className="h-4 w-4 font-bold text-black" />
             </Link>
             <a
               href={content.whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-7 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:bg-[#1eb253] hover:shadow-xl active:scale-95"
+              className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-7 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:bg-[#1eb253] hover:shadow-xl active:scale-95 sm:mt-0"
             >
               <Phone className="h-4 w-4 text-[#1eb253]" />
               {content.whatsapp}
