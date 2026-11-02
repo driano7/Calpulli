@@ -252,7 +252,7 @@ export default function CheckoutPage() {
     const fetchLuchaEvents = async () => {
       try {
         const from = new Date().toISOString().slice(0, 10)
-        const to = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+        const to = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
         const res = await fetch(`/api/lucha/events?from=${from}&to=${to}`)
         if (!res.ok) return
         const data = await res.json()

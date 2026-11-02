@@ -1,9 +1,6 @@
-'use client'
-
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
 // Selector de fecha y hora por journey en el checkout.
-// UI "liquid glass" de lujo con Framer Motion, colores terracota / cempasuchil,
-// y las reglas de negocio de Xoco Café:
+// UI "liquid glass" con colores terracota / cempasuchil y reglas de Xoco Café:
 //   - mínimo 3 días de anticipación
 //   - máximo 2 meses de anticipación (excepto luchas: 1 semana)
 //   - horarios de 09:00 a 19:00, de una hora en una hora.
@@ -56,8 +53,6 @@ export function JourneyDateTimePicker({
   const defaultTime = dateTimeMap && item.date ? dateTimeMap[item.date] : item.time || '09:00'
   const [selectedTime, setSelectedTime] = useState<string>(defaultTime)
 
-  // Reglas Xoco Café: mínimo 3 días, máximo 2 meses.
-  // Para luchas: máximo 1 semana (7 días).
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const minDate = new Date(today)
@@ -66,7 +61,6 @@ export function JourneyDateTimePicker({
     ? new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
     : new Date(today.setMonth(today.getMonth() + 2))
 
-  // Para luchas: las fechas permitidas son las del scraper.
   const allowedDatesSet = useMemo(() => {
     if (!dateTimeMap) return null
     return new Set(Object.keys(dateTimeMap))
