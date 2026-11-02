@@ -16,7 +16,7 @@ export default function ExperiencesCtaBanner() {
       title: '¿Listo para vivir la ciudad en persona?',
       description:
         'Explora nuestras experiencias inmersivas, rutas gastronómicas de barrio y tours privados guiados en la CDMX.',
-      cta: 'Explorar Journeys →→→→',
+      cta: 'Explorar Journeys →',
       ctaHref: '/journeys',
       whatsapp: 'Preguntas, acércate a nosotros',
       whatsappHref:
@@ -27,7 +27,7 @@ export default function ExperiencesCtaBanner() {
       title: 'Ready to experience the city in person?',
       description:
         'Explore our immersive experiences, neighborhood food routes and private guided tours in CDMX.',
-      cta: 'Explore Journeys →→→→',
+      cta: 'Explore Journeys →',
       ctaHref: '/journeys',
       whatsapp: 'Questions, get in touch with us',
       whatsappHref:
@@ -38,20 +38,26 @@ export default function ExperiencesCtaBanner() {
   return (
     <section className="mx-auto w-full max-w-6xl px-4">
       <div
-        className="relative overflow-hidden rounded-3xl border border-slate-200/50 p-8 shadow-2xl backdrop-blur-md dark:border-slate-800/50 md:p-10"
+        className="relative overflow-hidden rounded-3xl border border-white/20 p-8 shadow-2xl backdrop-blur-md dark:border-white/10 md:p-10"
         style={{
-          background: 'linear-gradient(135deg, #064e3b 0%, #1e1b4b 35%, #064e3b 60%, #1e1b4b 100%)',
+          background: 'linear-gradient(135deg, #7B2BD9 0%, #C1440E 30%, #DE1D8D 60%, #7B2BD9 100%)',
           backgroundSize: '200% 200%',
           animation: 'gradientMove 8s ease infinite',
         }}
       >
-        {/* Wave-like background orbs, similar to hero shader */}
-        <div className="pointer-events-none absolute -right-24 -top-24 h-[700px] w-[700px] animate-pulse rounded-full bg-emerald-500/25 blur-[200px]" />
-        <div className="pointer-events-none absolute -left-24 -bottom-24 h-[700px] w-[700px] animate-[orbit_14s_ease-in-out_infinite] rounded-full bg-violet-500/25 blur-[200px]" />
-        <div className="top-1/5 left-1/6 pointer-events-none absolute h-[500px] w-[500px] animate-[float_8s_ease-in-out_infinite] rounded-full bg-emerald-400/20 blur-[160px]" />
-        <div className="bottom-1/6 right-1/5 animate-[float_10s_ease-in-out_infinite reverse] pointer-events-none absolute h-[500px] w-[500px] rounded-full bg-violet-400/20 blur-[160px]" />
-        <div className="animate-[orbit_11s_ease-in-out_infinite reverse] pointer-events-none absolute top-1/3 right-1/3 h-[400px] w-[400px] rounded-full bg-emerald-500/15 blur-[120px]" />
-        <div className="pointer-events-none absolute bottom-1/3 left-1/3 h-[400px] w-[400px] animate-[float_6s_ease-in-out_infinite] rounded-full bg-violet-500/15 blur-[120px]" />
+        {/* White decorative lines like hero shader */}
+        <div className="pointer-events-none absolute top-0 left-1/4 h-[1px] w-full animate-[lineMove_4s_ease-in-out_infinite] bg-white/20" />
+        <div className="pointer-events-none absolute bottom-0 left-1/3 h-[1px] w-full animate-[lineMove_6s_ease-in-out_infinite_reverse] bg-white/20" />
+        <div className="pointer-events-none absolute left-0 top-1/3 h-full w-[1px] animate-[lineMove_5s_ease-in-out_infinite] bg-white/20" />
+        <div className="pointer-events-none absolute right-0 top-1/4 h-full w-[1px] animate-[lineMove_7s_ease-in-out_infinite_reverse] bg-white/20" />
+
+        {/* Ambient glows: terracotta / rosa / marrón */}
+        <div className="pointer-events-none absolute -right-24 -top-24 h-[700px] w-[700px] animate-pulse rounded-full bg-[#DE1D8D]/20 blur-[200px]" />
+        <div className="pointer-events-none absolute -left-24 -bottom-24 h-[700px] w-[700px] animate-[orbit_14s_ease-in-out_infinite] rounded-full bg-[#C1440E]/20 blur-[200px]" />
+        <div className="top-1/5 left-1/6 pointer-events-none absolute h-[500px] w-[500px] animate-[float_8s_ease-in-out_infinite] rounded-full bg-[#7B2BD9]/25 blur-[160px]" />
+        <div className="bottom-1/6 right-1/5 animate-[float_10s_ease-in-out_infinite reverse] pointer-events-none absolute h-[500px] w-[500px] rounded-full bg-[#DE1D8D]/20 blur-[160px]" />
+        <div className="animate-[orbit_11s_ease-in-out_infinite reverse] pointer-events-none absolute top-1/3 right-1/3 h-[400px] w-[400px] rounded-full bg-[#C1440E]/15 blur-[120px]" />
+        <div className="pointer-events-none absolute bottom-1/3 left-1/3 h-[400px] w-[400px] animate-[float_6s_ease-in-out_infinite] rounded-full bg-[#7B2BD9]/15 blur-[120px]" />
 
         <style jsx>{`
           @keyframes gradientMove {
@@ -63,6 +69,34 @@ export default function ExperiencesCtaBanner() {
             }
             100% {
               background-position: 0% 50%;
+            }
+          }
+          @keyframes lineMove {
+            0% {
+              transform: translateX(-100%);
+              opacity: 0.3;
+            }
+            50% {
+              transform: translateX(100%);
+              opacity: 0.7;
+            }
+            100% {
+              transform: translateX(-100%);
+              opacity: 0.3;
+            }
+          }
+          @keyframes lineMove_reverse {
+            0% {
+              transform: translateX(100%);
+              opacity: 0.3;
+            }
+            50% {
+              transform: translateX(-100%);
+              opacity: 0.7;
+            }
+            100% {
+              transform: translateX(100%);
+              opacity: 0.3;
             }
           }
           @keyframes orbit {
@@ -94,15 +128,15 @@ export default function ExperiencesCtaBanner() {
 
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-widest text-white/70 backdrop-blur">
-              <Compass className="h-3.5 w-3.5 text-orange-400/80" />
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-widest text-white/80 backdrop-blur">
+              <Compass className="h-3.5 w-3.5 text-[#DE1D8D]" />
               {content.badge}
-              <Sparkles className="h-3 w-3 text-orange-400/80" />
+              <Sparkles className="h-3 w-3 text-[#DE1D8D]" />
             </div>
-            <h2 className="text-2xl font-black leading-tight tracking-tight text-white/90 md:text-3xl">
+            <h2 className="mb-2 text-2xl font-black leading-tight tracking-tight text-white md:text-3xl">
               {content.title}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-white/60 md:text-base">
+            <p className="text-sm leading-relaxed text-white/70 md:text-base">
               {content.description}
             </p>
           </div>
