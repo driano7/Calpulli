@@ -1,7 +1,7 @@
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
 import { getFileBySlug, bundleMdxSource } from '@/lib/mdx'
 import { MDXLayoutRenderer } from '@/components/MDXComponents'
-import { getAllLocalPickSlugs, getLocalPickBySlug } from '@/lib/localPicks'
+import { getAllLocalPickSlugs, getLocalPickBySlug, getAllLocalPicks } from '@/lib/localPicks'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { Reveal } from '@/components/journeys/Reveal'
 import Link from '@/components/Link'
@@ -29,11 +29,10 @@ export async function getStaticProps({ params }) {
     }
   }
 
-  // recomendaciones-mes: mostrar actividades del mes actual (página generada dinámicamente)
+  // recomendaciones-mes: mostrar actividades del mes actual (página MDX estática)
   if (slug === 'recomendaciones-mes') {
-    const { getAllLocalPicksAsync } = await import('@/lib/localPicksAsync')
-    const picksEs = await getAllLocalPicksAsync('es')
-    const picksEn = await getAllLocalPicksAsync('en')
+    const picksEs = getAllLocalPicks('es')
+    const picksEn = getAllLocalPicks('en')
     const month = new Date().toISOString().slice(0, 7)
     const monthEs = picksEs.filter((p) => p.month === month && !p.pinned)
     const monthEn = picksEn.filter((p) => p.month === month && !p.pinned)

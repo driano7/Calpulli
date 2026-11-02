@@ -5,7 +5,7 @@ import Link from '@/components/Link'
 import Image from '@/components/Image'
 import { PageSEO } from '@/components/SEO'
 import siteMetadata from '@/data/siteMetadata'
-import { getAllLocalPicksAsync } from '@/lib/localPicksAsync'
+import { getAllLocalPicks } from '@/lib/localPicks'
 import { getFeaturedLocalPicks } from '@/lib/localPicksSelection'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { AnimatedSection } from '@/components/AnimatedSection'
@@ -47,8 +47,8 @@ const pageTranslations = {
 export async function getStaticProps() {
   // Los fijados (3 festividades) + los que rotan (6). El orden lo decide
   // getFeaturedLocalPicks, no el orden del archivo.
-  const allEs = await getAllLocalPicksAsync('es')
-  const allEn = await getAllLocalPicksAsync('en')
+  const allEs = getAllLocalPicks('es')
+  const allEn = getAllLocalPicks('en')
   const picksEs = getFeaturedLocalPicks(allEs)
   const picksEn = getFeaturedLocalPicks(allEn)
   // Pre-generated at build, revalidate cada hora para nuevos picks sin rebuild
