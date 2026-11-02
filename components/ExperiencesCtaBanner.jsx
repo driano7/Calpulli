@@ -46,15 +46,15 @@ export default function ExperiencesCtaBanner() {
           animation: 'gradientMove 8s ease infinite',
         }}
       >
-        {/* White decorative lines moving like hero */}
-        <div className="pointer-events-none absolute top-0 left-0 h-[1px] w-full animate-[lineMove_4s_ease-in-out_infinite] bg-white/40" />
-        <div className="pointer-events-none absolute bottom-0 left-0 h-[1px] w-full animate-[lineMove_6s_ease-in-out_infinite_reverse] bg-white/30" />
-        <div className="bg-white/35 pointer-events-none absolute left-0 top-0 h-full w-[1px] animate-[lineMove_5s_ease-in-out_infinite]" />
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-[1px] animate-[lineMove_7s_ease-in-out_infinite_reverse] bg-white/25" />
+        {/* White decorative lines moving like hero - MORE VISIBLE */}
+        <div className="pointer-events-none absolute top-0 left-0 h-[2px] w-full animate-[lineMove_4s_ease-in-out_infinite] bg-white/60" />
+        <div className="pointer-events-none absolute bottom-0 left-0 h-[2px] w-full animate-[lineMove_6s_ease-in-out_infinite_reverse] bg-white/50" />
+        <div className="bg-white/45 pointer-events-none absolute left-0 top-0 h-full w-[2px] animate-[lineMove_5s_ease-in-out_infinite]" />
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-[2px] animate-[lineMove_7s_ease-in-out_infinite_reverse] bg-white/40" />
 
         {/* Black decorative lines on lighter gradient zones */}
-        <div className="pointer-events-none absolute top-1/4 left-1/4 h-full w-[1px] animate-[lineMove_5s_ease-in-out_infinite_reverse] bg-black/30" />
-        <div className="pointer-events-none absolute bottom-1/4 right-1/4 h-full w-[1px] animate-[lineMove_7s_ease-in-out_infinite] bg-black/20" />
+        <div className="pointer-events-none absolute top-1/4 left-1/4 h-full w-[2px] animate-[lineMove_5s_ease-in-out_infinite_reverse] bg-black/40" />
+        <div className="bg-black/35 pointer-events-none absolute bottom-1/4 right-1/4 h-full w-[2px] animate-[lineMove_7s_ease-in-out_infinite]" />
 
         {/* Ambient glows: terracotta / rosa / marrón */}
         <div className="pointer-events-none absolute -right-24 -top-24 h-[700px] w-[700px] animate-pulse rounded-full bg-[#DE1D8D]/25 blur-[200px]" />
@@ -79,29 +79,29 @@ export default function ExperiencesCtaBanner() {
           @keyframes lineMove {
             0% {
               transform: translateX(-100%);
-              opacity: 0.25;
+              opacity: 0.4;
             }
             50% {
               transform: translateX(200%);
-              opacity: 0.8;
+              opacity: 0.9;
             }
             100% {
               transform: translateX(-100%);
-              opacity: 0.25;
+              opacity: 0.4;
             }
           }
           @keyframes lineMove_reverse {
             0% {
               transform: translateX(200%);
-              opacity: 0.25;
+              opacity: 0.4;
             }
             50% {
               transform: translateX(-100%);
-              opacity: 0.8;
+              opacity: 0.9;
             }
             100% {
               transform: translateX(200%);
-              opacity: 0.25;
+              opacity: 0.4;
             }
           }
           @keyframes orbit {
