@@ -116,6 +116,11 @@ module.exports = withBundleAnalyzer({
       { source: '/news/:slug*', destination: '/local/:slug*', permanent: false },
       { source: '/local-picks', destination: '/local', permanent: false },
       { source: '/local-picks/:slug*', destination: '/local/:slug*', permanent: false },
+      {
+        source: '/local/fiesta-ano-nuevo',
+        destination: '/local/recomendaciones-mes',
+        permanent: true,
+      },
     ]
   },
   // Las rewrites de .well-known viven también aquí para que funcionen en local;
