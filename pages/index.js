@@ -21,7 +21,10 @@ export default function Home() {
       <div className="bg-transparent text-gray-900 dark:text-gray-100">
         <div className="container mx-auto px-4 py-16">
           {/* Guides Preview — similar UI */}
-          <div className="mb-8 rounded-xl border border-teal-500/20 bg-teal-500/10 p-8 dark:border-teal-500/20 dark:bg-teal-500/5">
+          <AnimatedSection
+            className="mb-8 rounded-xl border border-teal-500/20 bg-teal-500/10 p-8 dark:border-teal-500/20 dark:bg-teal-500/5"
+            delay={0.05}
+          >
             <div className="mb-2 flex items-center gap-2 text-teal-600 dark:text-teal-400">
               <span className="text-2xl">🧭</span>
               <span className="text-xs font-bold uppercase tracking-widest">
@@ -44,10 +47,13 @@ export default function Home() {
                 {isEn ? 'View Guides' : 'Ver Guías'}
               </Link>
             </div>
-          </div>
+          </AnimatedSection>
 
           {/* Local Picks chip — actividades del mes */}
-          <div className="mb-8 rounded-xl border border-amber-500/20 bg-amber-500/10 p-8 dark:border-amber-500/20 dark:bg-amber-500/5">
+          <AnimatedSection
+            className="mb-8 rounded-xl border border-amber-500/20 bg-amber-500/10 p-8 dark:border-amber-500/20 dark:bg-amber-500/5"
+            delay={0.15}
+          >
             <div className="mb-2 flex items-center gap-2 text-amber-600 dark:text-amber-400">
               <span className="text-2xl">📅</span>
               <span className="text-xs font-bold uppercase tracking-widest">
@@ -70,10 +76,13 @@ export default function Home() {
                 {isEn ? 'See This Month’s Activities' : 'Ver Actividades del Mes'}
               </Link>
             </div>
-          </div>
+          </AnimatedSection>
 
           {/* Maps Preview — similar UI */}
-          <div className="mb-8 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-8 dark:border-emerald-500/20 dark:bg-emerald-500/5">
+          <AnimatedSection
+            className="mb-8 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-8 dark:border-emerald-500/20 dark:bg-emerald-500/5"
+            delay={0.25}
+          >
             <div className="mb-2 flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
               <span className="text-2xl">🗺️</span>
               <span className="text-xs font-bold uppercase tracking-widest">
@@ -96,15 +105,18 @@ export default function Home() {
                 {isEn ? 'View Maps' : 'Ver Mapas'}
               </Link>
             </div>
-          </div>
+          </AnimatedSection>
 
           {/* CTA Banner Experiences — entre mapas y selección local */}
-          <div className="mb-8">
+          <AnimatedSection className="mb-8" delay={0.35}>
             <ExperiencesCtaBanner />
-          </div>
+          </AnimatedSection>
 
           {/* Local Picks chip — recomendaciones de locales */}
-          <div className="mb-8 rounded-xl border border-amber-500/20 bg-amber-500/10 p-8 dark:border-amber-500/20 dark:bg-amber-500/5">
+          <AnimatedSection
+            className="mb-8 rounded-xl border border-amber-500/20 bg-amber-500/10 p-8 dark:border-amber-500/20 dark:bg-amber-500/5"
+            delay={0.45}
+          >
             <div className="mb-2 flex items-center gap-2 text-amber-600 dark:text-amber-400">
               <span className="text-2xl">★</span>
               <span className="text-xs font-bold uppercase tracking-widest">
@@ -129,7 +141,7 @@ export default function Home() {
                 {isEn ? 'View Local Picks' : 'Ver Selección Local'}
               </Link>
             </div>
-          </div>
+          </AnimatedSection>
         </div>
 
         {/* Desvanecido azul morado antes de Safety & Help */}
