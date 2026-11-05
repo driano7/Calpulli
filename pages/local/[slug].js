@@ -4,9 +4,10 @@ import { MDXLayoutRenderer } from '@/components/MDXComponents'
 import { getAllLocalPickSlugs, getLocalPickBySlug, getAllLocalPicks } from '@/lib/localPicks'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { Reveal } from '@/components/journeys/Reveal'
+import Head from 'next/head'
 import Link from '@/components/Link'
 import Image from '@/components/Image'
-import { PageSEO } from '@/components/SEO'
+import { PageSEO, BlogSEO } from '@/components/SEO'
 
 export async function getStaticPaths() {
   const slugs = getAllLocalPickSlugs()
@@ -94,9 +95,25 @@ export default function LocalPickPage({
     if (!post) return null
     const { mdxSource, frontMatter } = post
     frontMatter.slug = frontMatter.slug.replace(/[.-](en|es)$/, '')
+    const isEs = currentLanguage === 'es'
+    const canonicalEs = `https://donovan-amx.vercel.app/local/recomendaciones-mes`
+    const canonicalEn = `https://donovan-amx.vercel.app/local/recomendaciones-mes`
     return (
       <>
-        <PageSEO title={frontMatter.title} description={frontMatter.summary || ''} />
+        <Head>
+          <link rel="alternate" hreflang="es" href={canonicalEs} />
+          <link rel="alternate" hreflang="en" href={canonicalEn} />
+          <link rel="alternate" hreflang="x-default" href={canonicalEs} />
+        </Head>
+        <BlogSEO
+          title={frontMatter.title}
+          summary={frontMatter.summary || ''}
+          date={frontMatter.date}
+          lastmod={frontMatter.date}
+          images={frontMatter.images || []}
+          author={frontMatter.author || 'Donovan Riaño'}
+          canonicalUrl={isEs ? canonicalEs : canonicalEn}
+        />
         <Reveal once={false} className="mb-8">
           <MDXLayoutRenderer layout="PostLayout" mdxSource={mdxSource} frontMatter={frontMatter} />
         </Reveal>
