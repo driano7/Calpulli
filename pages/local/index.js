@@ -6,7 +6,7 @@ import Image from '@/components/Image'
 import { PageSEO } from '@/components/SEO'
 import siteMetadata from '@/data/siteMetadata'
 import { getAllLocalPicks } from '@/lib/localPicks'
-import { getFeaturedLocalPicks } from '@/lib/localPicksSelection'
+import { getFeaturedLocalPicks, getCurrentMonthKey } from '@/lib/localPicksSelection'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { AnimatedSection } from '@/components/AnimatedSection'
 import { Pin, Star } from 'lucide-react'
@@ -162,7 +162,9 @@ export default function LocalPicksPage({ picksEs, picksEn }) {
   // Los fijados van primero, en rosa; despues los que rotan.
   const pinnedPicks = picks.filter((p) => p.pinned === true)
   const monthPicks = picks.filter((p) => p.pinned !== true && !p.isMonthlyGuide)
-  const guides = picks.filter((p) => p.isMonthlyGuide)
+  const monthKey = getCurrentMonthKey()
+  // Los guides de meses futuros no se anuncian todavía.
+  const guides = picks.filter((p) => p.isMonthlyGuide && (!p.month || p.month <= monthKey))
 
   return (
     <>

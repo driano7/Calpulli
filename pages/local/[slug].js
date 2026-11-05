@@ -30,8 +30,20 @@ export async function getStaticProps({ params }) {
     }
   }
 
-  // recomendaciones-mes: mostrar actividades del mes actual (página MDX estática)
+  // recomendaciones-mes: actividades del mes actual (página MDX estática)
   if (slug === 'recomendaciones-mes') {
+    const loadMonthPost = async (fileName) => {
+      try {
+        return await getFileBySlug('local-picks', fileName)
+      } catch (err) {
+        console.error(`[recomendaciones-mes] no se pudo compilar ${fileName}:`, err)
+        return null
+      }
+    }
+    const [postEs, postEn] = await Promise.all([
+      loadMonthPost('recomendaciones-mes-es'),
+      loadMonthPost('recomendaciones-mes-en'),
+    ])
     const picksEs = getAllLocalPicks('es')
     const picksEn = getAllLocalPicks('en')
     const month = new Date().toISOString().slice(0, 7)
@@ -42,6 +54,8 @@ export async function getStaticProps({ params }) {
         slug: 'recomendaciones-mes',
         isMonthPage: true,
         month,
+        postEs,
+        postEn,
         picksEs,
         monthEs,
         picksEn,
@@ -87,15 +101,14 @@ export default function LocalPickPage({
   monthEn,
 }) {
   const { currentLanguage } = useLanguage()
-  const isEn = currentLanguage === 'es'
+  const isEs = currentLanguage === 'es'
 
   // Página de recomendaciones mensuales (MDX estático)
   if (isMonthPage) {
-    const post = isEn ? postEn || postEs : postEs || postEn
+    const post = isEs ? postEs || postEn : postEn || postEs
     if (!post) return null
     const { mdxSource, frontMatter } = post
     frontMatter.slug = frontMatter.slug.replace(/[.-](en|es)$/, '')
-    const isEs = currentLanguage === 'es'
     const canonicalEs = `https://donovan-amx.vercel.app/local/recomendaciones-mes`
     const canonicalEn = `https://donovan-amx.vercel.app/local/recomendaciones-mes`
     return (
@@ -122,7 +135,7 @@ export default function LocalPickPage({
   }
 
   // Página de detalle de un pick individual (MDX)
-  const post = isEn ? postEn || postEs : postEs || postEn
+  const post = isEs ? postEs || postEn : postEn || postEs
   if (!post) return null
   const { mdxSource, frontMatter } = post
   frontMatter.slug = frontMatter.slug.replace(/[.-](en|es)$/, '')

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ComponentType } from 're
 import { useRouter } from 'next/router'
 import classNames from 'classnames'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Footprints, BookOpen, Star, Users, MapPinned } from 'lucide-react'
+import { Footprints, BookOpen, Star, Users, MapPinned, Bot } from 'lucide-react'
 import Link from '@/components/Link'
 import WhatsAppIcon from '@/components/social-icons/whatsapp.svg'
 import { useLanguage } from '@/lib/hooks/useLanguage'
@@ -123,21 +123,47 @@ export function MobileDock() {
                 onClick={resetTimer}
                 className={classNames(
                   DOCK_BUTTON_BASE,
-                  compact ? 'h-10 w-10' : 'h-11 w-11',
+                  compact ? 'h-9 w-9' : 'h-10 w-10',
                   active ? DOCK_BUTTON_ACTIVE : DOCK_BUTTON_INACTIVE
                 )}
               >
-                <Icon className={compact ? 'h-4 w-4' : 'h-5 w-5'} />
+                <Icon className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
               </Link>
             </motion.div>
           )
         })}
 
-        {/* WhatsApp directo a la derecha */}
+        {/* Calpulli AI: abre el chat. Va antes de WhatsApp, entre About y WhatsApp. */}
         <motion.div
           initial={reducedMotion ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.16 + DOCK_ITEMS.length * 0.08 }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              resetTimer()
+              window.dispatchEvent(new CustomEvent('open-calpulli-chatbot'))
+            }}
+            title={
+              lang === 'es' ? 'Calpulli AI — pregúntame de CDMX' : 'Calpulli AI — ask about CDMX'
+            }
+            aria-label={lang === 'es' ? 'Abrir Calpulli AI' : 'Open Calpulli AI'}
+            className={classNames(
+              DOCK_BUTTON_BASE,
+              compact ? 'h-9 w-9' : 'h-10 w-10',
+              'bg-gradient-to-br from-orange-500 to-pink-600 text-white hover:opacity-90'
+            )}
+          >
+            <Bot className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+          </button>
+        </motion.div>
+
+        {/* WhatsApp directo a la derecha */}
+        <motion.div
+          initial={reducedMotion ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.16 + (DOCK_ITEMS.length + 1) * 0.08 }}
         >
           <a
             href={whatsAppHref}
@@ -148,11 +174,13 @@ export function MobileDock() {
             aria-label={whatsAppLabel}
             className={classNames(
               DOCK_BUTTON_BASE,
-              compact ? 'h-10 w-10' : 'h-11 w-11',
+              compact ? 'h-9 w-9' : 'h-10 w-10',
               'bg-[#25D366] text-white hover:bg-[#1fbe5b]'
             )}
           >
-            <WhatsAppIcon className={classNames(compact ? 'h-4 w-4' : 'h-5 w-5', 'fill-current')} />
+            <WhatsAppIcon
+              className={classNames(compact ? 'h-3.5 w-3.5' : 'h-4 w-4', 'fill-current')}
+            />
           </a>
         </motion.div>
       </nav>

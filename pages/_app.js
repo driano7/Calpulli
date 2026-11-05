@@ -28,6 +28,11 @@ const WhatsAppButton = dynamic(() => import('@/components/WhatsAppButton'), {
   loading: () => null,
 })
 
+const ChatbotAssistant = dynamic(() => import('@/components/ChatbotAssistant'), {
+  ssr: false,
+  loading: () => null,
+})
+
 const PageAnalyticsTracker = dynamic(() => import('@/components/PageAnalyticsTracker'), {
   ssr: false,
   loading: () => null,
@@ -78,6 +83,7 @@ export default function App({ Component, pageProps }) {
             <SiteCookie />
             {getLayout(<Component {...pageProps} />)}
             <WhatsAppButton />
+            <ChatbotAssistant />
             <PageAnalyticsTracker />
           </AnalyticsProvider>
         </AuthProvider>

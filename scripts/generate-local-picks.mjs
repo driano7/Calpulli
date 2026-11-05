@@ -1,6 +1,6 @@
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
 /**
- * Genera los 8 Local Picks que rotan cada mes, con OpenRouter.
+ * Genera los 8 Local Picks que rotan cada mes, con Gemini.
  *
  *   node scripts/generate-local-picks.mjs [YYYY-MM]
  *
