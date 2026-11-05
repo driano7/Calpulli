@@ -1,6 +1,7 @@
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
-// Genera las "Recomendaciones del Mes" (pinned en /local) usando OpenRouter + NewsAPI + FRED
+// Genera las "Recomendaciones del Mes" (pinned en /local) usando OpenRouter + NewsAPI
 // Correr: node scripts/generate-recomendaciones-mes.mjs [YYYY-MM]
+// Siempre SOBREESCRIBE recomendaciones-mes-es.mdx y recomendaciones-mes-en.mdx (misma URL)
 import { generateRecommendationsMonth } from '../lib/localPicks/generator-recomendaciones-mes.js'
 
 const month = process.argv[2]
@@ -10,12 +11,8 @@ console.log(`Generando Recomendaciones del Mes para ${date.toISOString().slice(0
 
 generateRecommendationsMonth(date)
   .then((result) => {
-    if (result.created > 0) {
-      console.log(`\nCreados ${result.created} archivos:`)
-      result.files.forEach((f) => console.log(`  ${f}`))
-    } else {
-      console.log(`\nNo se generó nada nuevo: ${result.reason}`)
-    }
+    console.log(`\nSobrescritos ${result.created} archivos:`)
+    result.files.forEach((f) => console.log(`  ${f}`))
   })
   .catch((error) => {
     console.error('\nError generando Recomendaciones del Mes:', error.message)
