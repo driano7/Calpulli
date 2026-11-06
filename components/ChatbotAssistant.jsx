@@ -9,12 +9,21 @@
  *  - Móvil: no muestra botón propio; el MobileDock abre el panel con el
  *    evento "open-calpulli-chatbot".
  *
+ * Animación de escritura (typewriter): la respuesta del asistente se muestra
+ * carácter por carácter usando streaming SSE del backend. Un cursor parpadeante
+ * acompaña la animación.
+ *
+ * Soporte de idioma: inglés (en) y español (es) determinado por el hook
+ * useLanguage. Si el backend detecta un idioma no soportado vía
+ * Accept-Language, responde con aviso bilingüe.
+ *
  * El endpoint /api/chatbot aplica los filtros de tema, el rate limit y el
  * system prompt. Aquí solo se cuida la experiencia de conversación.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { Bot, Send, X, Sparkles } from 'lucide-react'
+import { Bot, Send, X, Sparkles, ChevronUp, ChevronDown, MessageCircleQuestion } from 'lucide-react'
+import { useRouter } from 'next/router'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 
 const WELCOME_ES =
@@ -22,6 +31,8 @@ const WELCOME_ES =
 const WELCOME_EN =
   "Hey! I'm Calpulli AI 🤖 your Mexico City guide. I can recommend routes, food, museums and neighborhoods, or help you pick a Journey. What are you in the mood for?"
 
+// Respuestas predefinidas anteriores: ocultas por petición. Se mantienen
+// comentadas en espíritu pero ya no se usan en el panel.
 const QUICK_ACTIONS = {
   es: [
     '¿Qué hacer en CDMX?',
@@ -35,6 +46,115 @@ const QUICK_ACTIONS = {
     'Must-try food',
     'Is it safe to get around?',
   ],
+}
+
+// Preguntas predefinidas contextuales por sección, estilo WhatsApp:
+// una duda concreta, en ambos idiomas, según la página donde estás.
+const PRESET_BY_SECTION = {
+  journeyLuchas: {
+    es: [
+      '¿Cuándo es la próxima función de Luchas?',
+      '¿Qué incluye y dónde es el punto de encuentro?',
+      '¿Cómo reservo y con cuánto tiempo?',
+    ],
+    en: [
+      'When is the next Luchas show?',
+      'What is included and where is the meeting point?',
+      'How do I book and how far in advance?',
+    ],
+  },
+  journey: {
+    es: ['¿Qué incluye este Journey?', '¿Horarios y punto de encuentro?', '¿Cómo reservo?'],
+    en: ['What does this Journey include?', 'Schedules and meeting point?', 'How do I book?'],
+  },
+  journeys: {
+    es: ['¿Qué Journey me recomiendas para 2 días?', '¿Cuál es el más familiar?', '¿Cómo reservo?'],
+    en: [
+      'Which Journey do you recommend for 2 days?',
+      'Which one is most family-friendly?',
+      'How do I book?',
+    ],
+  },
+  local: {
+    es: [
+      '¿Qué hago este fin de semana en CDMX?',
+      '¿Qué recomiendas del mes?',
+      '¿Dónde comer cerca?',
+    ],
+    en: [
+      'What should I do this weekend in CDMX?',
+      'What do you recommend this month?',
+      'Where to eat nearby?',
+    ],
+  },
+  maps: {
+    es: [
+      '¿Qué mapa me conviene para mi visita?',
+      '¿Cómo me muevo con el Metro?',
+      '¿Ruta recomendada de 1 día?',
+    ],
+    en: ['Which map fits my trip?', 'How do I get around by Metro?', 'Recommended 1-day route?'],
+  },
+  guides: {
+    es: [
+      '¿Qué guía autoguiada me recomiendas?',
+      '¿Cuánto dura y qué necesito?',
+      '¿Necesito reservar?',
+    ],
+    en: [
+      'Which self-guided walk do you recommend?',
+      'How long does it take and what do I need?',
+      'Do I need to book?',
+    ],
+  },
+  bookings: {
+    es: [
+      'Necesito ayuda con mi reservación',
+      '¿Cómo cambio o cancelo?',
+      '¿Dónde es el punto de encuentro?',
+    ],
+    en: [
+      'I need help with my booking',
+      'How do I change or cancel?',
+      'Where is the meeting point?',
+    ],
+  },
+  pricing: {
+    es: [
+      '¿Cuánto cuesta un Journey?',
+      '¿Hay descuentos para grupos?',
+      '¿Qué métodos de pago aceptan?',
+    ],
+    en: [
+      'How much is a Journey?',
+      'Are there group discounts?',
+      'What payment methods do you accept?',
+    ],
+  },
+  about: {
+    es: ['¿Qué es Calpulli CDMX?', '¿Quiénes son y qué ofrecen?', '¿Cómo los contacto?'],
+    en: ['What is Calpulli CDMX?', 'Who are you and what do you offer?', 'How do I contact you?'],
+  },
+  home: {
+    es: ['¿Qué Journey me recomiendas?', '¿Qué hacer en CDMX este mes?', '¿Cómo reservo?'],
+    en: ['Which Journey do you recommend?', 'What to do in CDMX this month?', 'How do I book?'],
+  },
+}
+
+function sectionForPath(pathname) {
+  const path = pathname || '/'
+  if (path.startsWith('/journeys/luchas')) return 'journeyLuchas'
+  if (path.startsWith('/journeys/')) return 'journey'
+  if (path.startsWith('/journeys')) return 'journeys'
+  if (path.startsWith('/local')) return 'local'
+  if (path.startsWith('/maps')) return 'maps'
+  if (path.startsWith('/guides')) return 'guides'
+  if (path.startsWith('/bookings') || path.startsWith('/checkout') || path.startsWith('/cart'))
+    return 'bookings'
+  if (path.startsWith('/pricing')) return 'pricing'
+  if (path.startsWith('/about') || path.startsWith('/quienes-somos')) return 'about'
+  if (path === '/' || path === '') return 'home'
+  return 'home'
 }
 
 const STORAGE_KEY = 'calpulli_ai_chat_v1'
@@ -134,6 +254,7 @@ function RichText({ text }) {
   return <>{nodes}</>
 }
 
+/** Puntos animados mientras esperamos la primera respuesta del servidor. */
 function TypingDots() {
   return (
     <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-none bg-zinc-100 px-3.5 py-2.5 dark:bg-zinc-800">
@@ -149,15 +270,81 @@ function TypingDots() {
   )
 }
 
+/** Cursor parpadeante que acompaña la animación de escritura. */
+function BlinkingCursor() {
+  return (
+    <motion.span
+      className="ml-0.5 inline-block h-[1.1em] w-[2px] translate-y-[1px] rounded-full bg-orange-500"
+      animate={{ opacity: [1, 0] }}
+      transition={{ duration: 0.6, repeat: Infinity, ease: 'steps(2)' }}
+      aria-hidden
+    />
+  )
+}
+
+/**
+ * Burbuja del asistente con animación typewriter.
+ * Mientras `isStreaming` es true, el texto se muestra con un cursor parpadeante.
+ * Al terminar, se renderiza como RichText completo.
+ */
+function AssistantBubble({ content, isStreaming }) {
+  return (
+    <div className="flex justify-start">
+      <motion.div
+        initial={{ opacity: 0, y: 6, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className="max-w-[86%] rounded-2xl rounded-bl-none bg-zinc-100 px-4 py-2.5 text-sm leading-relaxed text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+      >
+        {isStreaming ? (
+          <span className="whitespace-pre-wrap">
+            {content}
+            <BlinkingCursor />
+          </span>
+        ) : (
+          <RichText text={content} />
+        )}
+      </motion.div>
+    </div>
+  )
+}
+
+// Variantes de entrada/salida del panel: al abrir los bloques bajan de arriba
+// hacia abajo; al cerrar se van de abajo hacia arriba (stagger invertido).
+const stackVariants = {
+  hidden: { opacity: 0, y: 24, scale: 0.97 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.22, ease: 'easeOut', staggerChildren: 0.07, delayChildren: 0.05 },
+  },
+  exit: {
+    opacity: 0,
+    y: 24,
+    scale: 0.97,
+    transition: { duration: 0.2, ease: 'easeIn', staggerChildren: 0.05, staggerDirection: -1 },
+  },
+}
+const stackItem = {
+  hidden: { opacity: 0, y: -14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: 'easeOut' } },
+  exit: { opacity: 0, y: 14, transition: { duration: 0.18, ease: 'easeIn' } },
+}
+
 export default function ChatbotAssistant() {
   const { currentLanguage } = useLanguage()
+  const router = useRouter()
   const isEs = currentLanguage !== 'en'
   const reduced = useReducedMotion()
 
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
+  const [inputExpanded, setInputExpanded] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [streaming, setStreaming] = useState(false)
+  const [streamingMsgId, setStreamingMsgId] = useState(null)
   const [error, setError] = useState('')
 
   const scrollRef = useRef(null)
@@ -166,7 +353,10 @@ export default function ChatbotAssistant() {
   const loadedRef = useRef(false)
 
   const welcome = isEs ? WELCOME_ES : WELCOME_EN
-  const actions = QUICK_ACTIONS[isEs ? 'es' : 'en']
+  // Preguntas contextuales según la sección (estilo WhatsApp); las
+  // QUICK_ACTIONS genéricas quedan ocultas por petición.
+  const section = sectionForPath(router?.asPath || router?.pathname)
+  const actions = PRESET_BY_SECTION[section]?.[isEs ? 'es' : 'en'] || []
 
   // Cargar conversación de la sesión (solo navegador).
   useEffect(() => {
@@ -208,7 +398,7 @@ export default function ChatbotAssistant() {
   useEffect(() => {
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
-  }, [messages, loading, open])
+  }, [messages, loading, streaming, open])
 
   // Foco al abrir (solo desktop, para no abrir el teclado en móvil).
   useEffect(() => {
@@ -218,13 +408,32 @@ export default function ChatbotAssistant() {
     }
   }, [open])
 
+  // El campo crece al escribir: cuando pasa de una línea se expande solo.
+  useEffect(() => {
+    if (!input) {
+      setInputExpanded(false)
+      return
+    }
+    if (input.length > 90 || input.includes('\n')) setInputExpanded(true)
+  }, [input])
+
+  // Altura automática del textarea dentro del límite del panel.
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    const next = Math.min(el.scrollHeight, inputExpanded ? 180 : 44)
+    el.style.height = `${next}px`
+  }, [input, inputExpanded, open])
+
   const sendMessage = useCallback(
     async (text) => {
       const clean = String(text || '').trim()
-      if (!clean || loading) return
+      if (!clean || loading || streaming) return
 
       setError('')
       setInput('')
+      setInputExpanded(false)
 
       const userMsg = {
         id: `u-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -233,15 +442,18 @@ export default function ChatbotAssistant() {
       }
 
       const history = messages
-        .slice(-6)
+        .slice(-3)
         .filter((m) => m && m.content)
         .map((m) => ({ role: m.role, content: m.content }))
 
       setMessages((prev) => [...prev, userMsg])
       setLoading(true)
 
+      const assistantMsgId = `a-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+
       try {
         abortRef.current = new AbortController()
+
         const res = await fetch('/api/chatbot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -249,10 +461,75 @@ export default function ChatbotAssistant() {
             message: clean,
             history,
             locale: isEs ? 'es' : 'en',
+            stream: true,
           }),
           signal: abortRef.current.signal,
         })
 
+        const contentType = res.headers.get('content-type') || ''
+
+        // ── Respuesta SSE (streaming) ──────────────────────────────
+        if (contentType.includes('text/event-stream')) {
+          setLoading(false)
+          setStreaming(true)
+          setStreamingMsgId(assistantMsgId)
+
+          // Agregar burbuja vacía del asistente
+          setMessages((prev) => [...prev, { id: assistantMsgId, role: 'assistant', content: '' }])
+
+          const reader = res.body.getReader()
+          const decoder = new TextDecoder()
+          let buffer = ''
+          let fullText = ''
+
+          // eslint-disable-next-line no-constant-condition
+          // eslint-disable-next-line no-constant-condition
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split('\n')
+            buffer = lines.pop() || ''
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const jsonStr = line.slice(6).trim()
+                if (jsonStr === '[DONE]') continue
+
+                try {
+                  const parsed = JSON.parse(jsonStr)
+                  const chunk = parsed.text || ''
+                  if (chunk) {
+                    fullText += chunk
+                    const captured = fullText
+                    setMessages((prev) =>
+                      prev.map((m) => (m.id === assistantMsgId ? { ...m, content: captured } : m))
+                    )
+                  }
+                } catch {
+                  // Ignorar líneas no-JSON
+                }
+              }
+            }
+          }
+
+          setStreaming(false)
+          setStreamingMsgId(null)
+
+          // Si no llegó texto, poner fallback
+          if (!fullText.trim()) {
+            const fallback = isEs
+              ? 'No recibí respuesta. Intenta de nuevo o escríbenos por WhatsApp.'
+              : 'I did not get a reply. Try again or message us on WhatsApp.'
+            setMessages((prev) =>
+              prev.map((m) => (m.id === assistantMsgId ? { ...m, content: fallback } : m))
+            )
+          }
+          return
+        }
+
+        // ── Respuesta JSON clásica (fallback / filtros) ─────────────
         const data = await res.json().catch(() => ({}))
         const reply =
           typeof data.reply === 'string' && data.reply.trim()
@@ -261,14 +538,16 @@ export default function ChatbotAssistant() {
             ? 'No recibí respuesta. Intenta de nuevo o escríbenos por WhatsApp.'
             : 'I did not get a reply. Try again or message us on WhatsApp.'
 
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `a-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-            role: 'assistant',
-            content: reply,
-          },
-        ])
+        // Simular typewriter para respuestas no-streaming
+        setLoading(false)
+        setStreaming(true)
+        setStreamingMsgId(assistantMsgId)
+        setMessages((prev) => [...prev, { id: assistantMsgId, role: 'assistant', content: '' }])
+
+        await typewriterAnimate(assistantMsgId, reply)
+
+        setStreaming(false)
+        setStreamingMsgId(null)
       } catch (err) {
         if (!(err instanceof Error && err.name === 'AbortError')) {
           setError(
@@ -277,12 +556,46 @@ export default function ChatbotAssistant() {
               : 'I could not connect. Check your internet and try again.'
           )
         }
+        setStreaming(false)
+        setStreamingMsgId(null)
       } finally {
         setLoading(false)
       }
     },
-    [isEs, loading, messages]
+    [isEs, loading, streaming, messages]
   )
+
+  /**
+   * Animación typewriter para respuestas que llegan completas (filtros, JSON).
+   * Muestra el texto carácter por carácter con velocidad variable.
+   */
+  const typewriterAnimate = useCallback(async (msgId, fullText) => {
+    const chars = [...fullText]
+    let shown = ''
+    const baseDelay = 12 // ms por carácter
+    const punctuationDelay = 80 // pausa en puntos, comas, etc.
+
+    for (let i = 0; i < chars.length; i++) {
+      shown += chars[i]
+      const captured = shown
+
+      setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, content: captured } : m)))
+
+      // Velocidad variable: pausa más en puntuación
+      const char = chars[i]
+      const isPunctuation = '.!?:;,\n'.includes(char)
+      const delay = isPunctuation ? punctuationDelay : baseDelay
+
+      // Batch de 2-3 caracteres para rendimiento, con variabilidad
+      if (!isPunctuation && i + 1 < chars.length && chars[i + 1] !== ' ') {
+        shown += chars[++i]
+        const captured2 = shown
+        setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, content: captured2 } : m)))
+      }
+
+      await new Promise((r) => setTimeout(r, delay))
+    }
+  }, [])
 
   const handleSubmit = (event) => {
     event.preventDefault()
@@ -293,8 +606,11 @@ export default function ChatbotAssistant() {
     abortRef.current?.abort()
     setMessages([])
     setInput('')
+    setInputExpanded(false)
     setError('')
     setLoading(false)
+    setStreaming(false)
+    setStreamingMsgId(null)
     try {
       window.sessionStorage.removeItem(STORAGE_KEY)
     } catch {
@@ -345,14 +661,18 @@ export default function ChatbotAssistant() {
             role="dialog"
             aria-modal="false"
             aria-label={isEs ? 'Calpulli AI' : 'Calpulli AI'}
-            initial={reduced ? false : { opacity: 0, y: 24, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reduced ? false : { opacity: 0, y: 24, scale: 0.97 }}
+            variants={reduced ? undefined : stackVariants}
+            initial={reduced ? false : 'hidden'}
+            animate="show"
+            exit="exit"
             transition={{ duration: reduced ? 0 : 0.22, ease: 'easeOut' }}
             className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-[110] mx-auto flex max-h-[min(78vh,620px)] w-[calc(100%-1.5rem)] max-w-md flex-col overflow-hidden rounded-3xl border border-zinc-200/70 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950 sm:inset-auto sm:bottom-24 sm:right-6 sm:mx-0 sm:w-[380px]"
           >
             {/* Header */}
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-200/70 bg-gradient-to-r from-orange-500/10 via-pink-500/10 to-orange-500/5 px-4 py-3 dark:border-zinc-800">
+            <motion.div
+              variants={reduced ? undefined : stackItem}
+              className="m-2 flex shrink-0 items-center justify-between gap-3 rounded-3xl border border-black/5 bg-white/80 px-4 py-3 text-zinc-900 shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-black/60 dark:text-white"
+            >
               <div className="flex min-w-0 items-center gap-2.5">
                 <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-pink-600 text-white shadow-md">
                   <Bot className="h-5 w-5" aria-hidden />
@@ -386,37 +706,37 @@ export default function ChatbotAssistant() {
                   <X className="h-4 w-4" />
                 </button>
               </div>
-            </div>
+            </motion.div>
 
             {/* Mensajes */}
-            <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
+            <motion.div
+              variants={reduced ? undefined : stackItem}
+              ref={scrollRef}
+              className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4"
+            >
               {/* Bienvenida local (no gasta tokens) */}
-              <div className="flex justify-start">
-                <div className="max-w-[86%] rounded-2xl rounded-bl-none bg-zinc-100 px-4 py-2.5 text-sm leading-relaxed text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100">
-                  <RichText text={welcome} />
-                </div>
-              </div>
+              <AssistantBubble content={welcome} isStreaming={false} />
 
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={msg.role === 'assistant' ? 'flex justify-start' : 'flex justify-end'}
-                >
-                  <div
-                    className={
-                      msg.role === 'assistant'
-                        ? 'max-w-[86%] rounded-2xl rounded-bl-none bg-zinc-100 px-4 py-2.5 text-sm leading-relaxed text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100'
-                        : 'max-w-[86%] rounded-2xl rounded-br-none bg-gradient-to-br from-orange-500 to-pink-600 px-4 py-2.5 text-sm leading-relaxed text-white'
-                    }
-                  >
-                    {msg.role === 'assistant' ? (
-                      <RichText text={msg.content} />
-                    ) : (
+              {messages.map((msg) =>
+                msg.role === 'assistant' ? (
+                  <AssistantBubble
+                    key={msg.id}
+                    content={msg.content}
+                    isStreaming={streaming && msg.id === streamingMsgId}
+                  />
+                ) : (
+                  <div key={msg.id} className="flex justify-end">
+                    <motion.div
+                      initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                      className="max-w-[86%] rounded-2xl rounded-br-none bg-gradient-to-br from-orange-500 to-pink-600 px-4 py-2.5 text-sm leading-relaxed text-white"
+                    >
                       <p className="whitespace-pre-wrap">{msg.content}</p>
-                    )}
+                    </motion.div>
                   </div>
-                </div>
-              ))}
+                )
+              )}
 
               {loading && (
                 <div className="flex justify-start">
@@ -425,54 +745,108 @@ export default function ChatbotAssistant() {
               )}
 
               {error && (
-                <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-300">
-                  {error}
-                </p>
-              )}
-            </div>
-
-            {/* Acciones rápidas */}
-            <div className="flex shrink-0 flex-wrap gap-1.5 border-t border-zinc-200/60 px-3 py-2 dark:border-zinc-800">
-              {actions.map((action) => (
-                <button
-                  key={action}
-                  type="button"
-                  disabled={loading}
-                  onClick={() => sendMessage(action)}
-                  className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-medium text-zinc-700 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-orange-500/40 dark:hover:bg-orange-500/10 dark:hover:text-orange-300"
+                <motion.p
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-300"
                 >
-                  <Sparkles className="h-3 w-3 text-orange-500" aria-hidden />
-                  {action}
-                </button>
-              ))}
-            </div>
+                  {error}
+                </motion.p>
+              )}
+            </motion.div>
+
+            {/* Presuntas contextuales */}
+            {!hasConversation && actions.length > 0 && (
+              <motion.div
+                variants={reduced ? undefined : stackItem}
+                className="flex shrink-0 flex-wrap gap-1.5 border-t border-zinc-200/60 px-3 py-2 dark:border-zinc-800"
+              >
+                <span className="flex w-full items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                  <MessageCircleQuestion className="h-3 w-3 text-orange-500" aria-hidden />
+                  {isEs
+                    ? 'Preguntas frecuentes de esta sección'
+                    : 'Frequently asked in this section'}
+                </span>
+                {actions.map((action) => (
+                  <button
+                    key={action}
+                    type="button"
+                    disabled={loading || streaming}
+                    onClick={() => sendMessage(action)}
+                    className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-medium text-zinc-700 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-orange-500/40 dark:hover:bg-orange-500/10 dark:hover:text-orange-300"
+                  >
+                    <Sparkles className="h-3 w-3 text-orange-500" aria-hidden />
+                    {action}
+                  </button>
+                ))}
+              </motion.div>
+            )}
 
             {/* Input */}
-            <form
+            <motion.form
+              variants={reduced ? undefined : stackItem}
               onSubmit={handleSubmit}
-              className="flex shrink-0 items-center gap-2 border-t border-zinc-200/60 px-3 py-2.5 dark:border-zinc-800"
+              className="flex shrink-0 items-end gap-2 border-t border-zinc-200/60 px-3 py-2.5 dark:border-zinc-800"
             >
-              <input
+              <textarea
                 ref={inputRef}
-                type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    if (input.trim() && !loading && !streaming) sendMessage(input)
+                  }
+                }}
                 maxLength={700}
                 autoComplete="off"
+                rows={1}
                 enterKeyHint="send"
                 placeholder={isEs ? 'Pregúntame de CDMX...' : 'Ask me about CDMX...'}
-                disabled={loading}
-                className="min-w-0 flex-1 rounded-full border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition-colors focus:border-orange-400 focus:bg-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-orange-500 dark:focus:bg-zinc-900"
+                disabled={loading || streaming}
+                aria-label={isEs ? 'Escribe tu mensaje' : 'Type your message'}
+                className={`max-h-[180px] min-h-[44px] min-w-0 flex-1 resize-none rounded-3xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition-colors focus:border-orange-400 focus:bg-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-orange-500 dark:focus:bg-zinc-900 ${
+                  inputExpanded ? 'rounded-3xl' : 'rounded-full'
+                }`}
               />
               <button
+                type="button"
+                onClick={() => setInputExpanded((v) => !v)}
+                aria-label={
+                  inputExpanded
+                    ? isEs
+                      ? 'Hacer campo pequeño'
+                      : 'Make field smaller'
+                    : isEs
+                    ? 'Hacer campo más grande'
+                    : 'Make field bigger'
+                }
+                title={
+                  inputExpanded
+                    ? isEs
+                      ? 'Más pequeño'
+                      : 'Smaller'
+                    : isEs
+                    ? 'Más grande'
+                    : 'Bigger'
+                }
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-600 transition-colors hover:border-orange-300 hover:text-orange-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-orange-500/40 dark:hover:text-orange-300"
+              >
+                {inputExpanded ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronUp className="h-4 w-4" />
+                )}
+              </button>
+              <button
                 type="submit"
-                disabled={!input.trim() || loading}
+                disabled={!input.trim() || loading || streaming}
                 aria-label={isEs ? 'Enviar mensaje' : 'Send message'}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-pink-600 text-white shadow-md transition-opacity hover:opacity-90 disabled:opacity-40"
               >
                 <Send className="h-4 w-4" />
               </button>
-            </form>
+            </motion.form>
 
             <p className="shrink-0 px-3 pb-2 text-center text-[10px] leading-none text-zinc-400 dark:text-zinc-500">
               {isEs

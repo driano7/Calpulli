@@ -18,13 +18,14 @@ try {
   }
 } catch {}
 
+// La key se lee de env (.env.local, GEMINI_API_KEY / GEMINI_KEY).
 const KEY = process.env.GEMINI_API_KEY || process.env.GEMINI_KEY || ''
 const PROJECT = (process.env.GEMINI_PROJECT || process.env.PROJECT || '').replace(/^projects\//, '')
 const FLASH = process.env.GEMINI_MODEL_FLASH || 'gemini-flash-lite-latest'
 const PRO = process.env.GEMINI_MODEL_PRO || 'gemini-flash-lite-latest'
 
 if (!KEY) {
-  console.error('❌ Falta GEMINI_API_KEY en .env.local')
+  console.error('❌ Falta GEMINI_API_KEY/GEMINI_KEY en .env.local')
   process.exit(1)
 }
 

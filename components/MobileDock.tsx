@@ -112,9 +112,9 @@ export function MobileDock() {
           return (
             <motion.div
               key={item.href}
-              initial={reducedMotion ? false : { opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.16 + index * 0.08 }}
+              initial={reducedMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+              transition={{ duration: 0.5, delay: index * 0.09, ease: 'easeOut' }}
             >
               <Link
                 href={item.href}
@@ -135,9 +135,9 @@ export function MobileDock() {
 
         {/* Calpulli AI: abre el chat. Va antes de WhatsApp, entre About y WhatsApp. */}
         <motion.div
-          initial={reducedMotion ? false : { opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.16 + DOCK_ITEMS.length * 0.08 }}
+          initial={reducedMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }}
+          animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 0.5, delay: DOCK_ITEMS.length * 0.09, ease: 'easeOut' }}
         >
           <button
             type="button"
@@ -161,9 +161,9 @@ export function MobileDock() {
 
         {/* WhatsApp directo a la derecha */}
         <motion.div
-          initial={reducedMotion ? false : { opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.16 + (DOCK_ITEMS.length + 1) * 0.08 }}
+          initial={reducedMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }}
+          animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 0.5, delay: (DOCK_ITEMS.length + 1) * 0.09, ease: 'easeOut' }}
         >
           <a
             href={whatsAppHref}

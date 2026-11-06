@@ -7,13 +7,20 @@
  * con un system prompt acotado: respuestas breves, enlaces seguros y sin
  * inventar precios ni disponibilidad.
  *
+ * Streaming: si el cliente envía `stream: true`, responde con SSE
+ * (Server-Sent Events) para habilitar la animación de escritura en el frontend.
+ *
+ * Idiomas soportados: español (es) e inglés (en). Si el Accept-Language del
+ * header indica otro idioma, se responde con un aviso bilingüe sin gastar
+ * tokens de IA.
+ *
  * Protecciones incluidas:
  *  - Filtros previos (sin gastar tokens) para temas sensibles y fuera de tema.
  *  - Rate limit global + por IP + anti-replay (lib/utils/rateLimiter).
  *  - Límite de longitud de mensaje e historial.
  *  - Rechazo de intentos de prompt injection / extracción del system prompt.
  */
-import { calpulliChat } from '@/lib/openrouter'
+import { calpulliChat, calpulliChatStream } from '@/lib/openrouter'
 import { JOURNEYS } from '@/data/journeysData'
 import { SELF_GUIDES_DATA } from '@/data/selfGuidesData'
 import { CDMX_MAPS_DATA } from '@/data/cdmxMapsData'
@@ -21,8 +28,8 @@ import { getAllLocalPicks } from '@/lib/localPicks'
 import { checkRateLimit, limits } from '@/lib/utils/rateLimiter'
 
 const MAX_MESSAGE_CHARS = 700
-const MAX_HISTORY = 6
-const MAX_HISTORY_CHARS = 500
+const MAX_HISTORY = 3
+const MAX_HISTORY_CHARS = 250
 
 const LOCALIZED = {
   es: {
@@ -58,6 +65,9 @@ const LOCALIZED = {
       'For large groups, custom itineraries or booking changes, the best option is to talk to a person on WhatsApp: +52 55 1229 1607. Can I help with anything else meanwhile?',
   },
 }
+
+const UNSUPPORTED_LANGUAGE_MSG =
+  '🌎 Sorry, Calpulli AI is only available in English and Spanish.\n\n🇲🇽 Lo sentimos, Calpulli AI solo está disponible en inglés y español.\n\nPlease switch your browser language to English or Spanish to chat with us!\nPor favor cambia el idioma de tu navegador a inglés o español para chatear con nosotros.'
 
 // Temas que no son parte del propósito del sitio. Respuesta breve y giro a turismo.
 const SENSITIVE_PATTERNS = [
@@ -132,6 +142,30 @@ function detectLocale(locale, message) {
   return 'en'
 }
 
+/**
+ * Detecta el idioma principal del header Accept-Language.
+ * Devuelve 'es', 'en' o null si ninguno de los dos es el principal.
+ */
+function detectAcceptLanguage(acceptLanguageHeader) {
+  if (!acceptLanguageHeader) return null
+  const parts = acceptLanguageHeader
+    .split(',')
+    .map((part) => {
+      const [lang, qPart] = part.trim().split(';')
+      const q = qPart ? parseFloat(qPart.replace('q=', '')) : 1
+      return { lang: lang?.trim().toLowerCase().split('-')[0], q }
+    })
+    .filter((p) => p.lang)
+    .sort((a, b) => b.q - a.q)
+
+  // Si alguno de los idiomas preferidos es es o en, lo soportamos
+  for (const { lang } of parts) {
+    if (lang === 'es' || lang === 'en') return lang
+  }
+  // Ningún idioma soportado encontrado
+  return null
+}
+
 function pickLocalized(es, en, isEs) {
   return isEs ? es || en : en || es
 }
@@ -146,7 +180,7 @@ function getKnowledgeBlock(isEs) {
       )} → /journeys/${j.slug}`
   ).join('\n')
 
-  const guides = SELF_GUIDES_DATA.slice(0, 5)
+  const guides = SELF_GUIDES_DATA.slice(0, 3)
     .map(
       (g) =>
         `• ${pickLocalized(g.title_es, g.title_en, isEs)} (${pickLocalized(
@@ -157,7 +191,7 @@ function getKnowledgeBlock(isEs) {
     )
     .join('\n')
 
-  const maps = CDMX_MAPS_DATA.slice(0, 5)
+  const maps = CDMX_MAPS_DATA.slice(0, 3)
     .map(
       (m) =>
         `• ${pickLocalized(m.title_es, m.title_en, isEs)}: ${pickLocalized(
@@ -173,7 +207,7 @@ function getKnowledgeBlock(isEs) {
     const all = getAllLocalPicks(isEs ? 'es' : 'en')
     const month = new Date().toISOString().slice(0, 7)
     const current = all.filter((p) => p.month === month && !p.pinned)
-    const list = (current.length ? current : all.filter((p) => !p.pinned)).slice(0, 6)
+    const list = (current.length ? current : all.filter((p) => !p.pinned)).slice(0, 4)
     localPicks = list
       .map(
         (p) =>
@@ -196,6 +230,45 @@ function getKnowledgeBlock(isEs) {
         ? '• Recomendaciones del mes → /local/recomendaciones-mes'
         : '• Monthly recommendations → /local/recomendaciones-mes'),
   }
+}
+
+// ── Respuestas rápidas: sin gastar tokens ni latencia de Gemini ────
+const FAST_PATHS_ES = [
+  {
+    re: /^(hola|buenas|buen d[íi]a|buenas tardes|buenas noches|hey+|que onda|quiubo|salve)\b/i,
+    reply:
+      '¡Quiubo! Soy Calpulli AI 🤖. Te ayudo con Journeys, qué hacer en CDMX, comida, museos y rutas. ¿Qué se te antoja?',
+  },
+  {
+    re: /^(gracias|muchas gracias|mil gracias|thank)/i,
+    reply: '¡De nada! Si quieres, te armo una ruta o te recomiendo un Journey. ¿Te late?',
+  },
+  {
+    re: /^(ayuda|help|qu[ée] puedes hacer|que sabes|qué sabes)/i,
+    reply:
+      'Te puedo recomendar Journeys, rutas de comida, museos, barrios, transporte y horarios generales de la CDMX. Pregúntame, por ejemplo: “¿qué hacer este fin de semana?” o “¿qué Journey me recomiendas?”',
+  },
+]
+const FAST_PATHS_EN = [
+  {
+    re: /^(hi|hello|hey+|good (morning|afternoon|evening)|howdy)\b/i,
+    reply:
+      "Hey! I'm Calpulli AI 🤖. I can help with Journeys, what to do in CDMX, food, museums and routes. What are you in the mood for?",
+  },
+  {
+    re: /^(thank|thanks|thx|appreciate)/i,
+    reply: 'You are welcome! Want a route or a Journey recommendation? Just ask.',
+  },
+  {
+    re: /^(help|what can you do|what do you know)/i,
+    reply:
+      'I can recommend Journeys, food routes, museums, neighborhoods, transport and general CDMX info. Try: “What should I do this weekend?” or “Recommend a Journey”.',
+  },
+]
+function fastReply(message, isEs) {
+  const list = isEs ? FAST_PATHS_ES : FAST_PATHS_EN
+  const found = list.find(({ re }) => re.test(message))
+  return found ? found.reply : null
 }
 
 function buildSystemPrompt(isEs) {
@@ -307,6 +380,21 @@ function getClientIp(req) {
   )
 }
 
+/**
+ * Limpia el texto devuelto por Gemini: algunos modelos exponen su razonamiento
+ * ("Draft 1", "Self-Correction", "Final Plan") antes de la respuesta real.
+ * (Versión simplificada para streaming – el cleanup principal vive en openrouter.js)
+ */
+function cleanStreamChunk(raw) {
+  let text = typeof raw === 'string' ? raw : ''
+  // Eliminar artefactos de razonamiento obvios en chunks
+  text = text.replace(
+    /^\*?(Draft \d|Self-Correction|Final Plan|Internal Monologue|Thought)[:\s]*/gi,
+    ''
+  )
+  return text
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ reply: 'Method not allowed' })
@@ -315,6 +403,37 @@ export default async function handler(req, res) {
   const body = req.body || {}
   const rawMessage = typeof body.message === 'string' ? body.message : ''
   const message = rawMessage.replace(/\s+/g, ' ').trim()
+  const wantsStream = body.stream === true
+
+  // ── Detección de idioma soportado vía Accept-Language ────────────
+  const acceptLang = req.headers['accept-language'] || ''
+  const detectedAcceptLang = detectAcceptLanguage(acceptLang)
+
+  // Si el locale explícito del body no es es/en Y el Accept-Language tampoco
+  // tiene es/en, responder con mensaje de idioma no soportado.
+  const bodyLocale = body.locale
+  const hasExplicitSupportedLocale = bodyLocale === 'es' || bodyLocale === 'en'
+  const hasSupportedAcceptLang = detectedAcceptLang !== null
+
+  if (!hasExplicitSupportedLocale && !hasSupportedAcceptLang && message) {
+    // Solo aplicar si el mensaje mismo no es claramente en es/en
+    const msgLocale = detectLocale(null, message)
+    const msgLooksSupported = msgLocale === 'es' || msgLocale === 'en'
+    // Si ni el header ni el mensaje parecen es/en, dar aviso bilingüe
+    if (!msgLooksSupported) {
+      if (wantsStream) {
+        res.setHeader('Content-Type', 'text/event-stream')
+        res.setHeader('Cache-Control', 'no-cache, no-transform')
+        res.setHeader('Connection', 'keep-alive')
+        res.setHeader('X-Accel-Buffering', 'no')
+        res.write(`data: ${JSON.stringify({ text: UNSUPPORTED_LANGUAGE_MSG })}\n\n`)
+        res.write(`data: [DONE]\n\n`)
+        return res.end()
+      }
+      return res.status(200).json({ reply: UNSUPPORTED_LANGUAGE_MSG, unsupportedLanguage: true })
+    }
+  }
+
   const isEs = detectLocale(body.locale, message) === 'es'
   const t = LOCALIZED[isEs ? 'es' : 'en']
 
@@ -327,22 +446,48 @@ export default async function handler(req, res) {
   }
 
   // ── Filtros previos: no gastan tokens ──────────────────────────────
+  const filteredReply = (reply, filtered) => {
+    if (wantsStream) {
+      res.setHeader('Content-Type', 'text/event-stream')
+      res.setHeader('Cache-Control', 'no-cache, no-transform')
+      res.setHeader('Connection', 'keep-alive')
+      res.setHeader('X-Accel-Buffering', 'no')
+      res.write(`data: ${JSON.stringify({ text: reply })}\n\n`)
+      res.write(`data: [DONE]\n\n`)
+      return res.end()
+    }
+    return res.status(200).json({ reply, filtered })
+  }
+
   if (INJECTION_PATTERNS.some((re) => re.test(message))) {
-    return res.status(200).json({ reply: t.injection, filtered: 'injection' })
+    return filteredReply(t.injection, 'injection')
   }
   if (SENSITIVE_PATTERNS.some((re) => re.test(message))) {
-    return res.status(200).json({ reply: t.sensitive, filtered: 'sensitive' })
+    return filteredReply(t.sensitive, 'sensitive')
   }
   if (OFF_TOPIC_PATTERNS.some((re) => re.test(message))) {
-    return res.status(200).json({ reply: t.offTopic, filtered: 'off-topic' })
+    return filteredReply(t.offTopic, 'off-topic')
   }
   if (HUMAN_PATTERNS.some((re) => re.test(message))) {
-    return res.status(200).json({ reply: t.human, filtered: 'human' })
+    return filteredReply(t.human, 'human')
   }
+
+  // ── Fast paths: respuestas instantáneas sin llamar a Gemini ──────
+  const fast = fastReply(message, isEs)
+  if (fast) return filteredReply(fast, 'fast-path')
 
   // ── Rate limit (global + IP + anti-replay) ─────────────────────────
   const rl = await checkRateLimit({ ip: getClientIp(req), message })
   if (!rl.allowed) {
+    if (wantsStream) {
+      res.setHeader('Content-Type', 'text/event-stream')
+      res.setHeader('Cache-Control', 'no-cache, no-transform')
+      res.setHeader('Connection', 'keep-alive')
+      res.setHeader('X-Accel-Buffering', 'no')
+      res.write(`data: ${JSON.stringify({ text: t.limited, rateLimited: true })}\n\n`)
+      res.write(`data: [DONE]\n\n`)
+      return res.end()
+    }
     return res.status(429).json({
       reply: t.limited,
       rateLimited: true,
@@ -371,18 +516,90 @@ export default async function handler(req, res) {
 
   if (process.env.NODE_ENV !== 'production') {
     console.log(
-      '[chatbot] locale=%s isEs=%s promptHead=%s',
+      '[chatbot] locale=%s isEs=%s stream=%s promptHead=%s',
       body.locale,
       isEs,
+      wantsStream,
       messages[0].content.slice(0, 220).replace(/\n/g, ' ')
     )
   }
 
+  // ── Modo streaming ─────────────────────────────────────────────────
+  if (wantsStream) {
+    res.setHeader('Content-Type', 'text/event-stream')
+    res.setHeader('Cache-Control', 'no-cache, no-transform')
+    res.setHeader('Connection', 'keep-alive')
+    res.setHeader('X-Accel-Buffering', 'no')
+
+    try {
+      const streamResult = await calpulliChatStream({
+        messages,
+        maxTokens: 256,
+        temperature: 0.3,
+      })
+
+      // Si recibimos un string (fallback no-streaming), enviarlo completo
+      if (typeof streamResult === 'string') {
+        res.write(`data: ${JSON.stringify({ text: streamResult })}\n\n`)
+        res.write(`data: [DONE]\n\n`)
+        return res.end()
+      }
+
+      // Procesar el stream SSE de Gemini
+      const reader = streamResult.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const jsonStr = line.slice(6).trim()
+            if (!jsonStr || jsonStr === '[DONE]') continue
+
+            try {
+              const parsed = JSON.parse(jsonStr)
+              const parts = parsed.candidates?.[0]?.content?.parts || []
+              // Filtrar las partes de "thought" que Gemini puede enviar
+              const textPart = parts.find((p) => !p.thought)
+              const text = textPart?.text || ''
+
+              if (text) {
+                const cleaned = cleanStreamChunk(text)
+                if (cleaned) {
+                  res.write(`data: ${JSON.stringify({ text: cleaned })}\n\n`)
+                }
+              }
+            } catch {
+              // Línea SSE no-JSON, ignorar
+            }
+          }
+        }
+      }
+
+      res.write(`data: [DONE]\n\n`)
+      return res.end()
+    } catch (err) {
+      console.error('Chatbot stream error:', err)
+      res.write(`data: ${JSON.stringify({ text: t.error, error: true })}\n\n`)
+      res.write(`data: [DONE]\n\n`)
+      return res.end()
+    }
+  }
+
+  // ── Modo clásico (sin streaming) ───────────────────────────────────
   try {
     const reply = await calpulliChat({
       messages,
-      maxTokens: 420,
-      temperature: 0.45,
+      maxTokens: 256,
+      temperature: 0.3,
     })
 
     return res.status(200).json({
