@@ -26,10 +26,8 @@ import { Bot, Send, X, Sparkles, ChevronUp, ChevronDown, MessageCircleQuestion }
 import { useRouter } from 'next/router'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 
-const WELCOME_ES =
-  '¡Quiubo! Soy Calpulli AI 🤖 tu asistente para vivir la CDMX. Te puedo recomendar rutas, comida, museos y barrios, o ayudarte a elegir un Journey. ¿Qué se te antoja?'
-const WELCOME_EN =
-  "Hey! I'm Calpulli AI 🤖 your Mexico City guide. I can recommend routes, food, museums and neighborhoods, or help you pick a Journey. What are you in the mood for?"
+const WELCOME_ES = '¡Quiubo! Soy Calpulli AI 🤖 — dime qué buscas y te guío.'
+const WELCOME_EN = "Hey! I'm Calpulli AI 🤖 — tell me what you need and I'll guide you."
 
 // Respuestas predefinidas anteriores: ocultas por petición. Se mantienen
 // comentadas en espíritu pero ya no se usan en el panel.
@@ -139,6 +137,66 @@ const PRESET_BY_SECTION = {
     es: ['¿Qué Journey me recomiendas?', '¿Qué hacer en CDMX este mes?', '¿Cómo reservo?'],
     en: ['Which Journey do you recommend?', 'What to do in CDMX this month?', 'How do I book?'],
   },
+}
+
+// 4 respuestas sugeridas permanentes (siempre visibles, en ambos idiomas).
+// 1) Museos/restaurantes/bares/atracciones con mini-serie -> Journey/Guía o WhatsApp.
+// 2) "¿Qué buscas?" -> detectar y mandar al blog más cercano o fuentes confiables.
+// 3) "Tengo una duda sobre lo que veo" -> explicar blog, qué hacer y qué agendar.
+// 4) Journey a la medida -> WhatsApp con mensaje precargado.
+const WHATSAPP_CUSTOM_URL =
+  'https://wa.me/525512291607?text=' +
+  encodeURIComponent('Hola Calpulli CDMX, quiero un Journey a la medida. Me gustaría: ')
+
+const SUGGESTED_FOUR = {
+  es: [
+    {
+      kind: 'send',
+      label: 'Museos, restaurantes, bares, atracciones',
+      message:
+        'Quiero recomendaciones de museos, restaurantes, bares o atracciones en CDMX. Hazme tus preguntas (máx. 4) para darme el Journey o guía que más se adapte; si no hay, te doy WhatsApp para armarlo.',
+    },
+    {
+      kind: 'send',
+      label: '¿Qué buscas? Te ayudo a encontrarlo',
+      message:
+        '¿Qué buscas en el sitio? Te ayudo a encontrarlo: dime qué necesitas y llévame al blog o resultado más cercano; si no lo tienen, dime fuentes confiables.',
+    },
+    {
+      kind: 'send',
+      label: 'Tengo una duda sobre lo que veo',
+      message:
+        'Tengo una duda sobre lo que veo en esta página: explícame en qué blog o sección está, qué puedo hacer ahí y qué me recomiendas ver o agendar.',
+    },
+    { kind: 'whatsapp', label: 'Quiero un journey a la medida', url: WHATSAPP_CUSTOM_URL },
+  ],
+  en: [
+    {
+      kind: 'send',
+      label: 'Museums, restaurants, bars, attractions',
+      message:
+        'I want recommendations for museums, restaurants, bars or attractions in CDMX. Ask me up to 4 questions to point me to the Journey or Guide that fits best; if there is none, give me WhatsApp to build it.',
+    },
+    {
+      kind: 'send',
+      label: 'What are you looking for? I can find it',
+      message:
+        'What are you looking for on the site? Help me find it: take me to the closest blog or result; if you do not have it, suggest reliable sources.',
+    },
+    {
+      kind: 'send',
+      label: 'I have a question about what I see',
+      message:
+        'I have a question about what I see on this page: explain which blog or section it is in, what I can do there, and what you recommend seeing or booking.',
+    },
+    {
+      kind: 'whatsapp',
+      label: 'I want a custom journey',
+      url:
+        'https://wa.me/525512291607?text=' +
+        encodeURIComponent('Hi Calpulli CDMX, I want a custom Journey. I would like: '),
+    },
+  ],
 }
 
 function sectionForPath(pathname) {
@@ -353,10 +411,10 @@ export default function ChatbotAssistant() {
   const loadedRef = useRef(false)
 
   const welcome = isEs ? WELCOME_ES : WELCOME_EN
-  // Preguntas contextuales según la sección (estilo WhatsApp); las
-  // QUICK_ACTIONS genéricas quedan ocultas por petición.
-  const section = sectionForPath(router?.asPath || router?.pathname)
-  const actions = PRESET_BY_SECTION[section]?.[isEs ? 'es' : 'en'] || []
+  // 4 sugeridas permanentes en todo momento (ES/EN según el header).
+  // El contexto por sección se mantiene para el saludo/prompt, pero ya no
+  // oculta las sugerencias.
+  const actions = SUGGESTED_FOUR[isEs ? 'es' : 'en']
 
   // Cargar conversación de la sesión (solo navegador).
   useEffect(() => {
@@ -462,6 +520,7 @@ export default function ChatbotAssistant() {
             history,
             locale: isEs ? 'es' : 'en',
             stream: true,
+            path: router?.asPath || '/',
           }),
           signal: abortRef.current.signal,
         })
@@ -755,30 +814,41 @@ export default function ChatbotAssistant() {
               )}
             </motion.div>
 
-            {/* Presuntas contextuales */}
-            {!hasConversation && actions.length > 0 && (
+            {/* 4 sugeridas permanentes (siempre visibles) */}
+            {actions.length > 0 && (
               <motion.div
                 variants={reduced ? undefined : stackItem}
                 className="flex shrink-0 flex-wrap gap-1.5 border-t border-zinc-200/60 px-3 py-2 dark:border-zinc-800"
               >
                 <span className="flex w-full items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                   <MessageCircleQuestion className="h-3 w-3 text-orange-500" aria-hidden />
-                  {isEs
-                    ? 'Preguntas frecuentes de esta sección'
-                    : 'Frequently asked in this section'}
+                  {isEs ? 'Sugeridas' : 'Suggested'}
                 </span>
-                {actions.map((action) => (
-                  <button
-                    key={action}
-                    type="button"
-                    disabled={loading || streaming}
-                    onClick={() => sendMessage(action)}
-                    className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-medium text-zinc-700 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-orange-500/40 dark:hover:bg-orange-500/10 dark:hover:text-orange-300"
-                  >
-                    <Sparkles className="h-3 w-3 text-orange-500" aria-hidden />
-                    {action}
-                  </button>
-                ))}
+                {actions.map((action, i) =>
+                  action.kind === 'whatsapp' ? (
+                    <a
+                      key={action.label}
+                      href={action.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 rounded-full bg-[#25D366]/15 px-2.5 py-1 text-[11px] font-semibold text-[#128C4B] transition-colors hover:bg-[#25D366]/25 dark:text-[#3dd68c] dark:hover:bg-[#25D366]/20"
+                    >
+                      <MessageCircleQuestion className="h-3 w-3" aria-hidden />
+                      {`${i + 1}. ${action.label}`}
+                    </a>
+                  ) : (
+                    <button
+                      key={action.label}
+                      type="button"
+                      disabled={loading || streaming}
+                      onClick={() => sendMessage(action.message)}
+                      className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-medium text-zinc-700 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-orange-500/40 dark:hover:bg-orange-500/10 dark:hover:text-orange-300"
+                    >
+                      <Sparkles className="h-3 w-3 text-orange-500" aria-hidden />
+                      {`${i + 1}. ${action.label}`}
+                    </button>
+                  )
+                )}
               </motion.div>
             )}
 

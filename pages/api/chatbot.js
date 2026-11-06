@@ -25,11 +25,14 @@ import { JOURNEYS } from '@/data/journeysData'
 import { SELF_GUIDES_DATA } from '@/data/selfGuidesData'
 import { CDMX_MAPS_DATA } from '@/data/cdmxMapsData'
 import { getAllLocalPicks } from '@/lib/localPicks'
+import { getAllFilesFrontMatter } from '@/lib/mdx'
 import { checkRateLimit, limits } from '@/lib/utils/rateLimiter'
+import { turso } from '@/lib/turso'
 
 const MAX_MESSAGE_CHARS = 700
 const MAX_HISTORY = 3
 const MAX_HISTORY_CHARS = 250
+const MAX_ANSWER_CHARS = 2000
 
 const LOCALIZED = {
   es: {
@@ -170,6 +173,23 @@ function pickLocalized(es, en, isEs) {
   return isEs ? es || en : en || es
 }
 
+function getBlogList() {
+  try {
+    const posts = getAllFilesFrontMatter('blog', 'es')
+    return (posts || [])
+      .slice(0, 20)
+      .map((p) => {
+        const slug = p?.slug || ''
+        const title = p?.title || slug
+        return title && slug ? `• ${title} → /blog/${slug}` : null
+      })
+      .filter(Boolean)
+      .join('\n')
+  } catch {
+    return ''
+  }
+}
+
 function getKnowledgeBlock(isEs) {
   const journeys = JOURNEYS.map(
     (j) =>
@@ -220,16 +240,27 @@ function getKnowledgeBlock(isEs) {
     localPicks = ''
   }
 
+  const blogList = getBlogList()
   return {
     journeys,
     guides,
     maps,
+    blog: blogList || (isEs ? '• Blog → /blog' : '• Blog → /blog'),
     localPicks:
       localPicks ||
       (isEs
         ? '• Recomendaciones del mes → /local/recomendaciones-mes'
         : '• Monthly recommendations → /local/recomendaciones-mes'),
   }
+}
+
+// ── Flujo "Journey a la medida": respuesta directa con WhatsApp ──────
+const CUSTOM_JOURNEY_ES =
+  /a la medida|journey a la medida|custom journe|custom tour|custom journey|quiero un journey/i
+function customJourneyReply(isEs) {
+  return isEs
+    ? '¡Será un placer hacerlo! Para armarte un Journey a la medida, escríbenos por WhatsApp: +52 55 1229 1607. Cuéntanos qué deseas encontrar (colonia, días, presupuesto, qué te late) y te lo armamos.'
+    : 'It will be our pleasure to build it! For a custom Journey, message us on WhatsApp: +52 55 1229 1607. Tell us what you are looking for (neighborhood, days, budget, vibe) and we will craft it.'
 }
 
 // ── Respuestas rápidas: sin gastar tokens ni latencia de Gemini ────
@@ -272,7 +303,7 @@ function fastReply(message, isEs) {
 }
 
 function buildSystemPrompt(isEs) {
-  const { journeys, guides, maps, localPicks } = getKnowledgeBlock(isEs)
+  const { journeys, guides, maps, blog, localPicks } = getKnowledgeBlock(isEs)
 
   if (!isEs) {
     return `You are "Calpulli AI", the virtual assistant of Calpulli CDMX, a house of local tours and experiences in Mexico City. You are not a person: say so naturally if asked. You sound like a warm, hospitable Mexico City expert who knows the city and wants visitors to experience it well.
@@ -287,6 +318,12 @@ MANDATORY LANGUAGE: ALWAYS answer in English. Never answer in Spanish unless the
 5. NEVER ASK FOR SENSITIVE DATA: no cards, passwords, ID numbers, addresses or medical data. For bookings, send people to /checkout.
 6. NO MEDICAL, LEGAL OR FINANCIAL ADVICE.
 
+=== SUGGESTED FLOWS ===
+1. MUSEUMS / RESTAURANTS / BARS / ATTRACTIONS: ask up to 4 short questions (neighborhood, budget, day/time, vibe) to match the closest Journey or Guide from the catalog; if none fits, offer WhatsApp +52 55 1229 1607 to build it.
+2. SEARCH HELP: detect what the user wants and send them to the closest blog/result (/blog/...); if we do not have it, kindly explain and recommend reliable sources (official: gob.mx, inah.gob.mx, bellasartes.gob.mx, antropologia.inah.gob.mx, cmll.com, ticketmaster.com.mx).
+3. QUESTION ABOUT WHAT THEY SEE: explain which blog/section they are on, what they can do there, and what they would like to see or book.
+4. CUSTOM JOURNEY: give WhatsApp +52 55 1229 1607, ask what they were looking for, and say it will be a pleasure to make it.
+
 === REAL CATALOG (use it, do not invent) ===
 JOURNEYS (6 editorial experiences; price and availability are confirmed on each page):
 ${journeys}
@@ -297,10 +334,15 @@ ${guides}
 CURATED MAPS:
 ${maps}
 
+BLOG POSTS (for search help):
+${blog}
+
 LOCAL PICKS OF THE MONTH:
 ${localPicks}
 
 Other useful links: /local, /local/recomendaciones-mes, /blog, /news, /about, /pricing.
+
+BLOG POSTS (for search help): use the closest match or the most recent ones.
 
 === CDMX & MEXICO: WHAT YOU KNOW ===
 You may share general, verifiable travel context: neighborhoods (Centro Histórico, Roma, Condesa, Coyoacán, Polanco, San Ángel, Xochimilco, Chapultepec), food (tacos, tamales, pozole, mole, mezcal), museums, architecture, transport (Metro, Metrobús, Ecobici, apps), weather, altitude (~2,240 m), tipping (10–15%), bottled water, rainy season (Jun–Sep), Day of the Dead (Nov 1–2), Independence Day (Sep 15–16), jacarandas (Mar–Apr). For destinations outside Mexico City you may recommend freely (Oaxaca, Puebla, Guanajuato, San Miguel de Allende, Tulum, Mérida, etc.). Remind people that schedules change and should be verified with the official source.
@@ -335,6 +377,12 @@ IDIOMA OBLIGATORIO: responde SIEMPRE en español de México, aunque el usuario e
 5. NO PIDAS DATOS SENSIBLES: nunca pidas tarjeta, contraseña, INE, dirección ni datos médicos. Para reservar, manda a /checkout.
 6. NO DES CONSEJO MÉDICO, LEGAL NI FINANCIERO.
 
+=== FLUJOS SUGERIDOS ===
+1. MUSEOS / RESTAURANTES / BARES / ATRACCIONES: haz hasta 4 preguntas cortas (colonia, presupuesto, día/horario, ambiente) para llevar al Journey o Guía del catálogo que más se adapte; si no hay, ofrece WhatsApp +52 55 1229 1607 para armarlo.
+2. AYUDAR A ENCONTRAR: detecta lo que busca y llévalo al blog/resultado más cercano (/blog/...); si no lo tenemos, responde con amabilidad y recomienda fuentes confiables (oficiales: gob.mx, inah.gob.mx, bellasartes.gob.mx, antropologia.inah.gob.mx, cmll.com, ticketmaster.com.mx).
+3. DUDA SOBRE LO QUE VE: explícale en qué blog o sección está, qué puede hacer ahí y qué le gustaría ver o agendar.
+4. JOURNEY A LA MEDIDA: pásale WhatsApp +52 55 1229 1607, pregúntale qué deseaba encontrar y dile que será un placer hacerlo.
+
 === CATÁLOGO REAL (úsalo, no inventes) ===
 JOURNEYS (6 experiencias editoriales; precio y disponibilidad se confirman en la ficha):
 ${journeys}
@@ -345,10 +393,15 @@ ${guides}
 MAPAS CURADOS:
 ${maps}
 
+POSTS DEL BLOG (para ayudar a encontrar):
+${blog}
+
 SELECCIÓN LOCAL DEL MES:
 ${localPicks}
 
 Otros enlaces útiles: /local, /local/recomendaciones-mes, /blog, /news, /about, /pricing.
+
+POSTS DEL BLOG (para ayudar a encontrar): usa la coincidencia más cercana o los más recientes.
 
 === CDMX Y MÉXICO: LO QUE SÍ SABES ===
 Puedes dar contexto turístico general y verificable: barrios (Centro Histórico, Roma, Condesa, Coyoacán, Polanco, San Ángel, Xochimilco, Chapultepec), comida (tacos, tamales, pozole, mole, mezcal), museos, arquitectura, transporte (Metro, Metrobús, Ecobici, apps), clima, altitud (~2,240 m), propinas (10–15%), agua embotellada, temporada de lluvias (jun–sep), Día de Muertos (1–2 nov), Independencia (15–16 sep), jacarandas (mar–abr). Para México fuera de CDMX puedes recomendar destinos (Oaxaca, Puebla, Guanajuato, San Miguel de Allende, Tulum, Mérida, etc.) con libertad. Aclara que los horarios cambian y conviene verificar en la fuente oficial.
@@ -378,6 +431,53 @@ function getClientIp(req) {
     req.socket?.remoteAddress ||
     'unknown'
   )
+}
+
+function cleanPath(value) {
+  const raw = String(value || '/')
+    .split('?')[0]
+    .split('#')[0]
+  return raw.slice(0, 300) || '/'
+}
+
+/**
+ * Totem de preguntas del chatbot en Turso para análisis.
+ * Sin datos personales: no guarda IP, user-agent ni cookies.
+ * No bloqueante: cualquier error se ignora para no romper el chat.
+ */
+async function logChatQuestion({ question, answer, locale, path, filtered }) {
+  try {
+    if (!question || !process.env.TURSO_URL) return
+    await turso.execute({
+      sql: `CREATE TABLE IF NOT EXISTS chat_questions (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        question TEXT NOT NULL,
+        answer TEXT,
+        locale TEXT NOT NULL DEFAULT 'es',
+        path TEXT,
+        filtered TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+    })
+    await turso.execute({
+      sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_created_at ON chat_questions(created_at)`,
+    })
+    await turso.execute({
+      sql: `INSERT INTO chat_questions (question, answer, locale, path, filtered)
+            VALUES (?, ?, ?, ?, ?)`,
+      args: [
+        String(question).slice(0, MAX_MESSAGE_CHARS),
+        String(answer || '').slice(0, MAX_ANSWER_CHARS) || null,
+        locale === 'en' ? 'en' : 'es',
+        cleanPath(path),
+        filtered ? String(filtered).slice(0, 50) : null,
+      ],
+    })
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[chatbot log]', err?.message?.slice?.(0, 200) || err)
+    }
+  }
 }
 
 /**
@@ -446,7 +546,9 @@ export default async function handler(req, res) {
   }
 
   // ── Filtros previos: no gastan tokens ──────────────────────────────
-  const filteredReply = (reply, filtered) => {
+  const logCtx = { locale: isEs ? 'es' : 'en', path: body.path || '/' }
+  const filteredReply = async (reply, filtered) => {
+    await logChatQuestion({ question: message, answer: reply, ...logCtx, filtered })
     if (wantsStream) {
       res.setHeader('Content-Type', 'text/event-stream')
       res.setHeader('Cache-Control', 'no-cache, no-transform')
@@ -470,6 +572,11 @@ export default async function handler(req, res) {
   }
   if (HUMAN_PATTERNS.some((re) => re.test(message))) {
     return filteredReply(t.human, 'human')
+  }
+
+  // ── Journey a la medida: WhatsApp directo ───────────────────────
+  if (CUSTOM_JOURNEY_ES.test(message)) {
+    return filteredReply(customJourneyReply(isEs), 'custom-journey')
   }
 
   // ── Fast paths: respuestas instantáneas sin llamar a Gemini ──────
@@ -540,6 +647,12 @@ export default async function handler(req, res) {
 
       // Si recibimos un string (fallback no-streaming), enviarlo completo
       if (typeof streamResult === 'string') {
+        await logChatQuestion({
+          question: message,
+          answer: streamResult,
+          ...logCtx,
+          filtered: null,
+        })
         res.write(`data: ${JSON.stringify({ text: streamResult })}\n\n`)
         res.write(`data: [DONE]\n\n`)
         return res.end()
@@ -549,6 +662,7 @@ export default async function handler(req, res) {
       const reader = streamResult.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
+      let fullAnswer = ''
 
       // eslint-disable-next-line no-constant-condition
       while (true) {
@@ -574,6 +688,7 @@ export default async function handler(req, res) {
               if (text) {
                 const cleaned = cleanStreamChunk(text)
                 if (cleaned) {
+                  fullAnswer += cleaned
                   res.write(`data: ${JSON.stringify({ text: cleaned })}\n\n`)
                 }
               }
@@ -584,10 +699,12 @@ export default async function handler(req, res) {
         }
       }
 
+      await logChatQuestion({ question: message, answer: fullAnswer, ...logCtx, filtered: null })
       res.write(`data: [DONE]\n\n`)
       return res.end()
     } catch (err) {
       console.error('Chatbot stream error:', err)
+      await logChatQuestion({ question: message, answer: t.error, ...logCtx, filtered: 'error' })
       res.write(`data: ${JSON.stringify({ text: t.error, error: true })}\n\n`)
       res.write(`data: [DONE]\n\n`)
       return res.end()
@@ -602,13 +719,15 @@ export default async function handler(req, res) {
       temperature: 0.3,
     })
 
+    const finalReply =
+      reply && reply.trim()
+        ? reply.trim()
+        : isEs
+        ? 'No alcancé a formular una respuesta. ¿Me lo preguntas de otra forma o te paso con el equipo por WhatsApp?'
+        : 'I could not put an answer together. Could you rephrase, or shall I connect you with the team on WhatsApp?'
+    await logChatQuestion({ question: message, answer: finalReply, ...logCtx, filtered: null })
     return res.status(200).json({
-      reply:
-        reply && reply.trim()
-          ? reply.trim()
-          : isEs
-          ? 'No alcancé a formular una respuesta. ¿Me lo preguntas de otra forma o te paso con el equipo por WhatsApp?'
-          : 'I could not put an answer together. Could you rephrase, or shall I connect you with the team on WhatsApp?',
+      reply: finalReply,
       timestamp: new Date().toISOString(),
       remaining: rl.remaining,
     })

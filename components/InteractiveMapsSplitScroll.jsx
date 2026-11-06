@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 
+function viewerUrl(embedUrl) {
+  if (!embedUrl) return '#'
+  const m = embedUrl.match(/[?&]mid=([^&]+)/)
+  return m ? `https://www.google.com/maps/d/viewer?mid=${m[1]}` : embedUrl
+}
+
 export default function InteractiveMapsSplitScroll({ maps = [] }) {
   const [activeMapId, setActiveMapId] = useState(maps[0]?.id || '')
   const blockRefs = useRef({})
@@ -100,13 +106,26 @@ export default function InteractiveMapsSplitScroll({ maps = [] }) {
                 )}
 
                 {/* Mapa móvil (visible solo en pantallas pequeñas) */}
-                <div className="mt-6 block h-80 w-full overflow-hidden rounded-2xl border border-gray-200 shadow-lg dark:border-gray-800 lg:hidden">
-                  <iframe
-                    src={map.embedUrl}
-                    title={map.title}
-                    className="h-full w-full border-0"
-                    loading="lazy"
-                  />
+                <div className="mt-6 block overflow-hidden rounded-2xl border border-gray-200 shadow-lg dark:border-gray-800 lg:hidden">
+                  <div className="h-80 w-full">
+                    <iframe
+                      src={map.embedUrl}
+                      title={map.title}
+                      className="h-full w-full border-0"
+                      loading="lazy"
+                      allowFullScreen
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    />
+                  </div>
+                  <a
+                    href={viewerUrl(map.embedUrl)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-1.5 bg-gray-50 px-3 py-2 text-xs font-bold text-gray-600 underline-offset-2 hover:underline dark:bg-gray-800 dark:text-gray-300"
+                  >
+                    Abrir en Google Maps ↗
+                  </a>
                 </div>
               </article>
             )
@@ -115,23 +134,38 @@ export default function InteractiveMapsSplitScroll({ maps = [] }) {
 
         {/* Columna Derecha: Mapa Sticky sincronizado (Desktop) */}
         <div className="sticky top-24 hidden lg:col-span-7 lg:block">
-          <div className="relative h-[calc(100vh-140px)] max-h-[780px] min-h-[520px] w-full overflow-hidden rounded-3xl border border-gray-200/80 bg-gray-100 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
-            {maps.map((map) => {
-              const isCurrent = map.id === activeMapId
-              return (
-                <iframe
-                  key={map.id}
-                  src={map.embedUrl}
-                  title={map.title}
-                  className={`absolute inset-0 h-full w-full border-0 transition-opacity duration-500 ease-in-out ${
-                    isCurrent
-                      ? 'pointer-events-auto z-10 opacity-100'
-                      : 'pointer-events-none z-0 opacity-0'
-                  }`}
-                  loading="lazy"
-                />
-              )
-            })}
+          <div className="overflow-hidden rounded-3xl border border-gray-200/80 bg-gray-100 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+            <div className="relative h-[calc(100vh-180px)] max-h-[780px] min-h-[520px] w-full">
+              {maps.map((map) => {
+                const isCurrent = map.id === activeMapId
+                return (
+                  <iframe
+                    key={map.id}
+                    src={map.embedUrl}
+                    title={map.title}
+                    className={`absolute inset-0 h-full w-full border-0 transition-opacity duration-500 ease-in-out ${
+                      isCurrent
+                        ? 'pointer-events-auto z-10 opacity-100'
+                        : 'pointer-events-none z-0 opacity-0'
+                    }`}
+                    loading="lazy"
+                    allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  />
+                )
+              })}
+            </div>
+            {activeMap && (
+              <a
+                href={viewerUrl(activeMap.embedUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 bg-white px-3 py-2.5 text-xs font-bold text-gray-600 underline-offset-2 hover:underline dark:bg-gray-900 dark:text-gray-300"
+              >
+                Abrir en Google Maps ↗
+              </a>
+            )}
           </div>
         </div>
       </div>

@@ -5,6 +5,12 @@ import { useRouter } from 'next/router'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { CDMX_PAGE_HEADER, CDMX_MAPS_DATA } from '@/data/cdmxMapsData'
 
+function viewerUrl(embedUrl) {
+  if (!embedUrl) return '#'
+  const m = embedUrl.match(/[?&]mid=([^&]+)/)
+  return m ? `https://www.google.com/maps/d/viewer?mid=${m[1]}` : embedUrl
+}
+
 // SVG Icons minimalistas para el Dock Móvil y Badges
 function DockIcon({ name, className = 'w-5 h-5' }) {
   switch (name) {
@@ -227,13 +233,26 @@ export default function CDMXInteractiveExperience() {
                   </div>
 
                   {/* Vista embebida en móvil (se muestra debajo de cada card en pantallas pequeñas) */}
-                  <div className="mt-6 block h-80 w-full overflow-hidden rounded-2xl border border-slate-200 shadow-inner dark:border-slate-800 lg:hidden">
-                    <iframe
-                      src={map.embedUrl}
-                      title={title}
-                      className="h-full w-full border-0"
-                      loading="lazy"
-                    />
+                  <div className="mt-6 block overflow-hidden rounded-2xl border border-slate-200 shadow-inner dark:border-slate-800 lg:hidden">
+                    <div className="h-80 w-full">
+                      <iframe
+                        src={map.embedUrl}
+                        title={title}
+                        className="h-full w-full border-0"
+                        loading="lazy"
+                        allowFullScreen
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      />
+                    </div>
+                    <a
+                      href={viewerUrl(map.embedUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-1.5 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 underline-offset-2 hover:underline dark:bg-slate-800 dark:text-slate-300"
+                    >
+                      {isEn ? 'Open in Google Maps ↗' : 'Abrir en Google Maps ↗'}
+                    </a>
                   </div>
                 </article>
               )
@@ -249,14 +268,27 @@ export default function CDMXInteractiveExperience() {
                 : activeMap.title_es || activeMap.title
             return (
               <div className="sticky top-24 hidden lg:col-span-7 lg:block">
-                <div className="relative h-[calc(100vh-140px)] max-h-[820px] min-h-[560px] w-full overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-                  <iframe
-                    key={activeMap.id}
-                    src={activeMap.embedUrl}
-                    title={activeTitle}
-                    className="absolute inset-0 h-full w-full border-0"
-                    loading="lazy"
-                  />
+                <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+                  <div className="relative h-[calc(100vh-180px)] max-h-[820px] min-h-[560px] w-full">
+                    <iframe
+                      key={activeMap.id}
+                      src={activeMap.embedUrl}
+                      title={activeTitle}
+                      className="absolute inset-0 h-full w-full border-0"
+                      loading="lazy"
+                      allowFullScreen
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    />
+                  </div>
+                  <a
+                    href={viewerUrl(activeMap.embedUrl)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-1.5 bg-white px-3 py-2.5 text-xs font-bold text-slate-600 underline-offset-2 hover:underline dark:bg-slate-900 dark:text-slate-300"
+                  >
+                    {isEn ? 'Open in Google Maps ↗' : 'Abrir en Google Maps ↗'}
+                  </a>
                 </div>
               </div>
             )

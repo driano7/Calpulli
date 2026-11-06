@@ -11,7 +11,8 @@ const ContentSecurityPolicy = `
   media-src 'none';
   connect-src *;
   font-src 'self';
-  frame-src giscus.app https://www.google.com https://maps.google.com
+  frame-src giscus.app https://www.google.com https://www.google.com/maps https://maps.google.com https://docs.google.com
+  child-src giscus.app https://www.google.com https://www.google.com/maps https://maps.google.com https://docs.google.com
 `
 
 const securityHeaders = [
@@ -65,21 +66,11 @@ const securityHeaders = [
     key: 'X-Powered-By',
     value: '',
   },
-  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Embedder-Policy
-  {
-    key: 'Cross-Origin-Embedder-Policy',
-    value: 'require-corp',
-  },
-  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy
-  {
-    key: 'Cross-Origin-Opener-Policy',
-    value: 'same-origin',
-  },
-  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Resource-Policy
-  {
-    key: 'Cross-Origin-Resource-Policy',
-    value: 'same-origin',
-  },
+  // NOTA /maps: no se envían Cross-Origin-Embedder-Policy / Opener / Resource
+  // con require-corp / same-origin porque bloquean los iframes cross-origin
+  // de Google My Maps (ERR_BLOCKED_BY_RESPONSE_NOT_CORP) y de Giscus.
+  // Si se necesita crossOriginIsolated en el futuro, hacerlo solo en rutas
+  // sin embeds externos.
 ]
 
 module.exports = withBundleAnalyzer({
