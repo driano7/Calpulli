@@ -34,6 +34,15 @@ interface VirtualTicketProps {
     participantNames?: string[]
     /** WhatsApp del responsable (para mostrar en el ticket). */
     customerPhone?: string | null
+    /** Partner referral snapshot (booking_attributions). No commission. */
+    partner?: {
+      name: string
+      originalAmount: number
+      discountAmount: number
+      discountPct: number
+      finalAmount: number
+      status: string
+    } | null
   }
   onClose: () => void
   onDownloadPNG?: () => void
@@ -328,6 +337,36 @@ export function VirtualTicket({
               ? 'Pago pendiente'
               : 'Payment pending'}
           </div>
+
+          {/* Partner referral: original / discount / paid / partner name (no commission) */}
+          {ticket.partner && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs dark:border-emerald-500/30 dark:bg-emerald-500/10">
+              <p className="font-semibold text-emerald-700 dark:text-emerald-300">
+                {isEs
+                  ? `Reserva a través de ${ticket.partner.name}`
+                  : `Booking via ${ticket.partner.name}`}
+              </p>
+              <dl className="mt-1.5 space-y-0.5 text-zinc-600 dark:text-zinc-300">
+                <div className="flex justify-between">
+                  <dt>{isEs ? 'Precio original' : 'Original price'}</dt>
+                  <dd className="tabular-nums">
+                    <s>{formatPrice(ticket.partner.originalAmount)}</s>
+                  </dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt>{isEs ? 'Descuento' : 'Discount'}</dt>
+                  <dd className="tabular-nums">
+                    −{formatPrice(ticket.partner.discountAmount)} (
+                    {Math.round((Number(ticket.partner.discountPct) || 0) * 100)}%)
+                  </dd>
+                </div>
+                <div className="flex justify-between font-semibold">
+                  <dt>{isEs ? 'Pagado' : 'Paid'}</dt>
+                  <dd className="tabular-nums">{formatPrice(ticket.partner.finalAmount)}</dd>
+                </div>
+              </dl>
+            </div>
+          )}
 
           {/* Ticket Info */}
           <div className="space-y-3">

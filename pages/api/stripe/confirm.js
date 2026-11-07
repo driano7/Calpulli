@@ -9,6 +9,13 @@ import { recordConversion } from '@/lib/referrals'
 import { notifyBooking } from '@/lib/mail/bookingNotice'
 import { getSessionUser } from '@/lib/auth'
 import { getSessionOptional } from '@/lib/auth/session'
+import {
+  resolvePartnerForRequest,
+  priceForExperience,
+  createAttribution,
+  recordPartnerEvent,
+} from '@/lib/partners'
+import { applyDiscount } from '@/lib/partners/pricing'
 
 function bearerToken(req) {
   const header = req.headers.authorization
@@ -38,16 +45,25 @@ async function persistBookings({
   paymentMethod,
   stripe,
   responsiblePosition = 1,
+  partner = null,
+  partnerSource = 'PARTNER_LINK',
 }) {
   const created = []
   for (const item of items) {
+    // Server-side price recalculation: client unitPrice is never trusted.
+    // Original = public MXN price × people; partner discount applied here.
+    const peopleCount = Math.max(1, Number(item.peopleCount) || 1)
+    const originalUnit = priceForExperience(item.experienceId)
+    const discountedUnit = partner
+      ? applyDiscount(originalUnit, partner.guestDiscountPct).finalAmount
+      : originalUnit
     const booking = await createBookingInTurso({
       experienceId: item.experienceId,
       userId,
       date: item.date,
       time: item.time,
-      peopleCount: Math.max(1, Number(item.peopleCount) || 1),
-      totalAmount: Number(item.unitPrice || 0) * Math.max(1, Number(item.peopleCount) || 1),
+      peopleCount,
+      totalAmount: discountedUnit * peopleCount,
       currency,
       customerName: item.customerName || customerName,
       // Un ticket por persona: cada quien con su codigo y su QR.
@@ -67,6 +83,29 @@ async function persistBookings({
       stripePaymentIntentId: stripe?.paymentIntentId || null,
       paid: paymentMethod !== 'cash',
     })
+    // Partner attribution: UNIQUE(booking_id) makes retries/webhooks idempotent.
+    if (partner) {
+      try {
+        const status = paymentMethod === 'cash' ? 'PENDING' : 'CONFIRMED'
+        await createAttribution({
+          bookingId: booking.id,
+          partner,
+          source: partnerSource,
+          originalAmount: originalUnit * peopleCount,
+          currency: currency || 'MXN',
+          status,
+        })
+        if (status === 'CONFIRMED') {
+          await recordPartnerEvent({
+            partner,
+            eventType: 'BOOKING_CONFIRMED',
+            eventKey: `${booking.id}:BOOKING_CONFIRMED`,
+          })
+        }
+      } catch (err) {
+        console.error('[partners] attribution failed:', err)
+      }
+    }
     created.push(booking)
   }
   return created
@@ -198,13 +237,13 @@ export default async function handler(req, res) {
         ? mockItems[0].participantNames[0]
         : 'Invitado'
 
+      const mockPartner = await resolvePartnerForRequest(req, req.body || {})
       const mockBookings = await persistBookings({
         items: mockItems.map((item) => ({
           experienceId: item.experienceId,
           date: item.date,
           time: item.time,
           peopleCount: Math.max(1, Number(item.peopleCount) || 1),
-          unitPrice: Number(item.unitPrice) || 0,
           customerName:
             (Array.isArray(item.participantNames) && item.participantNames[0]) || customerName,
         })),
@@ -216,6 +255,8 @@ export default async function handler(req, res) {
         currency: typeof currency === 'string' ? currency : 'USD',
         stripe: { sessionId },
         responsiblePosition: Number(responsiblePosition) || 1,
+        partner: mockPartner,
+        partnerSource: req.body?.referralCode ? 'REFERRAL_CODE' : 'PARTNER_LINK',
       })
 
       await registerReferralConversions(mockBookings, {
@@ -270,6 +311,12 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, bookings: alreadyBooked, idempotent: true })
     }
 
+    // Server-side partner resolve: body (manual code) + Stripe metadata + cookie.
+    const realPartner = await resolvePartnerForRequest(req, {
+      ...(req.body || {}),
+      referralCode: req.body?.referralCode || checkout.metadata?.partner_ref || undefined,
+    })
+
     await persistBookings({
       responsiblePosition: Number(checkout.metadata?.responsible_position) || 1,
       items: parsedItems.map((item) => ({
@@ -277,7 +324,6 @@ export default async function handler(req, res) {
         date: item.date,
         time: item.time,
         peopleCount: Math.max(1, Number(item.peopleCount) || 1),
-        unitPrice: Number(item.unitPrice) || 0,
         customerName: customerName,
         participantNames: Array.isArray(item.participantNames) ? item.participantNames : [],
         specialRequests: item.specialRequests,
@@ -295,6 +341,8 @@ export default async function handler(req, res) {
             ? checkout.payment_intent
             : checkout.payment_intent?.id || null,
       },
+      partner: realPartner,
+      partnerSource: req.body?.referralCode ? 'REFERRAL_CODE' : 'PARTNER_LINK',
     })
 
     const bookings = await findBookingsByStripeSession(sessionId)

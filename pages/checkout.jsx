@@ -33,6 +33,10 @@ import { GuestPeopleField, MAX_GUESTS } from '@/components/checkout/GuestPeopleF
 import { CountrySearchSelect } from '@/components/checkout/CountrySearchSelect'
 import { JourneyDateTimePicker } from '@/components/checkout/JourneyDateTimePicker'
 import { JOURNEYS, pickLocalized } from '@/data/journeysData'
+import PartnerBanner from '@/components/partners/PartnerBanner'
+import PartnerPrice from '@/components/partners/PartnerPrice'
+import { usePartnerReferral } from '@/lib/partners/usePartnerReferral'
+import { clearStoredReferral, saveReferral, getDiscountedPrice } from '@/lib/partners/client'
 
 /** Resta horas a un string HH:MM (para calcular 2h antes de una función). */
 function subtractHours(time, hours) {
@@ -48,6 +52,48 @@ export default function CheckoutPage() {
   const { t, currentLanguage } = useLanguage()
   const locale = currentLanguage === 'es' ? 'es' : 'en'
   const isGuest = !isLoading && !user
+  const partnerReferral = usePartnerReferral()
+  const partnerRef = partnerReferral?.ref || ''
+  const partnerExpiresAt = partnerReferral?.expiresAt || null
+  const partnerPct = Number(partnerReferral?.partner?.guestDiscountPct || 0)
+  const discounted = getDiscountedPrice(subtotal, partnerReferral)
+  const displaySubtotal = partnerReferral?.partner ? discounted.finalAmount : subtotal
+  const partnerSavings = partnerReferral?.partner ? discounted.discountAmount : 0
+  const [manualRef, setManualRef] = useState('')
+  const [manualRefError, setManualRefError] = useState(null)
+
+  const applyManualRef = async () => {
+    const code = manualRef.trim()
+    if (!code) return
+    setManualRefError(null)
+    try {
+      const res = await fetch(`/api/partners/resolve?ref=${encodeURIComponent(code)}`, {
+        credentials: 'include',
+      })
+      const data = await res.json().catch(() => null)
+      if (!data?.active || !data?.partner) {
+        setManualRefError(
+          locale === 'es' ? 'Código no válido o inactivo.' : 'Invalid or inactive code.'
+        )
+        return
+      }
+      saveReferral({
+        ref: data.partner.referralCode || data.partner.slug || code,
+        partner: data.partner,
+        attributionDays: data.attributionDays,
+      })
+      setManualRef('')
+    } catch {
+      setManualRefError(
+        locale === 'es' ? 'No pudimos validar el código.' : 'Could not validate the code.'
+      )
+    }
+  }
+
+  const removePartnerReferral = () => {
+    clearStoredReferral()
+    setManualRefError(null)
+  }
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
@@ -528,6 +574,8 @@ export default function CheckoutPage() {
             : user?.firstName
             ? `${user.firstName} ${user.lastName || ''}`.trim()
             : undefined,
+          referralCode: partnerRef || undefined,
+          referralExpiresAt: partnerExpiresAt || undefined,
           locale,
         }),
       })
@@ -628,6 +676,8 @@ export default function CheckoutPage() {
             acquisitionChannel: getAcquisitionChannel(),
             paymentMethod: payMethod,
             customerPhone: customerPhone.trim() || undefined,
+            referralCode: partnerRef || undefined,
+            referralExpiresAt: partnerExpiresAt || undefined,
           }),
         })
 
@@ -742,6 +792,8 @@ export default function CheckoutPage() {
             customerPhone: customerPhone.trim() || undefined,
             currency: locale === 'es' ? 'MXN' : 'USD',
             responsiblePosition: isGuest ? responsiblePosition : 1,
+            referralCode: partnerRef || undefined,
+            referralExpiresAt: partnerExpiresAt || undefined,
             locale,
           }),
         })
@@ -1073,7 +1125,7 @@ export default function CheckoutPage() {
 
         <CryptoPayment
           open={showCryptoModal}
-          amount={subtotal}
+          amount={displaySubtotal}
           currency={locale === 'es' ? 'MXN' : 'USD'}
           onClose={() => setShowCryptoModal(false)}
           onConfirmed={confirmCryptoPayment}
@@ -1331,6 +1383,8 @@ export default function CheckoutPage() {
             )}
           </div>
 
+          <PartnerBanner />
+
           <div className="grid gap-6 overflow-hidden lg:grid-cols-2 lg:gap-8">
             {/* Summary */}
             <div className="w-full min-w-0 overflow-hidden rounded-2xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10 sm:p-6">
@@ -1366,9 +1420,10 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     <div className="flex flex-shrink-0 items-center gap-2">
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {formatPrice((item.price || 0) * (item.peopleCount || 1))}
-                      </span>
+                      <PartnerPrice
+                        originalAmount={(item.price || 0) * (item.peopleCount || 1)}
+                        className="font-medium text-gray-900 dark:text-white"
+                      />
                       <button
                         type="button"
                         onClick={() => removeItem(item.lineId)}
@@ -1384,6 +1439,24 @@ export default function CheckoutPage() {
               </div>
 
               <div className="mt-6 border-t border-zinc-200 pt-4 dark:border-white/10">
+                {partnerReferral?.partner ? (
+                  <div className="mb-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-zinc-600 dark:text-gray-300">
+                        {locale === 'es' ? 'Precio original' : 'Original price'}
+                      </span>
+                      <s className="tabular-nums text-zinc-400">{formatPrice(subtotal)}</s>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-sm">
+                      <span className="font-semibold text-emerald-700 dark:text-emerald-300">
+                        {locale === 'es' ? 'Descuento socio' : 'Partner discount'}
+                      </span>
+                      <span className="font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
+                        −{formatPrice(partnerSavings)}
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
                 <div className="flex items-center justify-between">
                   <span className="text-zinc-600 dark:text-gray-300">
                     {t('cart.total', 'Total')} ({itemCount}{' '}
@@ -1393,7 +1466,7 @@ export default function CheckoutPage() {
                     )
                   </span>
                   <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {formatPrice(subtotal)}
+                    {formatPrice(displaySubtotal)}
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-zinc-500 dark:text-gray-500">
@@ -1401,6 +1474,50 @@ export default function CheckoutPage() {
                     ? 'Moneda: MXN (Precios mostrados en MXN)'
                     : 'Currency: MXN — prices shown in MXN'}
                 </p>
+                {/* Código de referido manual (opcional) */}
+                <div className="mt-4 rounded-xl border border-zinc-200 bg-white/60 p-3 dark:border-white/10 dark:bg-zinc-900/60">
+                  <label
+                    htmlFor="partner-ref-code"
+                    className="text-xs font-semibold text-zinc-700 dark:text-zinc-300"
+                  >
+                    {locale === 'es' ? 'Código de referido (opcional)' : 'Referral code (optional)'}
+                  </label>
+                  {partnerReferral?.partner ? (
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        {partnerReferral.partner.name} · {partnerRef}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={removePartnerReferral}
+                        className="rounded-lg border px-2 py-1 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                      >
+                        {locale === 'es' ? 'Quitar' : 'Remove'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-2 flex gap-2">
+                      <input
+                        id="partner-ref-code"
+                        type="text"
+                        value={manualRef}
+                        onChange={(e) => setManualRef(e.target.value)}
+                        placeholder="hostal-mx"
+                        className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-white/10 dark:bg-zinc-950 dark:text-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void applyManualRef()}
+                        className="rounded-lg bg-zinc-900 px-3 py-2 text-xs font-semibold text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900"
+                      >
+                        {locale === 'es' ? 'Aplicar' : 'Apply'}
+                      </button>
+                    </div>
+                  )}
+                  {manualRefError ? (
+                    <p className="mt-1 text-xs text-red-500">{manualRefError}</p>
+                  ) : null}
+                </div>
                 <button
                   type="button"
                   onClick={() => clearCart()}
@@ -1663,6 +1780,8 @@ export default function CheckoutPage() {
                             customerEmail: isGuest ? guestEmail.trim() : user?.email,
                             customerPhone: customerPhone.trim(),
                             responsiblePosition,
+                            referralCode: partnerRef || undefined,
+                            referralExpiresAt: partnerExpiresAt || undefined,
                             locale,
                           }),
                         })
@@ -1729,7 +1848,7 @@ export default function CheckoutPage() {
                         {locale === 'es'
                           ? 'Confirmar reserva en efectivo'
                           : 'Confirm cash reservation'}{' '}
-                        {formatPrice(subtotal)}
+                        {formatPrice(displaySubtotal)}
                       </>
                     )}
                   </button>
@@ -1838,12 +1957,12 @@ export default function CheckoutPage() {
                       <>
                         <Lock className="h-5 w-5" />
                         {locale === 'es' ? 'Pagar como invitado' : 'Pay as guest'}{' '}
-                        {formatPrice(subtotal)}
+                        {formatPrice(displaySubtotal)}
                       </>
                     ) : (
                       <>
                         <Lock className="h-5 w-5" />
-                        {t('checkout.payNow', 'Pagar ahora')} {formatPrice(subtotal)}
+                        {t('checkout.payNow', 'Pagar ahora')} {formatPrice(displaySubtotal)}
                       </>
                     )}
                   </button>
@@ -1914,7 +2033,7 @@ export default function CheckoutPage() {
                       : locale === 'es'
                       ? 'Pagar con cripto'
                       : 'Pay with crypto'}{' '}
-                    {formatPrice(subtotal)}
+                    {formatPrice(displaySubtotal)}
                   </button>
                   {isGuest && (
                     <Link
@@ -1939,7 +2058,7 @@ export default function CheckoutPage() {
       </div>
       <CryptoPayment
         open={showCryptoModal}
-        amount={subtotal}
+        amount={displaySubtotal}
         currency={locale === 'es' ? 'MXN' : 'USD'}
         onClose={() => setShowCryptoModal(false)}
         onConfirmed={confirmCryptoPayment}

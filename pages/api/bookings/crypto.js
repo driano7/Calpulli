@@ -22,6 +22,13 @@ import { WALLETS } from '@/lib/crypto/addresses'
 import { notifyBooking } from '@/lib/mail/bookingNotice'
 import { recordConversion } from '@/lib/referrals'
 import { getSessionOptional } from '@/lib/auth/session'
+import {
+  resolvePartnerForRequest,
+  priceForExperience,
+  createAttribution,
+  recordPartnerEvent,
+} from '@/lib/partners'
+import { applyDiscount } from '@/lib/partners/pricing'
 
 export const config = { runtime: 'nodejs' }
 
@@ -133,6 +140,8 @@ export default async function handler(req, res) {
 
   try {
     const created = []
+    const partner = await resolvePartnerForRequest(req, req.body || {})
+    const partnerSource = req.body?.referralCode ? 'REFERRAL_CODE' : 'PARTNER_LINK'
     for (const item of items) {
       const peopleCount = Math.max(1, Number(item.peopleCount) || 1)
       const names = (Array.isArray(item.participantNames) ? item.participantNames : [])
@@ -141,6 +150,10 @@ export default async function handler(req, res) {
       const people = names.length
         ? names
         : [item.customerName || customerName || (locale === 'en' ? 'Guest' : 'Invitado')]
+      const originalUnit = priceForExperience(item.experienceId)
+      const discountedUnit = partner
+        ? applyDiscount(originalUnit, partner.guestDiscountPct).finalAmount
+        : originalUnit
 
       const booking = await createBookingInTurso({
         experienceId: item.experienceId,
@@ -148,7 +161,7 @@ export default async function handler(req, res) {
         date: item.date,
         time: item.time,
         peopleCount,
-        totalAmount: (Number(item.unitPrice) || 0) * peopleCount,
+        totalAmount: discountedUnit * peopleCount,
         currency: currency === 'USD' || currency === 'EUR' || currency === 'CAD' ? currency : 'MXN',
         customerName: people[0] || customerName || null,
         // El invitado no queda registrado (mismo criterio de privacidad que
@@ -162,6 +175,25 @@ export default async function handler(req, res) {
         participants: people.map((name) => ({ name })),
         responsiblePosition: Math.max(1, Number(responsiblePosition) || 1),
       })
+      if (partner) {
+        try {
+          await createAttribution({
+            bookingId: booking.id,
+            partner,
+            source: partnerSource,
+            originalAmount: originalUnit * peopleCount,
+            currency: booking.currency || 'MXN',
+            status: 'CONFIRMED',
+          })
+          await recordPartnerEvent({
+            partner,
+            eventType: 'BOOKING_CONFIRMED',
+            eventKey: `${booking.id}:BOOKING_CONFIRMED`,
+          })
+        } catch (err) {
+          console.error('[partners] crypto attribution failed:', err)
+        }
+      }
       created.push(booking)
     }
 

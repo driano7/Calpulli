@@ -2,6 +2,8 @@ import { getStripeClient } from '@/lib/stripe'
 import { tours } from '@/data/toursData'
 import { JOURNEYS } from '@/data/journeysData'
 import { MXN_PER_USD } from '@/lib/currency'
+import { resolvePartnerForRequest, recordPartnerEvent } from '@/lib/partners'
+import { applyDiscount } from '@/lib/partners/pricing'
 
 export const config = { runtime: 'nodejs' }
 
@@ -58,7 +60,8 @@ const createMockSession = (
   customerName,
   locale,
   baseUrl,
-  guestEmails = []
+  guestEmails = [],
+  partner = null
 ) => {
   const sessionId = `mock_cs_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
   const metadata = {
@@ -67,6 +70,13 @@ const createMockSession = (
     ...(customerEmail ? { customer_email: customerEmail } : {}),
     ...(customerName ? { customer_name: customerName } : {}),
     ...(guestEmails.length ? { guest_emails: JSON.stringify(guestEmails) } : {}),
+    ...(partner
+      ? {
+          partner_ref: partner.referralCode,
+          partner_id: partner.id,
+          partner_discount_pct: String(partner.guestDiscountPct),
+        }
+      : {}),
     items: JSON.stringify(
       items.map((item) => ({
         experienceId: String(item.experienceId),
@@ -130,6 +140,14 @@ export default async function handler(req, res) {
     // Todo se cobra en pesos mexicanos: lo que se ve es lo que se paga.
     const currency = 'mxn'
 
+    // Partner referral: server-side resolve only. Client discount is never
+    // trusted — amounts below are recalculated from priceFor + applyDiscount.
+    const partner = await resolvePartnerForRequest(req, body)
+    const discountedUnitFor = (experienceId) => {
+      const original = priceFor(experienceId)
+      return partner ? applyDiscount(original, partner.guestDiscountPct).finalAmount : original
+    }
+
     const baseUrl = getBaseUrl(req)
 
     // ─── MOCK MODE: sin clave de Stripe ───
@@ -140,21 +158,37 @@ export default async function handler(req, res) {
         customerName,
         locale,
         baseUrl,
-        guestEmails
+        guestEmails,
+        partner
       )
+      if (partner) {
+        await recordPartnerEvent({
+          partner,
+          eventType: 'CHECKOUT_STARTED',
+          eventKey: `${mockSession.id}:CHECKOUT_STARTED:${partner.id}`,
+          path: '/checkout',
+        })
+      }
       console.log('[stripe.mock] Checkout session creada (mock):', mockSession.id)
-      return res.status(200).json({ url: mockSession.url, sessionId: mockSession.id, mock: true })
+      return res.status(200).json({
+        url: mockSession.url,
+        sessionId: mockSession.id,
+        mock: true,
+        partner: partner
+          ? { name: partner.name, guestDiscountPct: partner.guestDiscountPct }
+          : null,
+      })
     }
 
     // ─── MODO REAL: Stripe Checkout ───
     const lineItems = items.map((item) => {
-      const unitUsd = priceFor(item.experienceId)
+      const unitMxn = discountedUnitFor(item.experienceId)
       const qty = Math.max(1, Number(item.peopleCount) || 1)
       return {
         quantity: qty,
         price_data: {
           currency,
-          unit_amount: Math.round(unitUsd * 100),
+          unit_amount: Math.round(unitMxn * 100),
           product_data: {
             name: tourTitleFor(item.experienceId, item.title),
             metadata: { experienceId: String(item.experienceId) },
@@ -171,6 +205,13 @@ export default async function handler(req, res) {
       ...(customerEmail ? { customer_email: customerEmail } : {}),
       ...(customerName ? { customer_name: customerName } : {}),
       ...(guestEmails.length ? { guest_emails: JSON.stringify(guestEmails) } : {}),
+      ...(partner
+        ? {
+            partner_ref: partner.referralCode,
+            partner_id: partner.id,
+            partner_discount_pct: String(partner.guestDiscountPct),
+          }
+        : {}),
       items: JSON.stringify(
         items.map((item) => ({
           experienceId: String(item.experienceId),
@@ -202,7 +243,20 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'No checkout URL returned by Stripe' })
     }
 
-    return res.status(200).json({ url: session.url, sessionId: session.id })
+    if (partner) {
+      await recordPartnerEvent({
+        partner,
+        eventType: 'CHECKOUT_STARTED',
+        eventKey: `${session.id}:CHECKOUT_STARTED:${partner.id}`,
+        path: '/checkout',
+      })
+    }
+
+    return res.status(200).json({
+      url: session.url,
+      sessionId: session.id,
+      partner: partner ? { name: partner.name, guestDiscountPct: partner.guestDiscountPct } : null,
+    })
   } catch (error) {
     console.error('stripe.checkout error:', error)
     return res.status(500).json({

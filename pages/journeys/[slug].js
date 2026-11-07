@@ -18,10 +18,20 @@ import { LuchasJourney } from '@/components/journeys/LuchasJourney'
 import { RomaJourney } from '@/components/journeys/RomaJourney'
 import { JamaicaJourney } from '@/components/journeys/JamaicaJourney'
 import { Reveal } from '@/components/journeys/Reveal'
+import PartnerBanner from '@/components/partners/PartnerBanner'
+import PartnerPrice from '@/components/partners/PartnerPrice'
 
 export default function JourneyDetail({ journey }) {
   const { currentLanguage } = useLanguage()
   const isEs = currentLanguage === 'es'
+  const price = journey.price || 0
+
+  const PartnerHeader = () => (
+    <div className="mx-auto max-w-5xl px-6 pb-6 pt-24 sm:pt-32">
+      <PartnerBanner />
+      {price > 0 ? <PartnerPrice originalAmount={price} className="mt-2" /> : null}
+    </div>
+  )
 
   // Los journeys con experiencia propia se renderizan con su componente
   // dedicado; el resto usa la presentacion editorial generica de abajo.
@@ -29,6 +39,7 @@ export default function JourneyDetail({ journey }) {
     return (
       <>
         <PageSEO title={journey.title_es} description={journey.subtitle_es} />
+        <PartnerHeader />
         <AntropologiaJourney />
       </>
     )
@@ -38,6 +49,7 @@ export default function JourneyDetail({ journey }) {
     return (
       <>
         <PageSEO title={journey.title_es} description={journey.subtitle_es} />
+        <PartnerHeader />
         <JamaicaJourney />
       </>
     )
@@ -47,6 +59,7 @@ export default function JourneyDetail({ journey }) {
     return (
       <>
         <PageSEO title={journey.title_es} description={journey.subtitle_es} />
+        <PartnerHeader />
         <RomaJourney />
       </>
     )
@@ -56,6 +69,7 @@ export default function JourneyDetail({ journey }) {
     return (
       <>
         <PageSEO title={journey.title_es} description={journey.subtitle_es} />
+        <PartnerHeader />
         <LuchasJourney />
       </>
     )
@@ -65,6 +79,7 @@ export default function JourneyDetail({ journey }) {
     return (
       <>
         <PageSEO title={journey.title_es} description={journey.subtitle_es} />
+        <PartnerHeader />
         <CentroJourney />
       </>
     )
@@ -74,6 +89,7 @@ export default function JourneyDetail({ journey }) {
     return (
       <>
         <PageSEO title={journey.title_es} description={journey.subtitle_es} />
+        <PartnerHeader />
         <ChapultepecJourney />
       </>
     )
@@ -92,6 +108,12 @@ export default function JourneyDetail({ journey }) {
         <JourneyHero title={title} subtitle={subtitle} image={journey.heroImage} />
 
         <article className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
+          <PartnerBanner />
+          {price > 0 ? (
+            <div className="mb-8">
+              <PartnerPrice originalAmount={price} />
+            </div>
+          ) : null}
           {intro && (
             <Reveal>
               <p className="mx-auto max-w-2xl text-center text-xl leading-relaxed text-zinc-600 dark:text-zinc-300">

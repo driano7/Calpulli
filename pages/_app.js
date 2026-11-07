@@ -43,6 +43,11 @@ const SiteCookie = dynamic(() => import('@/components/SiteCookie'), {
   loading: () => null,
 })
 
+const PartnerReferralTracker = dynamic(
+  () => import('@/components/partners/PartnerReferralTracker'),
+  { ssr: false, loading: () => null }
+)
+
 const isDevelopment = process.env.NODE_ENV === 'development'
 const isSocket = process.env.SOCKET
 
@@ -81,6 +86,7 @@ export default function App({ Component, pageProps }) {
             {isDevelopment && isSocket && <ClientReload />}
             <Analytics />
             <SiteCookie />
+            <PartnerReferralTracker />
             {getLayout(<Component {...pageProps} />)}
             <WhatsAppButton />
             <ChatbotAssistant />

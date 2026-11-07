@@ -12,6 +12,8 @@ import { checkRateLimit, rateLimitHeaders } from '@/lib/booking/rateLimit'
 import { trySend } from '@/lib/mail/service'
 import { BRAND } from '@/lib/brand'
 import { getSessionOptional } from '@/lib/auth/session'
+import { resolvePartnerForRequest, priceForExperience, createAttribution } from '@/lib/partners'
+import { applyDiscount } from '@/lib/partners/pricing'
 
 export const config = { runtime: 'nodejs' }
 
@@ -73,6 +75,8 @@ export default async function handler(req, res) {
   try {
     const session = await getSessionOptional(req)
     const bookings = []
+    const partner = await resolvePartnerForRequest(req, body)
+    const partnerSource = body.referralCode ? 'REFERRAL_CODE' : 'PARTNER_LINK'
 
     for (const item of items) {
       const names = (Array.isArray(item.participantNames) ? item.participantNames : [])
@@ -81,14 +85,18 @@ export default async function handler(req, res) {
       const people = names.length
         ? names
         : [customerName || (locale === 'es' ? 'Invitado' : 'Guest')]
+      const peopleCount = Math.max(1, Number(item.peopleCount) || people.length)
+      const originalUnit = priceForExperience(item.experienceId)
+      const discountedUnit = partner
+        ? applyDiscount(originalUnit, partner.guestDiscountPct).finalAmount
+        : originalUnit
 
       const booking = await createBookingInTurso({
         experienceId: item.experienceId,
         date: item.date,
         time: item.time,
-        peopleCount: Math.max(1, Number(item.peopleCount) || people.length),
-        totalAmount:
-          (Number(item.unitPrice) || 0) * Math.max(1, Number(item.peopleCount) || people.length),
+        peopleCount,
+        totalAmount: discountedUnit * peopleCount,
         currency: 'MXN',
         customerName: people[0] || customerName,
         customerEmail: session?.user?.id ? customerEmail : null,
@@ -100,6 +108,20 @@ export default async function handler(req, res) {
         participants: people.map((name) => ({ name })),
         responsiblePosition,
       })
+      if (partner) {
+        try {
+          await createAttribution({
+            bookingId: booking.id,
+            partner,
+            source: partnerSource,
+            originalAmount: originalUnit * peopleCount,
+            currency: 'MXN',
+            status: 'PENDING', // cash: unpaid, commission only after payment+completion
+          })
+        } catch (err) {
+          console.error('[partners] cash attribution failed:', err)
+        }
+      }
       bookings.push(booking)
     }
 

@@ -10,6 +10,7 @@ import { VirtualTicket } from '@/components/tickets/VirtualTicket'
 import { AnimatedSection } from '@/components/AnimatedSection'
 import { formatBookingDate } from '@/lib/booking/types'
 import { formatPriceByLocale } from '@/lib/currency'
+import PartnerBanner from '@/components/partners/PartnerBanner'
 
 export default function BookingsPage() {
   const { user, isLoading: authLoading } = useAuth()
@@ -515,6 +516,8 @@ export default function BookingsPage() {
             </Link>
           </div>
 
+          <PartnerBanner />
+
           {/* Formulario de búsqueda (invitado y autenticado) */}
           <section className="mb-8 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-900/50">
             <h3 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">
@@ -821,6 +824,19 @@ export default function BookingsPage() {
                         </svg>
                         <span>{booking.time}</span>
                       </div>
+                      {booking.partner ? (
+                        <p className="mb-2 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                          {isEs
+                            ? `Vía ${booking.partner.name} · ${formatPriceByLocale(
+                                booking.partner.originalAmount,
+                                'es'
+                              )} → ${formatPriceByLocale(booking.partner.finalAmount, 'es')}`
+                            : `Via ${booking.partner.name} · ${formatPriceByLocale(
+                                booking.partner.originalAmount,
+                                'es'
+                              )} → ${formatPriceByLocale(booking.partner.finalAmount, 'es')}`}
+                        </p>
+                      ) : null}
                       <div className="mt-auto flex items-center justify-between border-t border-zinc-200 pt-3 dark:border-white/10">
                         <span className="text-2xl font-bold text-gray-900 dark:text-white">
                           {formatPrice(booking.totalPrice)}

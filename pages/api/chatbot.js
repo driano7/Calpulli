@@ -28,6 +28,7 @@ import { getAllLocalPicks } from '@/lib/localPicks'
 import { getAllFilesFrontMatter } from '@/lib/mdx'
 import { checkRateLimit, limits } from '@/lib/utils/rateLimiter'
 import { turso } from '@/lib/turso'
+import { getSessionUser } from '@/lib/auth'
 
 const MAX_MESSAGE_CHARS = 700
 const MAX_HISTORY = 3
@@ -441,16 +442,27 @@ function cleanPath(value) {
 }
 
 /**
- * Totem de preguntas del chatbot en Turso para análisis.
- * Sin datos personales: no guarda IP, user-agent ni cookies.
- * No bloqueante: cualquier error se ignora para no romper el chat.
+ * Totem de preguntas del chatbot en Turso para análisis + historial por usuario.
+ * Sin IP, user-agent ni cookies. user_id se resuelve server-side desde el
+ * token Bearer; conversation_id agrupa una conversación (NULL = invitado
+ * sin id). No bloqueante: cualquier error se ignora para no romper el chat.
  */
-async function logChatQuestion({ question, answer, locale, path, filtered }) {
+async function logChatQuestion({
+  question,
+  answer,
+  locale,
+  path,
+  filtered,
+  userId,
+  conversationId,
+}) {
   try {
     if (!question || !process.env.TURSO_URL) return
     await turso.execute({
       sql: `CREATE TABLE IF NOT EXISTS chat_questions (
         id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        conversation_id TEXT,
         question TEXT NOT NULL,
         answer TEXT,
         locale TEXT NOT NULL DEFAULT 'es',
@@ -459,13 +471,33 @@ async function logChatQuestion({ question, answer, locale, path, filtered }) {
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`,
     })
+    // Migración best-effort para BDs creadas antes de user_id/conversation_id.
+    for (const sql of [
+      `ALTER TABLE chat_questions ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE SET NULL`,
+      `ALTER TABLE chat_questions ADD COLUMN conversation_id TEXT`,
+    ]) {
+      try {
+        await turso.execute({ sql })
+      } catch {
+        // duplicate column: ya existe
+      }
+    }
     await turso.execute({
       sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_created_at ON chat_questions(created_at)`,
     })
     await turso.execute({
-      sql: `INSERT INTO chat_questions (question, answer, locale, path, filtered)
-            VALUES (?, ?, ?, ?, ?)`,
+      sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_user_created ON chat_questions(user_id, created_at DESC)`,
+    })
+    await turso.execute({
+      sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_conv ON chat_questions(conversation_id, created_at)`,
+    })
+    const cleanConv = typeof conversationId === 'string' ? conversationId.slice(0, 80) : null
+    await turso.execute({
+      sql: `INSERT INTO chat_questions (user_id, conversation_id, question, answer, locale, path, filtered)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
       args: [
+        userId || null,
+        cleanConv || null,
         String(question).slice(0, MAX_MESSAGE_CHARS),
         String(answer || '').slice(0, MAX_ANSWER_CHARS) || null,
         locale === 'en' ? 'en' : 'es',
@@ -478,6 +510,17 @@ async function logChatQuestion({ question, answer, locale, path, filtered }) {
       console.warn('[chatbot log]', err?.message?.slice?.(0, 200) || err)
     }
   }
+}
+
+function cleanConversationId(value) {
+  if (typeof value !== 'string') return null
+  const cleaned = value.trim().slice(0, 80)
+  return /^[A-Za-z0-9-_]+$/.test(cleaned) ? cleaned : null
+}
+
+function bearerToken(req) {
+  const h = req.headers.authorization
+  return typeof h === 'string' && h.startsWith('Bearer ') ? h.slice(7).trim() || null : null
 }
 
 /**
@@ -545,8 +588,23 @@ export default async function handler(req, res) {
     return res.status(200).json({ reply: t.tooLong })
   }
 
+  // Usuario logueado (si trae Bearer) + conversación (nueva charla = nuevo id).
+  let actorUserId = null
+  try {
+    const actor = await getSessionUser(bearerToken(req))
+    actorUserId = actor ? actor.id : null
+  } catch {
+    actorUserId = null
+  }
+  const conversationId = cleanConversationId(body.conversationId)
+
   // ── Filtros previos: no gastan tokens ──────────────────────────────
-  const logCtx = { locale: isEs ? 'es' : 'en', path: body.path || '/' }
+  const logCtx = {
+    locale: isEs ? 'es' : 'en',
+    path: body.path || '/',
+    userId: actorUserId,
+    conversationId,
+  }
   const filteredReply = async (reply, filtered) => {
     await logChatQuestion({ question: message, answer: reply, ...logCtx, filtered })
     if (wantsStream) {

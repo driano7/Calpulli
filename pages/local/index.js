@@ -10,6 +10,7 @@ import { getFeaturedLocalPicks, getCurrentMonthKey } from '@/lib/localPicksSelec
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { AnimatedSection } from '@/components/AnimatedSection'
 import { Pin, Star } from 'lucide-react'
+import PartnerBadge from '@/components/partners/PartnerBadge'
 
 const pageTranslations = {
   en: {
@@ -221,6 +222,9 @@ export default function LocalPicksPage({ picksEs, picksEn }) {
             <p className="mx-auto mt-2 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
               Roma · Condesa · Juárez · Centro Histórico · Coyoacán · Polanco
             </p>
+            <div className="mt-4 flex justify-center">
+              <PartnerBadge />
+            </div>
           </div>
 
           {pinnedPicks.length > 0 && (

@@ -34,6 +34,7 @@ import {
 import {
   Calendar,
   Heart,
+  MessageCircle,
   MessageSquare,
   User,
   Shield,
@@ -76,6 +77,7 @@ type Tab =
   | 'commented'
   | 'security'
   | 'referral'
+  | 'chat'
 
 // Real bookings fetched from the server (Turso) — never from the browser
 const getRealBookings = async (userId: string) => {
@@ -623,11 +625,16 @@ export default function Profile() {
     if (canBeReferrer) {
       base.push({ id: 'referral' as Tab, label: isEs ? 'Mi referido' : 'My referral', icon: Gift })
     }
-    if (isPrivileged) return base
+    if (isPrivileged)
+      return [
+        ...base,
+        { id: 'chat' as Tab, label: isEs ? 'Chat Calpulli' : 'Calpulli chat', icon: MessageCircle },
+      ]
     return [
       ...base.slice(0, 1),
       { id: 'bookings' as Tab, label: isEs ? 'Mis reservas' : 'My bookings', icon: Calendar },
       base[1],
+      { id: 'chat' as Tab, label: isEs ? 'Chat Calpulli' : 'Calpulli chat', icon: MessageCircle },
       { id: 'favorites' as Tab, label: isEs ? 'Favoritos' : 'Favorites', icon: Heart },
       { id: 'commented' as Tab, label: isEs ? 'Comentados' : 'Commented', icon: MessageSquare },
       {
@@ -1016,6 +1023,12 @@ export default function Profile() {
                   />
                 </ErrorBoundary>
               )}
+
+              {tab === 'chat' && (
+                <ErrorBoundary>
+                  <ChatHistorySection isEs={isEs} />
+                </ErrorBoundary>
+              )}
             </motion.div>
           </AnimatePresence>
         </motion.div>
@@ -1062,6 +1075,100 @@ function SummaryCard({
           <p className="text-xs text-zinc-500 dark:text-gray-400">{subtitle}</p>
         </div>
       </div>
+    </div>
+  )
+}
+
+function ChatHistorySection({ isEs }: { isEs: boolean }) {
+  const [conversations, setConversations] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const token = localStorage.getItem('authToken')
+        const res = await fetch('/api/profile/chat-history', {
+          headers: { Authorization: token ? `Bearer ${token}` : '' },
+        })
+        if (!res.ok) throw new Error('no-ok')
+        const data = await res.json()
+        if (!cancelled) setConversations(data.conversations || [])
+      } catch {
+        if (!cancelled)
+          setError(
+            isEs ? 'No pudimos cargar tu historial de chat.' : 'Could not load your chat history.'
+          )
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [isEs])
+
+  if (loading)
+    return (
+      <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 text-sm text-zinc-500 dark:border-white/10 dark:bg-zinc-900/50">
+        {isEs ? 'Cargando tu historial…' : 'Loading your history…'}
+      </div>
+    )
+
+  if (error)
+    return (
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-600 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300">
+        {error}
+      </div>
+    )
+
+  if (conversations.length === 0)
+    return (
+      <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 text-sm text-zinc-500 dark:border-white/10 dark:bg-zinc-900/50">
+        {isEs
+          ? 'Aún no tienes conversaciones guardadas. Abre Calpulli AI desde el botón de robot y tu charla quedará aquí.'
+          : 'No saved conversations yet. Open Calpulli AI from the robot button and your chat will appear here.'}
+      </div>
+    )
+
+  return (
+    <div className="space-y-4">
+      {conversations.map((conv) => (
+        <div
+          key={conv.id}
+          className="rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-white/10 dark:bg-zinc-900/50"
+        >
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+            {conv.id === 'sin-conversacion'
+              ? isEs
+                ? 'Conversación'
+                : 'Conversation'
+              : `${isEs ? 'Conversación' : 'Conversation'} · ${conv.id.slice(0, 8)}`}
+            {conv.updatedAt ? ` · ${String(conv.updatedAt).slice(0, 10)}` : ''}
+          </p>
+          <div className="mt-3 space-y-3">
+            {conv.messages.map((m: any) => (
+              <div key={m.id} className="space-y-1">
+                <p className="text-xs font-semibold text-orange-600 dark:text-orange-400">
+                  {isEs ? 'Tú' : 'You'}
+                </p>
+                <p className="whitespace-pre-wrap text-sm text-zinc-800 dark:text-zinc-100">
+                  {m.question}
+                </p>
+                <p className="text-xs font-semibold text-zinc-400">Calpulli AI</p>
+                <p className="whitespace-pre-wrap text-sm text-zinc-600 dark:text-zinc-300">
+                  {m.answer}
+                </p>
+                {m.path ? <p className="text-[11px] text-zinc-400">{m.path}</p> : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

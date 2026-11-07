@@ -1,10 +1,13 @@
+// MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX
 import { getStripeClient } from '@/lib/stripe'
+import { findBookingsByStripeSession } from '@/lib/booking/turso'
+import { transitionAttribution } from '@/lib/partners'
 
 export const config = { runtime: 'nodejs' }
 
-// Webhook opcional de Stripe. Registra la sesión como pagada y, si el pago se
-// confirma, crea las reservas (tickets con QR) para el usuario indicado en los
-// metadata de la sesión de checkout.
+// Webhook de Stripe. Idempotente: las reservas se crean solo en
+// /api/stripe/confirm (que ya es idempotente por stripe_session_id).
+// Aquí: (1) no duplicamos bookings, (2) reversamos comisiones en reembolsos.
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -35,24 +38,42 @@ export default async function handler(req, res) {
     if (checkout.payment_status !== 'paid') {
       return res.status(200).json({ received: true })
     }
-
-    let items = []
-    try {
-      items = JSON.parse(checkout.metadata?.items || '[]')
-    } catch {
-      items = []
-    }
-
-    const userId = checkout.metadata?.user_id || checkout.customer_details?.email || ''
-    if (!userId || items.length === 0) {
-      return res.status(200).json({ received: true })
-    }
-
-    // Como el flujo normal confirma en /api/stripe/confirm con la sesión del
-    // usuario logueado, aquí solo registramos eventos duplicados de forma segura.
-    // La creación de bookings ocurre en /api/stripe/confirm (requiere login).
     console.log('stripe.webhook checkout.session.completed', checkout.id)
     return res.status(200).json({ received: true, confirmed: true })
+  }
+
+  // Reembolsos: reversal proporcional (full -> REVERSED con motivo).
+  if (event.type === 'charge.refunded' || event.type === 'charge.refund.updated') {
+    try {
+      const charge = event.data.object
+      const paymentIntentId =
+        typeof charge.payment_intent === 'string'
+          ? charge.payment_intent
+          : charge.payment_intent?.id || null
+      const refundedCents = Number(charge.amount_refunded || 0) // centavos MXN
+      if (paymentIntentId && refundedCents > 0) {
+        // Localizar bookings por payment_intent via stripe_session lookup:
+        // la session id no viaja en el charge; buscamos por intent en Turso.
+        const { turso } = await import('@/lib/turso')
+        const found = await turso.execute({
+          sql: `SELECT id, total_amount, currency FROM bookings WHERE stripe_payment_intent_id = ?`,
+          args: [paymentIntentId],
+        })
+        for (const row of found.rows) {
+          const refundedAmount = refundedCents / 100
+          await transitionAttribution({
+            bookingId: row.id,
+            toStatus: 'REVERSED',
+            reason: `Stripe refund ${charge.id}`,
+            refundedAmount,
+            eventType: 'BOOKING_REFUNDED',
+          })
+        }
+      }
+    } catch (err) {
+      console.error('[stripe.webhook refund] error:', err)
+    }
+    return res.status(200).json({ received: true })
   }
 
   return res.status(200).json({ received: true })

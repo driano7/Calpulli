@@ -11,6 +11,8 @@ import { useRouter } from 'next/router'
 import { Reveal } from '@/components/journeys/Reveal'
 import { ImageReveal } from '@/components/journeys/ImageReveal'
 import { Sparkles } from 'lucide-react'
+import PartnerBanner from '@/components/partners/PartnerBanner'
+import PartnerPrice from '@/components/partners/PartnerPrice'
 
 /**
  * Preview de foto de un journey en el indice.
@@ -95,6 +97,9 @@ export default function JourneysIndex() {
               ? 'Un archivo editorial y cultural: cada Journey se lee, se observa y se recorre despacio.'
               : 'An editorial and cultural archive: each Journey is read, observed and walked slowly.'}
           </p>
+          <div className="mt-6 max-w-2xl">
+            <PartnerBanner />
+          </div>
         </Reveal>
       </header>
 
@@ -180,19 +185,22 @@ export default function JourneysIndex() {
                           : 'The editorial content of this journey is published progressively.')}
                     </span>
                     {price ? (
-                      <button
-                        onClick={(e) => {
-                          // El boton vive dentro del <Link> de la tarjeta:
-                          // hay que frenar la navegacion por defecto del enlace
-                          // para que el clic lleve al checkout y no a la ficha.
-                          e.preventDefault()
-                          e.stopPropagation()
-                          handleReserve(journey)
-                        }}
-                        className="mt-3 inline-flex items-center justify-center rounded-full border border-[#C1440E]/30 bg-[#C1440E] px-4 py-2 text-xs font-semibold tabular-nums text-white shadow-sm transition-all hover:bg-[#9A3207] hover:shadow-md"
-                      >
-                        {isEs ? `Reservar por $${price} mxn` : `Reserve for $${price} mxn`}
-                      </button>
+                      <span className="mt-3 block">
+                        <button
+                          onClick={(e) => {
+                            // El boton vive dentro del <Link> de la tarjeta:
+                            // hay que frenar la navegacion por defecto del enlace
+                            // para que el clic lleve al checkout y no a la ficha.
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleReserve(journey)
+                          }}
+                          className="inline-flex items-center justify-center rounded-full border border-[#C1440E]/30 bg-[#C1440E] px-4 py-2 text-xs font-semibold tabular-nums text-white shadow-sm transition-all hover:bg-[#9A3207] hover:shadow-md"
+                        >
+                          {isEs ? `Reservar por $${price} mxn` : `Reserve for $${price} mxn`}
+                        </button>
+                        <PartnerPrice originalAmount={price} className="mt-1.5" />
+                      </span>
                     ) : null}
                   </span>
 

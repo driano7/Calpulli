@@ -25,6 +25,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Bot, Send, X, Sparkles, ChevronUp, ChevronDown, MessageCircleQuestion } from 'lucide-react'
 import { useRouter } from 'next/router'
 import { useLanguage } from '@/lib/hooks/useLanguage'
+import { useAuth } from '@/lib/hooks/useAuth'
 
 const WELCOME_ES = '¡Quiubo! Soy Calpulli AI 🤖 — dime qué buscas y te guío.'
 const WELCOME_EN = "Hey! I'm Calpulli AI 🤖 — tell me what you need and I'll guide you."
@@ -216,6 +217,34 @@ function sectionForPath(pathname) {
 }
 
 const STORAGE_KEY = 'calpulli_ai_chat_v1'
+const CONVERSATION_KEY = 'calpulli_ai_conversation_id_v1'
+
+function randomConversationId() {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID().slice(0, 80)
+    }
+  } catch {
+    // fallback below
+  }
+  return `conv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`.slice(0, 80)
+}
+
+function getOrCreateConversationId() {
+  try {
+    const existing = window.sessionStorage.getItem(CONVERSATION_KEY)
+    if (existing) return existing
+    const fresh = randomConversationId()
+    window.sessionStorage.setItem(CONVERSATION_KEY, fresh)
+    return fresh
+  } catch {
+    return randomConversationId()
+  }
+}
+
+function storageKeyFor(conversationId) {
+  return `${STORAGE_KEY}:${conversationId}`
+}
 
 // Enlaces permitidos: rutas internas y fuentes oficiales. Nada de competidores
 // ni acortadores.
@@ -393,6 +422,7 @@ const stackItem = {
 export default function ChatbotAssistant() {
   const { currentLanguage } = useLanguage()
   const router = useRouter()
+  const { user, token } = useAuth()
   const isEs = currentLanguage !== 'en'
   const reduced = useReducedMotion()
 
@@ -404,6 +434,7 @@ export default function ChatbotAssistant() {
   const [streaming, setStreaming] = useState(false)
   const [streamingMsgId, setStreamingMsgId] = useState(null)
   const [error, setError] = useState('')
+  const [conversationId, setConversationId] = useState(null)
 
   const scrollRef = useRef(null)
   const inputRef = useRef(null)
@@ -416,30 +447,37 @@ export default function ChatbotAssistant() {
   // oculta las sugerencias.
   const actions = SUGGESTED_FOUR[isEs ? 'es' : 'en']
 
-  // Cargar conversación de la sesión (solo navegador).
+  // Inicio fresco: cada visita (nueva pestaña) crea una conversación nueva
+  // con cero mensajes. Dentro de la misma pestaña se conserva hasta que el
+  // usuario elige "Nueva charla". Los mensajes se guardan por conversación.
   useEffect(() => {
     if (loadedRef.current) return
     loadedRef.current = true
     try {
-      const raw = window.sessionStorage.getItem(STORAGE_KEY)
+      const convId = getOrCreateConversationId()
+      setConversationId(convId)
+      const raw = window.sessionStorage.getItem(storageKeyFor(convId))
       if (raw) {
         const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed) && parsed.length) setMessages(parsed)
+        if (Array.isArray(parsed)) setMessages(parsed)
       }
     } catch {
       /* noop */
     }
   }, [])
 
-  // Persistir la conversación.
+  // Persistir la conversación activa.
   useEffect(() => {
-    if (!loadedRef.current) return
+    if (!loadedRef.current || !conversationId) return
     try {
-      window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-24)))
+      window.sessionStorage.setItem(
+        storageKeyFor(conversationId),
+        JSON.stringify(messages.slice(-24))
+      )
     } catch {
       /* noop */
     }
-  }, [messages])
+  }, [messages, conversationId])
 
   // El MobileDock abre el panel con este evento.
   useEffect(() => {
@@ -514,13 +552,17 @@ export default function ChatbotAssistant() {
 
         const res = await fetch('/api/chatbot', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({
             message: clean,
             history,
             locale: isEs ? 'es' : 'en',
             stream: true,
             path: router?.asPath || '/',
+            conversationId: conversationId || null,
           }),
           signal: abortRef.current.signal,
         })
@@ -621,7 +663,7 @@ export default function ChatbotAssistant() {
         setLoading(false)
       }
     },
-    [isEs, loading, streaming, messages]
+    [isEs, loading, streaming, messages, token, conversationId]
   )
 
   /**
@@ -663,6 +705,15 @@ export default function ChatbotAssistant() {
 
   const clearChat = () => {
     abortRef.current?.abort()
+    // Nueva charla: conversación nueva y limpia (inicio fresco).
+    try {
+      if (conversationId) window.sessionStorage.removeItem(storageKeyFor(conversationId))
+      const fresh = randomConversationId()
+      window.sessionStorage.setItem(CONVERSATION_KEY, fresh)
+      setConversationId(fresh)
+    } catch {
+      /* noop */
+    }
     setMessages([])
     setInput('')
     setInputExpanded(false)
@@ -670,11 +721,6 @@ export default function ChatbotAssistant() {
     setLoading(false)
     setStreaming(false)
     setStreamingMsgId(null)
-    try {
-      window.sessionStorage.removeItem(STORAGE_KEY)
-    } catch {
-      /* noop */
-    }
   }
 
   const hasConversation = messages.length > 0
@@ -742,7 +788,13 @@ export default function ChatbotAssistant() {
                     Calpulli AI
                   </p>
                   <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-                    {isEs ? 'Tu guía local · en línea' : 'Your local guide · online'}
+                    {user
+                      ? isEs
+                        ? 'Tu guía local · guardado en tu cuenta'
+                        : 'Your local guide · saved to your account'
+                      : isEs
+                      ? 'Tu guía local · en línea'
+                      : 'Your local guide · online'}
                   </p>
                 </div>
               </div>
@@ -753,7 +805,7 @@ export default function ChatbotAssistant() {
                     onClick={clearChat}
                     className="rounded-full px-2 py-1 text-[11px] font-medium text-zinc-500 transition-colors hover:bg-zinc-200/70 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                   >
-                    {isEs ? 'Limpiar' : 'Clear'}
+                    {isEs ? 'Nueva charla' : 'New chat'}
                   </button>
                 )}
                 <button

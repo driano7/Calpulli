@@ -358,7 +358,7 @@ export async function findBookingTicketByCode(code: string) {
   })
   const row: any = result.rows[0]
   if (!row) return null
-  return {
+  const base = {
     id: row.id,
     bookingId: row.booking_id,
     bookingReference: row.booking_reference,
@@ -379,6 +379,35 @@ export async function findBookingTicketByCode(code: string) {
     experienceTitleEn: row.title_en || row.title_es || 'Experience',
     location: row.location_es || row.location_en || null,
     imageUrl: row.image_url || null,
+    partner: null as any,
+  }
+  base.partner = await fetchPartnerInfo(row.booking_id)
+  return base
+}
+
+/** Partner snapshot for reservations. Never exposes commission. */
+async function fetchPartnerInfo(bookingId: string) {
+  try {
+    const result = await turso.execute({
+      sql: `SELECT a.original_amount, a.discount_amount, a.discount_pct, a.final_amount, a.status,
+                   p.name AS partner_name
+            FROM booking_attributions a
+            JOIN partners p ON p.id = a.partner_id
+            WHERE a.booking_id = ? LIMIT 1`,
+      args: [bookingId],
+    })
+    const row: any = result.rows[0]
+    if (!row) return null
+    return {
+      name: row.partner_name,
+      originalAmount: Number(row.original_amount) || 0,
+      discountAmount: Number(row.discount_amount) || 0,
+      discountPct: Number(row.discount_pct) || 0,
+      finalAmount: Number(row.final_amount) || 0,
+      status: row.status,
+    }
+  } catch {
+    return null
   }
 }
 
@@ -404,6 +433,15 @@ export interface TicketLookup {
   accessibilityNeeds: string | null
   checkedInAt: string | null
   stripeSessionId: string | null
+  /** Partner referral snapshot (booking_attributions). Never includes commission. */
+  partner?: {
+    name: string
+    originalAmount: number
+    discountAmount: number
+    discountPct: number
+    finalAmount: number
+    status: string
+  } | null
 }
 
 const TICKET_SELECT = `
@@ -439,7 +477,18 @@ function mapTicket(row: any): TicketLookup {
     accessibilityNeeds: row.accessibility_needs,
     checkedInAt: row.checked_in_at,
     stripeSessionId: row.stripe_session_id,
+    partner: null,
   }
+}
+
+async function enrichTicketWithPartner(ticket: TicketLookup): Promise<TicketLookup> {
+  if (!ticket?.bookingId) return ticket
+  try {
+    ticket.partner = await fetchPartnerInfo(ticket.bookingId)
+  } catch {
+    ticket.partner = null
+  }
+  return ticket
 }
 
 function safeJson(value: unknown): string[] {
@@ -467,7 +516,7 @@ export async function getTicketByCode(code: string): Promise<TicketLookup | null
   })
 
   const row: any = result.rows[0]
-  return row ? mapTicket(row) : null
+  return row ? await enrichTicketWithPartner(mapTicket(row)) : null
 }
 
 /** Marca el check-in. Devuelve el ticket actualizado o null si no existe. */
@@ -498,7 +547,11 @@ export async function findBookingsByStripeSession(sessionId: string): Promise<Ti
     sql: `${TICKET_SELECT} WHERE b.stripe_session_id = ? ORDER BY b.start_date`,
     args: [sessionId],
   })
-  return result.rows.map(mapTicket)
+  const tickets = result.rows.map(mapTicket)
+  for (const ticket of tickets) {
+    await enrichTicketWithPartner(ticket)
+  }
+  return tickets
 }
 
 // ---------------------------------------------------------------------------

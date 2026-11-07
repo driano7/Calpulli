@@ -8,6 +8,7 @@ import Head from 'next/head'
 import Link from '@/components/Link'
 import Image from '@/components/Image'
 import { PageSEO, BlogSEO } from '@/components/SEO'
+import PartnerBadge from '@/components/partners/PartnerBadge'
 
 // Fotos alusivas libres de derechos (Unsplash). Sin Getty: tiene
 // copyright y no se usa.
@@ -188,6 +189,9 @@ export default function LocalPickPage({
           author={frontMatter.author || 'Donovan Riaño'}
           canonicalUrl={isEs ? canonicalEs : canonicalEn}
         />
+        <div className="mb-4 flex justify-center">
+          <PartnerBadge />
+        </div>
         <Reveal once={false} className="mb-8">
           <MDXLayoutRenderer layout="PostLayout" mdxSource={mdxSource} frontMatter={frontMatter} />
         </Reveal>
@@ -203,6 +207,9 @@ export default function LocalPickPage({
   frontMatter.slug = frontMatter.slug.replace(/[.-](en|es)$/, '')
   return (
     <>
+      <div className="mb-4 flex justify-center">
+        <PartnerBadge />
+      </div>
       <Reveal once={false} className="mb-8">
         <MDXLayoutRenderer layout="PostLayout" mdxSource={mdxSource} frontMatter={frontMatter} />
       </Reveal>

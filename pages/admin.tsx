@@ -13,6 +13,7 @@ import { type QrType } from '@/lib/qr/types'
 import { AdvancedMetricsPanel, PassiveAnalyticsPanel } from '@/components/analytics/SocioPanels'
 import { EmailTemplatesPanel } from '@/components/admin/EmailTemplatesPanel'
 import { PartnerReportsPanel } from '@/components/admin/PartnerReportsPanel'
+import PartnersPanel from '@/components/admin/PartnersPanel'
 import { getLocalAnalytics, type AnalyticsEntry } from '@/lib/analytics/track'
 import { BRAND, getAdminConfig } from '@/lib/brand'
 import {
@@ -453,6 +454,8 @@ export default function AdminPanel() {
             {/* Correos: plantillas editables */}
             {me.role === 'admin' && <EmailTemplatesPanel isEs={isEs} />}
           </motion.div>
+
+          {me.role === 'admin' && <PartnersPanel isEs={isEs} />}
 
           {/* SOCIOS ONLY: Métricas ML + Analítica pasiva */}
           {me.role === 'admin' && me.permissions.canViewAdvancedMetrics && (
