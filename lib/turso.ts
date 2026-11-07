@@ -31,9 +31,9 @@ export async function executeWithRetry(sql: string, args: any[] = [], retries = 
         await new Promise((resolve) => setTimeout(resolve, 100 * (i + 1)))
       }
     }
-
-    throw lastError
   }
+
+  throw lastError ?? new Error('executeWithRetry: all retries failed')
 }
 
 // Helper para transacciones
