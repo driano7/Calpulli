@@ -2,6 +2,7 @@ import Head from 'next/head'
 import { useRouter } from 'next/router'
 import siteMetadata from '@/data/siteMetadata'
 import { buildCanonicalUrl, buildBlogPostingEntity } from '@/lib/seo'
+import JsonLd from '@/components/JsonLd'
 
 const CommonSEO = ({ title, description, ogType, ogImage, twImage, canonicalUrl }) => {
   const router = useRouter()
@@ -31,17 +32,32 @@ const CommonSEO = ({ title, description, ogType, ogImage, twImage, canonicalUrl 
   )
 }
 
-export const PageSEO = ({ title, description }) => {
-  const ogImageUrl = siteMetadata.siteUrl + siteMetadata.socialBanner
-  const twImageUrl = siteMetadata.siteUrl + siteMetadata.socialBanner
+export const PageSEO = ({
+  title,
+  description,
+  jsonLd,
+  canonicalUrl,
+  ogImage,
+  ogType = 'website',
+}) => {
+  const ogImageUrl = ogImage
+    ? ogImage.startsWith('http')
+      ? ogImage
+      : siteMetadata.siteUrl + ogImage
+    : siteMetadata.siteUrl + siteMetadata.socialBanner
+  const twImageUrl = ogImageUrl
   return (
-    <CommonSEO
-      title={title}
-      description={description}
-      ogType="website"
-      ogImage={ogImageUrl}
-      twImage={twImageUrl}
-    />
+    <>
+      <CommonSEO
+        title={title}
+        description={description}
+        ogType={ogType}
+        ogImage={ogImageUrl}
+        twImage={twImageUrl}
+        canonicalUrl={canonicalUrl}
+      />
+      {jsonLd ? <JsonLd data={jsonLd} /> : null}
+    </>
   )
 }
 

@@ -27,6 +27,29 @@ export async function getSession(req: NextApiRequest): Promise<AuthSession | nul
     return { user: { id: 'demo-user', email: demoEmail }, token }
   }
 
+  // Sesiones reales de Turso (lib/auth.createSession): token hex de 64 chars.
+  // Sin esto, reservas/cash/crypto trataban al usuario logueado como invitado
+  // (userId null, sin límite 3/journey por usuario, sin historial).
+  if (!token.includes('.') && !token.startsWith('mock_')) {
+    try {
+      const { getSessionUser } = await import('../auth')
+      const user = await getSessionUser(token)
+      if (user) {
+        return {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+          },
+          token,
+        }
+      }
+    } catch {
+      // Turso caído: seguir como invitado, no tumbar el checkout
+    }
+  }
+
   // Si es un JWT real (contiene '.'), decodificar payload sin verificar firma (solo claims)
   // Para mock_jwt_token_* no hay payload, se retorna null -> el caller tratará como invitado
   if (token.includes('.')) {

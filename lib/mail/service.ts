@@ -309,7 +309,10 @@ export async function sendMail(key: string, options: SendOptions): Promise<SendR
 }
 
 function randomHex(): string {
-  return Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('hex')
+  // Node 18 no expone crypto.getRandomValues global: randomBytes.
+  /* eslint-disable-next-line global-require */
+  const { randomBytes } = require('crypto')
+  return randomBytes(16).toString('hex')
 }
 
 /**

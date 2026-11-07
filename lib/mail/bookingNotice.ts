@@ -14,12 +14,21 @@ function escapeHtml(value: unknown): string {
     .replace(/'/g, '&#39;')
 }
 
+export interface ParticipantContact {
+  name?: string | null
+  email?: string | null
+}
+
 export interface NotifyBookingOptions {
   paymentMethod?: string | null
   customerPhone?: string | null
   userEmail?: string | null
   userId?: string | null
   locale?: string
+  /** Correos de participantes (transitorio, no se persiste). */
+  participants?: ParticipantContact[]
+  /** Mapa nombre->email o lista paralela a tickets. */
+  participantEmails?: Array<{ name?: string; email?: string } | string>
 }
 
 /** Avisa al cliente según cómo pagó. Si falla el correo, la reserva sigue. */
@@ -74,4 +83,63 @@ export async function notifyBooking(booking: any, options: NotifyBookingOptions)
     vars,
     options.locale || 'es'
   )
+
+  // Correo individual por participante: cada quien recibe SU ticket con QR,
+  // no la lista completa del responsable. Los correos llegan transitorios
+  // (nunca se guardan en la BD) y se deduplican contra el comprador.
+  const contacts: ParticipantContact[] = []
+  if (Array.isArray(options.participants)) {
+    for (const p of options.participants) {
+      if (p && typeof p === 'object' && (p as any).email) {
+        contacts.push({ name: (p as any).name || '', email: String((p as any).email).trim() })
+      }
+    }
+  }
+  if (Array.isArray(options.participantEmails)) {
+    for (const p of options.participantEmails) {
+      if (typeof p === 'string' && p.includes('@')) {
+        contacts.push({ email: p.trim() })
+      } else if (p && typeof p === 'object' && (p as any).email) {
+        contacts.push({ name: (p as any).name || '', email: String((p as any).email).trim() })
+      }
+    }
+  }
+  const buyerEmail = String(options.userEmail || '')
+    .trim()
+    .toLowerCase()
+  const seen = new Set<string>()
+  for (const [index, contact] of contacts.entries()) {
+    const email = String(contact.email || '').trim()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) continue
+    const key = email.toLowerCase()
+    if (key === buyerEmail || seen.has(key)) continue
+    seen.add(key)
+    // El ticket del participante: por posición, o el responsable si no hay.
+    const ticket =
+      tickets[index] ||
+      tickets.find(
+        (t: any) =>
+          String(t.participantName || '').toLowerCase() === String(contact.name || '').toLowerCase()
+      ) ||
+      tickets[0]
+    if (!ticket) continue
+    await trySend(
+      'ticket_participant',
+      email,
+      null,
+      {
+        firstName: escapeHtml(
+          String(contact.name || ticket.participantName || '').split(' ')[0] || 'viajera'
+        ),
+        bookingReference: escapeHtml(booking.bookingReference),
+        experienceTitle: escapeHtml(booking.experienceTitle || 'Tu tour'),
+        startDate: String(booking.startDate || '').slice(0, 10),
+        startTime: booking.time || '10:00',
+        meetingPoint: 'Te lo confirmamos por WhatsApp',
+        ticketUrl: ticketUrlFor(ticket),
+        ticketCode: escapeHtml(ticket.ticketCode),
+      },
+      options.locale || 'es'
+    )
+  }
 }

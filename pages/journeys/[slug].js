@@ -7,6 +7,7 @@ import {
   pickLocalized,
   pickLocalizedList,
 } from '@/data/journeysData'
+import { buildJourneyEntity, buildWebPageEntity, buildBreadcrumbList } from '@/lib/seo'
 import { journeyVars } from '@/lib/journeyTheme'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { JourneyHero } from '@/components/journeys/JourneyHero'
@@ -25,6 +26,29 @@ export default function JourneyDetail({ journey }) {
   const { currentLanguage } = useLanguage()
   const isEs = currentLanguage === 'es'
   const price = journey.price || 0
+  const journeyTitle = pickLocalized(journey.title_es, journey.title_en, isEs)
+  const journeySubtitle =
+    pickLocalized(journey.subtitle_es, journey.subtitle_en, isEs) ||
+    pickLocalized(journey.intro_es, journey.intro_en, isEs)
+  const journeySeo = {
+    title: `${journeyTitle} — Journey CDMX | Calpulli CDMX`,
+    description: journeySubtitle,
+    canonicalUrl: `/journeys/${journey.slug}`,
+    ogImage: journey.heroImage || undefined,
+    jsonLd: [
+      buildJourneyEntity(journey, isEs ? 'es' : 'en'),
+      buildWebPageEntity({
+        title: `${journeyTitle} — Journey CDMX | Calpulli CDMX`,
+        description: journeySubtitle,
+        path: `/journeys/${journey.slug}`,
+      }),
+      buildBreadcrumbList([
+        { name: isEs ? 'Inicio' : 'Home', path: '/' },
+        { name: 'Journeys', path: '/journeys' },
+        { name: journeyTitle, path: `/journeys/${journey.slug}` },
+      ]),
+    ],
+  }
 
   const PartnerHeader = () => (
     <div className="mx-auto max-w-5xl px-6 pb-6 pt-24 sm:pt-32">
@@ -38,7 +62,7 @@ export default function JourneyDetail({ journey }) {
   if (journey.experience === 'antropologia') {
     return (
       <>
-        <PageSEO title={journey.title_es} description={journey.subtitle_es} />
+        <PageSEO {...journeySeo} />
         <PartnerHeader />
         <AntropologiaJourney />
       </>
@@ -48,7 +72,7 @@ export default function JourneyDetail({ journey }) {
   if (journey.experience === 'jamaica') {
     return (
       <>
-        <PageSEO title={journey.title_es} description={journey.subtitle_es} />
+        <PageSEO {...journeySeo} />
         <PartnerHeader />
         <JamaicaJourney />
       </>
@@ -58,7 +82,7 @@ export default function JourneyDetail({ journey }) {
   if (journey.experience === 'roma') {
     return (
       <>
-        <PageSEO title={journey.title_es} description={journey.subtitle_es} />
+        <PageSEO {...journeySeo} />
         <PartnerHeader />
         <RomaJourney />
       </>
@@ -68,7 +92,7 @@ export default function JourneyDetail({ journey }) {
   if (journey.experience === 'luchas') {
     return (
       <>
-        <PageSEO title={journey.title_es} description={journey.subtitle_es} />
+        <PageSEO {...journeySeo} />
         <PartnerHeader />
         <LuchasJourney />
       </>
@@ -78,7 +102,7 @@ export default function JourneyDetail({ journey }) {
   if (journey.experience === 'centro') {
     return (
       <>
-        <PageSEO title={journey.title_es} description={journey.subtitle_es} />
+        <PageSEO {...journeySeo} />
         <PartnerHeader />
         <CentroJourney />
       </>
@@ -88,7 +112,7 @@ export default function JourneyDetail({ journey }) {
   if (journey.experience === 'chapultepec') {
     return (
       <>
-        <PageSEO title={journey.title_es} description={journey.subtitle_es} />
+        <PageSEO {...journeySeo} />
         <PartnerHeader />
         <ChapultepecJourney />
       </>
@@ -102,7 +126,7 @@ export default function JourneyDetail({ journey }) {
 
   return (
     <>
-      <PageSEO title={title} description={subtitle || intro} />
+      <PageSEO {...journeySeo} />
 
       <div style={journeyVars(journey.accents)}>
         <JourneyHero title={title} subtitle={subtitle} image={journey.heroImage} />

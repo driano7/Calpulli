@@ -7,7 +7,14 @@ import { Reveal } from '@/components/journeys/Reveal'
 import Head from 'next/head'
 import Link from '@/components/Link'
 import Image from '@/components/Image'
-import { PageSEO, BlogSEO } from '@/components/SEO'
+import { BlogSEO } from '@/components/SEO'
+import JsonLd from '@/components/JsonLd'
+import {
+  buildCollectionPageEntity,
+  buildWebPageEntity,
+  buildBreadcrumbList,
+  buildCanonicalUrl,
+} from '@/lib/seo'
 import PartnerBadge from '@/components/partners/PartnerBadge'
 
 // Fotos alusivas libres de derechos (Unsplash). Sin Getty: tiene
@@ -171,8 +178,23 @@ export default function LocalPickPage({
     if (!post) return null
     const { mdxSource, frontMatter } = post
     frontMatter.slug = frontMatter.slug.replace(/[.-](en|es)$/, '')
-    const canonicalEs = `https://donovan-amx.vercel.app/local/recomendaciones-mes`
-    const canonicalEn = `https://donovan-amx.vercel.app/local/recomendaciones-mes`
+    const canonicalEs = buildCanonicalUrl('/local/recomendaciones-mes')
+    const canonicalEn = buildCanonicalUrl('/local/recomendaciones-mes')
+    // SEO mensual: el mes viaja en title/canonical/JSON-LD para que Google
+    // archive cada actualización mensual sin arrastrar la URL.
+    const monthPicksList = isEs ? monthEs || [] : monthEn || []
+    const monthLabel =
+      month && month.length === 7 ? `${month.slice(5, 7)}/${month.slice(0, 4)}` : month || ''
+    const monthTitle =
+      frontMatter.title ||
+      (isEs
+        ? `Recomendaciones del mes CDMX ${monthLabel}`
+        : `Monthly CDMX recommendations ${monthLabel}`)
+    const monthDescription =
+      frontMatter.summary ||
+      (isEs
+        ? `Qué hacer en la Ciudad de México en ${monthLabel}: actividades con fecha, lugar y precio, curadas por chilangos.`
+        : `What to do in Mexico City in ${monthLabel}: activities with date, place and price, curated by locals.`)
     return (
       <>
         <Head>
@@ -181,13 +203,39 @@ export default function LocalPickPage({
           <link rel="alternate" hreflang="x-default" href={canonicalEs} />
         </Head>
         <BlogSEO
-          title={frontMatter.title}
-          summary={frontMatter.summary || ''}
+          title={monthTitle}
+          summary={monthDescription}
           date={frontMatter.date}
           lastmod={frontMatter.date}
           images={frontMatter.images || []}
           author={frontMatter.author || 'Donovan Riaño'}
           canonicalUrl={isEs ? canonicalEs : canonicalEn}
+        />
+        <JsonLd
+          data={[
+            buildCollectionPageEntity({
+              title: monthTitle,
+              description: monthDescription,
+              path: '/local/recomendaciones-mes',
+              items: monthPicksList.slice(0, 20).map((pick) => ({
+                name: pick.title,
+                url: `/local/${pick.slug}`,
+              })),
+            }),
+            buildWebPageEntity({
+              title: monthTitle,
+              description: monthDescription,
+              path: '/local/recomendaciones-mes',
+            }),
+            buildBreadcrumbList([
+              { name: isEs ? 'Inicio' : 'Home', path: '/' },
+              { name: isEs ? 'Selección Local' : 'Local Picks', path: '/local' },
+              {
+                name: isEs ? 'Recomendaciones del mes' : 'Monthly recommendations',
+                path: '/local/recomendaciones-mes',
+              },
+            ]),
+          ]}
         />
         <div className="mb-4 flex justify-center">
           <PartnerBadge />
@@ -205,8 +253,34 @@ export default function LocalPickPage({
   if (!post) return null
   const { mdxSource, frontMatter } = post
   frontMatter.slug = frontMatter.slug.replace(/[.-](en|es)$/, '')
+  const pickPath = `/local/${frontMatter.slug}`
+  const pickDescription = frontMatter.summary || frontMatter.description || frontMatter.title
+  const pickDate = frontMatter.date || new Date().toISOString()
   return (
     <>
+      <BlogSEO
+        title={frontMatter.title}
+        summary={pickDescription}
+        date={pickDate}
+        lastmod={pickDate}
+        images={frontMatter.images || []}
+        author={frontMatter.author || 'Donovan Riaño'}
+        canonicalUrl={buildCanonicalUrl(pickPath)}
+      />
+      <JsonLd
+        data={[
+          buildWebPageEntity({
+            title: frontMatter.title,
+            description: pickDescription,
+            path: pickPath,
+          }),
+          buildBreadcrumbList([
+            { name: isEs ? 'Inicio' : 'Home', path: '/' },
+            { name: isEs ? 'Selección Local' : 'Local Picks', path: '/local' },
+            { name: frontMatter.title, path: pickPath },
+          ]),
+        ]}
+      />
       <div className="mb-4 flex justify-center">
         <PartnerBadge />
       </div>

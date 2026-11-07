@@ -120,6 +120,21 @@ export const TEMPLATE_META: TemplateMeta[] = [
     ],
   },
   {
+    key: 'ticket_participant',
+    label: 'Ticket individual (participante)',
+    description: 'Se envía a cada participante con su propio QR/ticket.',
+    variables: [
+      'firstName',
+      'bookingReference',
+      'experienceTitle',
+      'startDate',
+      'startTime',
+      'meetingPoint',
+      'ticketUrl',
+      'ticketCode',
+    ],
+  },
+  {
     key: 'booking_reminder',
     label: 'Recordatorio del tour',
     description: 'Se envía antes de la salida.',
@@ -225,6 +240,40 @@ export const DEFAULT_TEMPLATES: Record<string, LocalizedTemplate> = {
       ${btn('{{ticketUrl}}', 'Ver mi ticket')}
     `),
     text: `Reserva confirmada {{bookingReference}}\n{{experienceTitle}}\n{{startDate}} {{startTime}} · {{guests}} personas\n{{meetingPoint}}\nTotal: {{total}} {{currency}}\nTicket: {{ticketUrl}}`,
+  },
+  ticket_participant: {
+    subject: {
+      es: 'Tu ticket para {{experienceTitle}} · {{bookingReference}}',
+      en: 'Your ticket for {{experienceTitle}} · {{bookingReference}}',
+    },
+    html: {
+      es: wrap(`
+        <h2 style="margin:0 0 4px;font-size:20px">Tu ticket</h2>
+        <p style="margin:0 0 20px;color:#78716c;font-size:13px">Referencia <strong>{{bookingReference}}</strong> · Código <strong>{{ticketCode}}</strong></p>
+        <table role="presentation" width="100%" style="background:#fafaf9;border-radius:12px;padding:18px">
+          <tr><td style="padding:4px 0;color:#78716c;font-size:13px">Experiencia</td><td align="right" style="padding:4px 0;font-weight:700">{{experienceTitle}}</td></tr>
+          <tr><td style="padding:4px 0;color:#78716c;font-size:13px">Fecha</td><td align="right" style="padding:4px 0;font-weight:700">{{startDate}} · {{startTime}}</td></tr>
+          <tr><td style="padding:4px 0;color:#78716c;font-size:13px">Punto de encuentro</td><td align="right" style="padding:4px 0;font-weight:700">{{meetingPoint}}</td></tr>
+        </table>
+        <p style="margin:20px 0 0;color:#57534e;line-height:1.7">Muestra este QR al llegar. Es tu ticket individual.</p>
+        ${btn('{{ticketUrl}}', 'Ver mi ticket con QR')}
+      `),
+      en: wrap(`
+        <h2 style="margin:0 0 4px;font-size:20px">Your ticket</h2>
+        <p style="margin:0 0 20px;color:#78716c;font-size:13px">Reference <strong>{{bookingReference}}</strong> · Code <strong>{{ticketCode}}</strong></p>
+        <table role="presentation" width="100%" style="background:#fafaf9;border-radius:12px;padding:18px">
+          <tr><td style="padding:4px 0;color:#78716c;font-size:13px">Experience</td><td align="right" style="padding:4px 0;font-weight:700">{{experienceTitle}}</td></tr>
+          <tr><td style="padding:4px 0;color:#78716c;font-size:13px">Date</td><td align="right" style="padding:4px 0;font-weight:700">{{startDate}} · {{startTime}}</td></tr>
+          <tr><td style="padding:4px 0;color:#78716c;font-size:13px">Meeting point</td><td align="right" style="padding:4px 0;font-weight:700">{{meetingPoint}}</td></tr>
+        </table>
+        <p style="margin:20px 0 0;color:#57534e;line-height:1.7">Show this QR when you arrive. This is your individual ticket.</p>
+        ${btn('{{ticketUrl}}', 'View my ticket with QR')}
+      `),
+    },
+    text: {
+      es: `Tu ticket {{ticketCode}} · {{bookingReference}}\n{{experienceTitle}}\n{{startDate}} {{startTime}}\n{{meetingPoint}}\nTicket: {{ticketUrl}}`,
+      en: `Your ticket {{ticketCode}} · {{bookingReference}}\n{{experienceTitle}}\n{{startDate}} {{startTime}}\n{{meetingPoint}}\nTicket: {{ticketUrl}}`,
+    },
   },
   booking_cash_reserved: {
     subject: `Reserva guardada · pagas en el punto · {{bookingReference}}`,

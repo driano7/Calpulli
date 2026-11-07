@@ -150,7 +150,7 @@ export async function resetPasswordWithToken(
   if (!user.rows.length) return 'usuario'
 
   await turso.execute({
-    sql: `UPDATE users SET password = ?, failed_login_attempts = 0 WHERE id = ?`,
+    sql: `UPDATE users SET password_hash = ?, failed_login_attempts = 0, account_locked_until = NULL WHERE id = ?`,
     args: [newPasswordHash, row.user_id],
   })
   await turso.execute({
@@ -458,8 +458,10 @@ export async function resolveRole(
     return row.role
   }
 
-  if (usersRole === 'admin' || usersRole === 'guide') return 'admin'
-  if (usersRole === 'employee') return 'employee'
+  // users.role solo admite admin/customer/guide (CHECK en Turso).
+  // guide = guía/empleado operativo, no admin.
+  if (usersRole === 'admin') return 'admin'
+  if (usersRole === 'guide' || usersRole === 'employee') return 'employee'
   return 'client'
 }
 
@@ -549,28 +551,36 @@ export async function registerUser(input: {
   // Alta: 'client' por defecto. Si el correo está en ADMIN_EMAILS o
   // EMPLOYEE_EMAILS se auto-asigna ese rol, así la cuenta de.bootstrap no
   // depende de que alguien la promueva a mano después.
-  try {
-    const admins = (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase())
-    const employees = (process.env.EMPLOYEE_EMAILS || '')
-      .split(',')
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean)
-    const role: Role = admins.includes(email)
+  const admins = (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase())
+  const employees = (process.env.EMPLOYEE_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+  // lib/roles.ts conserva bootstrap admins (donovanriano@gmail.com) aunque la
+  // variable ADMIN_EMAILS de Vercel falte; REGISTER debe respetar ese recurso.
+  const bootstrapAdmins = ['donovanriano@gmail.com']
+  const bootstrapEmployees = ['dnvn77@gmail.com']
+  const role: Role =
+    admins.includes(email) || bootstrapAdmins.includes(email)
       ? 'admin'
-      : employees.includes(email)
+      : employees.includes(email) || bootstrapEmployees.includes(email)
       ? 'employee'
       : 'client'
-
+  try {
     await turso.execute({
       sql: `INSERT OR IGNORE INTO user_roles ("userId", email, role, note)
             VALUES (?, ?, ?, ?)`,
       args: [id, email, role, role === 'client' ? 'Alta automática' : 'Bootstrap por .env'],
     })
 
-    if (role !== 'customer') {
+    // CHECK(users.role): admin | customer | guide. client queda como
+    // customer (default); employee vive en user_roles y en users.role como
+    // guide para compatibilidad con reportes.
+    const dbRole = role === 'admin' ? 'admin' : role === 'employee' ? 'guide' : 'customer'
+    if (dbRole !== 'customer') {
       await turso.execute({
         sql: 'UPDATE users SET role = ? WHERE id = ?',
-        args: [role === 'admin' ? 'admin' : 'guide', id],
+        args: [dbRole, id],
       })
     }
   } catch (error) {
@@ -617,7 +627,7 @@ export async function registerUser(input: {
     firstName: input.firstName.trim(),
     lastName: input.lastName.trim(),
     phone: null,
-    role: 'client',
+    role,
     isEmailVerified: false,
   }
 }

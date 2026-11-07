@@ -9,6 +9,7 @@ import { recordConversion } from '@/lib/referrals'
 import { notifyBooking } from '@/lib/mail/bookingNotice'
 import { getSessionUser } from '@/lib/auth'
 import { getSessionOptional } from '@/lib/auth/session'
+import { isLuchaDateValid } from '@/lib/db/schema'
 import {
   resolvePartnerForRequest,
   priceForExperience,
@@ -193,6 +194,23 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Falta session_id' })
   }
 
+  // Límite de fecha Lucha (server-side)
+  if (Array.isArray(items)) {
+    for (const item of items) {
+      if (item?.experienceId === 'luchas' && item.date) {
+        const ok = await isLuchaDateValid(String(item.date).slice(0, 10))
+        if (!ok) {
+          return res.status(400).json({
+            error:
+              locale === 'es'
+                ? 'Selecciona una fecha de función válida para Lucha Libre'
+                : 'Select a valid Lucha Libre show date',
+          })
+        }
+      }
+    }
+  }
+
   // Límite de 3 reservas por journey por usuario/identidad
   const experienceId = Array.isArray(items) && items[0] ? items[0].experienceId : null
   if (experienceId) {
@@ -280,6 +298,9 @@ export default async function handler(req, res) {
           userEmail: session?.user?.email || guestEmail || null,
           userId: session?.user?.id || null,
           locale: locale === 'en' ? 'en' : 'es',
+          participantEmails: Array.isArray(req.body?.participantEmails)
+            ? req.body.participantEmails
+            : undefined,
         })
       }
       return res.status(200).json({ ok: true, bookings: mockBookings, mock: true, isGuest })
@@ -353,6 +374,21 @@ export default async function handler(req, res) {
 
     const bookings = await findBookingsByStripeSession(sessionId)
 
+    // Correos de participantes: del body o de metadata de Stripe
+    let participantEmails = Array.isArray(req.body?.participantEmails)
+      ? req.body.participantEmails
+      : undefined
+    if (!participantEmails) {
+      try {
+        const metaEmails = JSON.parse(
+          checkout.metadata?.participant_emails || checkout.metadata?.guest_emails || '[]'
+        )
+        if (Array.isArray(metaEmails) && metaEmails.length) participantEmails = metaEmails
+      } catch {
+        /* metadata sin emails */
+      }
+    }
+
     for (const booking of bookings) {
       await notifyBooking(booking, {
         paymentMethod,
@@ -360,6 +396,7 @@ export default async function handler(req, res) {
         userEmail: session?.user?.email || customerEmail || null,
         userId: session?.user?.id || null,
         locale: locale === 'en' ? 'en' : 'es',
+        participantEmails,
       })
     }
 

@@ -203,20 +203,39 @@ export default function CheckoutPage() {
   // ── Guest + Nombres de participantes ──────────────────────────────
   const [guestEmail, setGuestEmail] = useState('')
   const [guestEmailTouched, setGuestEmailTouched] = useState(false)
-  // Limpiar email de invitado cuando el modo cambia a invitado
-  // Para evitar que se muestre el email anterior de un usuario logueado
+  // Guest autofill persistente: si el invitado vuelve, sus campos vuelven.
+  // (Se inicializa una sola vez al montar; la escritura va en otro efecto
+  // después de declarar guestName/guestPeople para evitar TDZ.)
   useEffect(() => {
-    if (isGuest) {
-      setGuestEmail('')
-      setEmailRegistered(false)
+    if (!isGuest) return
+    try {
+      const saved = JSON.parse(localStorage.getItem('amaxing_guest') || 'null')
+      if (saved?.email) setGuestEmail(saved.email)
+      if (saved?.name) setGuestName(saved.name)
+      if (Array.isArray(saved?.people) && saved.people.length) setGuestPeople(saved.people)
+    } catch {
+      /* storage no disponible */
     }
-  }, [isGuest])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   // Nombre de la persona que se esta agregando.
   const [guestName, setGuestName] = useState('')
   // Las personas de la reserva, cada una con su email y su nombre.
   const [guestPeople, setGuestPeople] = useState([])
   // Quien responde por la reserva (una de las fichas). Por defecto, la primera.
   const [responsibleId, setResponsibleId] = useState(null)
+  // Persistir invitados para autofill en la siguiente visita.
+  useEffect(() => {
+    if (!isGuest) return
+    try {
+      localStorage.setItem(
+        'amaxing_guest',
+        JSON.stringify({ email: guestEmail, name: guestName, people: guestPeople })
+      )
+    } catch {
+      /* storage no disponible */
+    }
+  }, [isGuest, guestEmail, guestName, guestPeople])
   // Luchas: mapa de fecha (YYYY-MM-DD) -> hora (HH:MM, 2h antes de la función) desde el scraper
   const [luchaDateTimeMap, setLuchaDateTimeMap] = useState({})
   const [luchaEventsLoaded, setLuchaEventsLoaded] = useState(false)
@@ -307,7 +326,9 @@ export default function CheckoutPage() {
     const fetchLuchaEvents = async () => {
       try {
         const from = new Date().toISOString().slice(0, 10)
-        const to = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+        // Límite de checkout: 60 días (antes 7, que dejaba fuera funciones
+        // reales a 8-60 días y bloqueaba el cobro).
+        const to = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
         const res = await fetch(`/api/lucha/events?from=${from}&to=${to}`)
         if (!res.ok) return
         const data = await res.json()
@@ -578,6 +599,12 @@ export default function CheckoutPage() {
             isGuest && guestPeople.length > 1
               ? guestPeople.slice(1).map((person) => person.email)
               : undefined,
+          // Todos los participantes (incl. responsable) para su ticket
+          // individual. Transitorio: no se persiste en Turso.
+          participantEmails:
+            isGuest && guestPeople.length > 0
+              ? guestPeople.map((person) => ({ name: person.name, email: person.email }))
+              : undefined,
           customerName: isGuest
             ? guestNameForStripe
             : user?.firstName
@@ -605,6 +632,10 @@ export default function CheckoutPage() {
           JSON.stringify({
             participantNames,
             guestEmail: guestEmail.trim(),
+            participantEmails:
+              isGuest && guestPeople.length > 0
+                ? guestPeople.map((person) => ({ name: person.name, email: person.email }))
+                : undefined,
             currency: locale === 'es' ? 'MXN' : 'USD',
           })
         )
@@ -631,6 +662,7 @@ export default function CheckoutPage() {
         // Recuperar snapshot si el estado en memoria se perdió al volver de Stripe mock
         let pNames = participantNames
         let gEmail = guestEmail
+        let pEmails = guestPeople.map((person) => ({ name: person.name, email: person.email }))
         let currency = locale === 'es' ? 'MXN' : 'USD'
         try {
           const snapRaw = sessionStorage.getItem('amaxing_checkout_snapshot')
@@ -638,6 +670,7 @@ export default function CheckoutPage() {
             const snap = JSON.parse(snapRaw)
             if (snap.participantNames) pNames = snap.participantNames
             if (snap.guestEmail) gEmail = snap.guestEmail
+            if (Array.isArray(snap.participantEmails)) pEmails = snap.participantEmails
             if (snap.currency) currency = snap.currency
           }
         } catch (e) {
@@ -679,6 +712,7 @@ export default function CheckoutPage() {
             sessionId,
             items: itemsWithNames,
             guestEmail: isGuest || !token ? gEmail?.trim() : undefined,
+            participantEmails: isGuest || !token ? pEmails : undefined,
             responsiblePosition: isGuest ? responsiblePosition : 1,
             guestName: isGuest || !token ? (pNames[items[0]?.lineId]?.[0] || '').trim() : undefined,
             currency,
@@ -799,6 +833,10 @@ export default function CheckoutPage() {
             network,
             items: cryptoItems,
             guestEmail: isGuest || !token ? guestEmail.trim() : undefined,
+            participantEmails:
+              isGuest || !token
+                ? guestPeople.map((person) => ({ name: person.name, email: person.email }))
+                : undefined,
             customerName: isGuest
               ? (participantNames[items[0]?.lineId]?.[0] || '').trim()
               : user?.firstName
@@ -1746,9 +1784,15 @@ export default function CheckoutPage() {
                   </div>
                   <button
                     onClick={async () => {
+                      // Límite de fecha Lucha: si ya cargaron eventos de
+                      // CMLL, la fecha debe ser una función válida. Si la
+                      // tabla está vacía (sin semilla), no bloqueamos (fecha
+                      // libre) para no dejar el checkout muerto.
+                      const hasLuchaEvents = Object.keys(luchaDateTimeMap).length > 0
                       const luchaInvalid = items.some(
                         (it) =>
-                          it.experienceId === 'luchas' && (!it.date || !luchaDateTimeMap[it.date])
+                          it.experienceId === 'luchas' &&
+                          (!it.date || (hasLuchaEvents && !luchaDateTimeMap[it.date]))
                       )
                       if (
                         !allNamesValid ||
@@ -1796,6 +1840,10 @@ export default function CheckoutPage() {
                             items: buildItemsPayload(),
                             customerName: (participantNames[items[0]?.lineId]?.[0] || '').trim(),
                             customerEmail: isGuest ? guestEmail.trim() : user?.email,
+                            participantEmails: guestPeople.map((person) => ({
+                              name: person.name,
+                              email: person.email,
+                            })),
                             customerPhone: customerPhone.trim(),
                             responsiblePosition,
                             referralCode: partnerRef || undefined,

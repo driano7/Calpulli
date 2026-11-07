@@ -12,6 +12,7 @@ import { checkRateLimit, rateLimitHeaders } from '@/lib/booking/rateLimit'
 import { trySend } from '@/lib/mail/service'
 import { BRAND } from '@/lib/brand'
 import { getSessionOptional } from '@/lib/auth/session'
+import { isLuchaDateValid } from '@/lib/db/schema'
 import {
   resolvePartnerForRequest,
   priceForExperience,
@@ -53,6 +54,22 @@ export default async function handler(req, res) {
   // El WhatsApp es obligatorio: sin el, la reserva no se puede confirmar.
   if (customerPhone.replace(/\D/g, '').length < 10) {
     return res.status(400).json({ error: 'Necesitamos un WhatsApp para confirmar' })
+  }
+
+  // Límite de fecha Lucha (server-side): si hay funciones sembradas, la
+  // fecha debe ser una función CMLL válida.
+  for (const item of items) {
+    if (item.experienceId === 'luchas' && item.date) {
+      const ok = await isLuchaDateValid(String(item.date).slice(0, 10))
+      if (!ok) {
+        return res.status(400).json({
+          error:
+            locale === 'es'
+              ? 'Selecciona una fecha de función válida para Lucha Libre'
+              : 'Select a valid Lucha Libre show date',
+        })
+      }
+    }
   }
 
   // Límite de 3 reservas por journey por usuario/identidad
@@ -136,26 +153,62 @@ export default async function handler(req, res) {
     const digits = customerPhone.replace(/\D/g, '')
     const whatsappUrl = digits.length >= 10 ? `https://wa.me/${digits}` : BRAND.social.whatsapp
 
+    const buyerEmail = session?.user?.email || customerEmail || null
+    const participantContacts = Array.isArray(body.participantEmails)
+      ? body.participantEmails
+          .map((p) => {
+            if (typeof p === 'string') return { email: p }
+            if (p && typeof p === 'object') return { name: p.name || '', email: p.email || '' }
+            return null
+          })
+          .filter(Boolean)
+      : []
+
     for (const booking of bookings) {
       const tickets = Array.isArray(booking.tickets) ? booking.tickets : []
-      await trySend(
-        'booking_cash_reserved',
-        session?.user?.email || customerEmail || null,
-        session?.user?.id || null,
-        {
-          firstName: (booking.customerName || '').split(' ')[0] || 'viajera',
+      await trySend('booking_cash_reserved', buyerEmail, session?.user?.id || null, {
+        firstName: (booking.customerName || '').split(' ')[0] || 'viajera',
+        bookingReference: booking.bookingReference,
+        experienceTitle: booking.experienceTitle,
+        startDate: String(booking.startDate || '').slice(0, 10),
+        startTime: booking.time || '10:00',
+        guests: booking.guests,
+        meetingPoint: 'Te lo confirmamos por WhatsApp',
+        whatsappUrl,
+        ticketUrl: tickets.length
+          ? `${origin}/t/${encodeURIComponent(tickets[0].ticketCode)}`
+          : `${origin}/profile`,
+      })
+
+      // Ticket individual por participante (deduplicado contra comprador).
+      const seen = new Set()
+      for (const [index, contact] of participantContacts.entries()) {
+        const email = String(contact.email || '').trim()
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) continue
+        const key = email.toLowerCase()
+        if (key === String(buyerEmail || '').toLowerCase() || seen.has(key)) continue
+        seen.add(key)
+        const ticket =
+          tickets[index] ||
+          tickets.find(
+            (t) =>
+              String(t.participantName || '').toLowerCase() ===
+              String(contact.name || '').toLowerCase()
+          ) ||
+          tickets[0]
+        if (!ticket) continue
+        await trySend('ticket_participant', email, null, {
+          firstName:
+            String(contact.name || ticket.participantName || '').split(' ')[0] || 'viajera',
           bookingReference: booking.bookingReference,
-          experienceTitle: booking.experienceTitle,
+          experienceTitle: booking.experienceTitle || 'Tu tour',
           startDate: String(booking.startDate || '').slice(0, 10),
           startTime: booking.time || '10:00',
-          guests: booking.guests,
           meetingPoint: 'Te lo confirmamos por WhatsApp',
-          whatsappUrl,
-          ticketUrl: tickets.length
-            ? `${origin}/t/${encodeURIComponent(tickets[0].ticketCode)}`
-            : `${origin}/profile`,
-        }
-      )
+          ticketUrl: `${origin}/t/${encodeURIComponent(ticket.ticketCode)}`,
+          ticketCode: ticket.ticketCode,
+        })
+      }
     }
 
     return res.status(200).json({ ok: true, bookings })

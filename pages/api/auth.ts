@@ -190,10 +190,11 @@ export default async function handler(req, res) {
       return res.status(403).json({ message: 'Cuenta desactivada' })
     }
 
-    if (
-      row.account_locked_until &&
-      new Date(`${row.account_locked_until}Z`).getTime() > Date.now()
-    ) {
+    const lockedRaw = String(row.account_locked_until || '').trim()
+    const lockedMs = lockedRaw
+      ? new Date(lockedRaw.includes('T') ? lockedRaw : `${lockedRaw.replace(' ', 'T')}Z`).getTime()
+      : NaN
+    if (lockedRaw && !Number.isNaN(lockedMs) && lockedMs > Date.now()) {
       return res
         .status(429)
         .json({ message: 'Cuenta bloqueada temporalmente por intentos fallidos' })

@@ -1,6 +1,8 @@
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
 import { getFileBySlug, bundleMdxSource } from '@/lib/mdx'
 import { MDXLayoutRenderer } from '@/components/MDXComponents'
+import { PageSEO } from '@/components/SEO'
+import { buildMapGuideEntity, buildWebPageEntity, buildBreadcrumbList } from '@/lib/seo'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 
 export async function getStaticPaths() {
@@ -72,5 +74,42 @@ export default function MapDetailPage({ postEs, postEn }) {
   const post = isEn ? postEn || postEs : postEs || postEn
   if (!post) return null
   const { mdxSource, frontMatter } = post
-  return <MDXLayoutRenderer layout="PostLayout" mdxSource={mdxSource} frontMatter={frontMatter} />
+  const slug = String(frontMatter.slug || '').replace(/[.-](en|es)$/, '')
+  const title = frontMatter.title || slug
+  const description = frontMatter.summary || frontMatter.description || title
+  const images = Array.isArray(frontMatter.images)
+    ? frontMatter.images
+    : frontMatter.images
+    ? [frontMatter.images]
+    : []
+  return (
+    <>
+      <PageSEO
+        title={`${title} — Mapa CDMX | Calpulli CDMX`}
+        description={description}
+        canonicalUrl={slug ? `/maps/${slug}` : '/maps'}
+        ogImage={images[0] || undefined}
+        jsonLd={[
+          buildMapGuideEntity({
+            slug,
+            title,
+            description,
+            locale: isEn ? 'en' : 'es',
+            image: images[0],
+          }),
+          buildWebPageEntity({
+            title: `${title} — Mapa CDMX | Calpulli CDMX`,
+            description,
+            path: slug ? `/maps/${slug}` : '/maps',
+          }),
+          buildBreadcrumbList([
+            { name: isEn ? 'Home' : 'Inicio', path: '/' },
+            { name: 'Maps', path: '/maps' },
+            { name: title, path: slug ? `/maps/${slug}` : '/maps' },
+          ]),
+        ]}
+      />
+      <MDXLayoutRenderer layout="PostLayout" mdxSource={mdxSource} frontMatter={frontMatter} />
+    </>
+  )
 }

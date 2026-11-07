@@ -1,6 +1,12 @@
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
 import Link from '@/components/Link'
 import { PageSEO } from '@/components/SEO'
+import {
+  buildBlogPostingEntity,
+  buildWebPageEntity,
+  buildBreadcrumbList,
+  buildCanonicalUrl,
+} from '@/lib/seo'
 import { getFileBySlug, getAllFilesFrontMatter } from '@/lib/mdx'
 import { MDXLayoutRenderer } from '@/components/MDXComponents'
 
@@ -27,11 +33,40 @@ export default function GuideDetailPage({ post }) {
   const switchLabel = isEs ? 'View in English' : 'Ver en Español'
   const switchHref = altSlug ? `/guides/${altSlug}` : null
 
+  const guidePath = `/guides/${frontMatter.slug}`
+  const guideDescription = frontMatter.summary || frontMatter.description || frontMatter.title
   return (
     <>
       <PageSEO
-        title={frontMatter.title}
-        description={frontMatter.summary || frontMatter.description}
+        title={`${frontMatter.title} — Guide CDMX | Calpulli CDMX`}
+        description={guideDescription}
+        canonicalUrl={guidePath}
+        ogImage={Array.isArray(frontMatter.images) ? frontMatter.images[0] : frontMatter.images}
+        jsonLd={[
+          buildBlogPostingEntity({
+            title: frontMatter.title,
+            summary: guideDescription,
+            date: frontMatter.date || new Date().toISOString(),
+            lastmod: frontMatter.lastmod || frontMatter.date || new Date().toISOString(),
+            url: buildCanonicalUrl(guidePath),
+            images: Array.isArray(frontMatter.images)
+              ? frontMatter.images
+              : frontMatter.images
+              ? [frontMatter.images]
+              : [],
+            author: frontMatter.author,
+          }),
+          buildWebPageEntity({
+            title: frontMatter.title,
+            description: guideDescription,
+            path: guidePath,
+          }),
+          buildBreadcrumbList([
+            { name: isEs ? 'Inicio' : 'Home', path: '/' },
+            { name: 'Guides', path: '/guides' },
+            { name: frontMatter.title, path: guidePath },
+          ]),
+        ]}
       />
       {/* Language switch floating */}
       {switchHref && (

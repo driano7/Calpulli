@@ -1,6 +1,7 @@
 // Script para poblar lucha_events en Turso
-import { initLuchaEventsTable } from './lib/db/schema'
-import { runLuchaScraper } from './scripts/scrapers/lucha-scraper'
+// Uso: PATH=/usr/local/bin:/opt/homebrew/bin npx tsx scripts/populate-lucha.ts
+import { initLuchaEventsTable } from '../lib/db/schema'
+import { runLuchaScraper } from './scrapers/lucha-scraper'
 
 async function main() {
   console.log('Inicializando tabla lucha_events...')

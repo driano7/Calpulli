@@ -4,6 +4,7 @@ import { JOURNEYS } from '@/data/journeysData'
 import { MXN_PER_USD } from '@/lib/currency'
 import { resolvePartnerForRequest, recordPartnerEvent } from '@/lib/partners'
 import { applyDiscount } from '@/lib/partners/pricing'
+import { isLuchaDateValid } from '@/lib/db/schema'
 
 export const config = { runtime: 'nodejs' }
 
@@ -61,7 +62,8 @@ const createMockSession = (
   locale,
   baseUrl,
   guestEmails = [],
-  partner = null
+  partner = null,
+  participantEmails = []
 ) => {
   const sessionId = `mock_cs_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
   const metadata = {
@@ -70,6 +72,7 @@ const createMockSession = (
     ...(customerEmail ? { customer_email: customerEmail } : {}),
     ...(customerName ? { customer_name: customerName } : {}),
     ...(guestEmails.length ? { guest_emails: JSON.stringify(guestEmails) } : {}),
+    ...(participantEmails.length ? { participant_emails: JSON.stringify(participantEmails) } : {}),
     ...(partner
       ? {
           partner_ref: partner.referralCode,
@@ -122,9 +125,42 @@ export default async function handler(req, res) {
           .slice(0, 19)
       : []
     const locale = body.locale === 'es' ? 'es' : 'en'
+    // Participant emails (name+email) for individual ticket mail at confirm.
+    // Stored in Stripe metadata (transitorio), never in Turso.
+    const participantEmails = Array.isArray(body.participantEmails)
+      ? body.participantEmails
+          .map((p) => {
+            if (typeof p === 'string') return { email: p.trim().toLowerCase() }
+            if (p && typeof p === 'object')
+              return {
+                name: String(p.name || ''),
+                email: String(p.email || '')
+                  .trim()
+                  .toLowerCase(),
+              }
+            return null
+          })
+          .filter((p) => p && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email))
+          .slice(0, 20)
+      : []
 
     if (items.length === 0) {
       return res.status(400).json({ error: 'Tu carrito está vacío' })
+    }
+
+    // Límite de fecha Lucha (server-side, antes de crear sesión)
+    for (const item of items) {
+      if (item.experienceId === 'luchas' && item.date) {
+        const ok = await isLuchaDateValid(String(item.date).slice(0, 10))
+        if (!ok) {
+          return res.status(400).json({
+            error:
+              locale === 'es'
+                ? 'Selecciona una fecha de función válida para Lucha Libre'
+                : 'Select a valid Lucha Libre show date',
+          })
+        }
+      }
     }
 
     // Validar que todos los items tengan precio conocido
@@ -159,7 +195,8 @@ export default async function handler(req, res) {
         locale,
         baseUrl,
         guestEmails,
-        partner
+        partner,
+        participantEmails
       )
       if (partner) {
         await recordPartnerEvent({
@@ -205,6 +242,9 @@ export default async function handler(req, res) {
       ...(customerEmail ? { customer_email: customerEmail } : {}),
       ...(customerName ? { customer_name: customerName } : {}),
       ...(guestEmails.length ? { guest_emails: JSON.stringify(guestEmails) } : {}),
+      ...(participantEmails.length
+        ? { participant_emails: JSON.stringify(participantEmails) }
+        : {}),
       ...(partner
         ? {
             partner_ref: partner.referralCode,

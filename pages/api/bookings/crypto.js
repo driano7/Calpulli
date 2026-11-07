@@ -22,6 +22,7 @@ import { WALLETS } from '@/lib/crypto/addresses'
 import { notifyBooking } from '@/lib/mail/bookingNotice'
 import { recordConversion } from '@/lib/referrals'
 import { getSessionOptional } from '@/lib/auth/session'
+import { isLuchaDateValid } from '@/lib/db/schema'
 import {
   resolvePartnerForRequest,
   priceForExperience,
@@ -85,6 +86,21 @@ export default async function handler(req, res) {
 
   const isGuest = !session?.user?.id
   const email = session?.user?.email || (emailOk(guestEmail) ? String(guestEmail).trim() : null)
+
+  // Límite de fecha Lucha (server-side)
+  for (const item of items) {
+    if (item.experienceId === 'luchas' && item.date) {
+      const ok = await isLuchaDateValid(String(item.date).slice(0, 10))
+      if (!ok) {
+        return res.status(400).json({
+          error:
+            locale === 'en'
+              ? 'Select a valid Lucha Libre show date'
+              : 'Selecciona una fecha de función válida para Lucha Libre',
+        })
+      }
+    }
+  }
 
   // Límite de reservas por journey, igual que en efectivo.
   const firstExperienceId = items[0]?.experienceId
@@ -206,6 +222,9 @@ export default async function handler(req, res) {
         userEmail: email,
         userId: session?.user?.id || null,
         locale: locale === 'en' ? 'en' : 'es',
+        participantEmails: Array.isArray(req.body?.participantEmails)
+          ? req.body.participantEmails
+          : undefined,
       })
     }
 

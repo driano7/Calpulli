@@ -4,6 +4,12 @@
 import Link from '@/components/Link'
 import { PageSEO } from '@/components/SEO'
 import { JOURNEYS, pickLocalized } from '@/data/journeysData'
+import {
+  buildCollectionPageEntity,
+  buildJourneyEntity,
+  buildBreadcrumbList,
+  buildWebPageEntity,
+} from '@/lib/seo'
 import { journeyVars } from '@/lib/journeyTheme'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { useCartStore } from '@/lib/store/useCartStore'
@@ -72,15 +78,36 @@ export default function JourneysIndex() {
     router.push('/checkout')
   }
 
+  const seoTitle = isEs
+    ? 'Journeys editoriales CDMX — Calpulli CDMX'
+    : 'Editorial Journeys in Mexico City — Calpulli CDMX'
+  const seoDescription = isEs
+    ? 'Seis journeys editoriales por la Ciudad de México: Luchas, Chapultepec, Jamaica, Centro, Roma-Condesa y Antropología. Cultura fácil para caminar solo.'
+    : 'Six editorial journeys through Mexico City: Luchas, Chapultepec, Jamaica, Centro, Roma-Condesa and Antropología. Easy culture for walking alone.'
+
   return (
     <>
       <PageSEO
-        title="Journeys — Calpulli CDMX"
-        description={
-          isEs
-            ? 'Seis journeys editoriales por la Ciudad de México: Luchas, Chapultepec, Jamaica, Centro, Roma-Condesa y Antropología.'
-            : 'Six editorial journeys through Mexico City: Luchas, Chapultepec, Jamaica, Centro, Roma-Condesa and Antropología.'
-        }
+        title={seoTitle}
+        description={seoDescription}
+        canonicalUrl="/journeys"
+        jsonLd={[
+          buildCollectionPageEntity({
+            title: seoTitle,
+            description: seoDescription,
+            path: '/journeys',
+            items: JOURNEYS.map((journey) => ({
+              name: pickLocalized(journey.title_es, journey.title_en, isEs),
+              url: `/journeys/${journey.slug}`,
+            })),
+          }),
+          buildWebPageEntity({ title: seoTitle, description: seoDescription, path: '/journeys' }),
+          buildBreadcrumbList([
+            { name: isEs ? 'Inicio' : 'Home', path: '/' },
+            { name: 'Journeys', path: '/journeys' },
+          ]),
+          ...JOURNEYS.map((journey) => buildJourneyEntity(journey, isEs ? 'es' : 'en')),
+        ]}
       />
 
       {/* Hero editorial del índice */}

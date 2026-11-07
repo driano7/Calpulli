@@ -4,6 +4,7 @@
 import Link from '@/components/Link'
 import Image from '@/components/Image'
 import { PageSEO } from '@/components/SEO'
+import { buildCollectionPageEntity, buildWebPageEntity, buildBreadcrumbList } from '@/lib/seo'
 import siteMetadata from '@/data/siteMetadata'
 import { getAllLocalPicks } from '@/lib/localPicks'
 import { getFeaturedLocalPicks, getCurrentMonthKey } from '@/lib/localPicksSelection'
@@ -203,9 +204,35 @@ export default function LocalPicksPage({ picksEs, picksEn }) {
   // Los guides de meses futuros no se anuncian todavía.
   const guides = picks.filter((p) => p.isMonthlyGuide && (!p.month || p.month <= monthKey))
 
+  const localSeoTitle = `${t.title} — Guía local mensual CDMX | Calpulli CDMX`
+  const localSeoDescription = t.subtitle
   return (
     <>
-      <PageSEO title={`${t.title} - ${monthPicks[0]?.month || ''}`} description={t.subtitle} />
+      <PageSEO
+        title={localSeoTitle}
+        description={localSeoDescription}
+        canonicalUrl="/local"
+        jsonLd={[
+          buildCollectionPageEntity({
+            title: localSeoTitle,
+            description: localSeoDescription,
+            path: '/local',
+            items: picks.slice(0, 20).map((pick) => ({
+              name: pick.title,
+              url: `/local/${pick.slug}`,
+            })),
+          }),
+          buildWebPageEntity({
+            title: localSeoTitle,
+            description: localSeoDescription,
+            path: '/local',
+          }),
+          buildBreadcrumbList([
+            { name: lang === 'es' ? 'Inicio' : 'Home', path: '/' },
+            { name: t.title, path: '/local' },
+          ]),
+        ]}
+      />
       <div className="min-h-screen bg-transparent">
         <div className="container mx-auto px-4 py-16">
           <div className="mb-12 text-center">
