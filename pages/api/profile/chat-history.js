@@ -29,17 +29,32 @@ export default async function handler(req, res) {
         locale TEXT NOT NULL DEFAULT 'es',
         path TEXT,
         filtered TEXT,
+        topic TEXT,
+        suggestion_key TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`,
+    })
+    for (const sql of [
+      `ALTER TABLE chat_questions ADD COLUMN topic TEXT`,
+      `ALTER TABLE chat_questions ADD COLUMN suggestion_key TEXT`,
+    ]) {
+      try {
+        await turso.execute({ sql })
+      } catch {
+        // duplicate column: ya existe
+      }
+    }
+    await turso.execute({
+      sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_topic_created ON chat_questions(topic, created_at DESC)`,
     })
   } catch {
     // ignore
   }
 
-  const limit = Math.min(200, Math.max(1, Number(req.query.limit || 100) || 100))
+  const limit = Math.min(200, Math.max(1, Number(req.query.limit || 200) || 200))
   try {
     const result = await turso.execute({
-      sql: `SELECT id, conversation_id, question, answer, locale, path, filtered, created_at
+      sql: `SELECT id, conversation_id, question, answer, locale, path, filtered, topic, suggestion_key, created_at
             FROM chat_questions
             WHERE user_id = ?
             ORDER BY created_at DESC
@@ -57,6 +72,8 @@ export default async function handler(req, res) {
         locale: r.locale,
         path: r.path,
         filtered: r.filtered || null,
+        topic: r.topic || null,
+        suggestionKey: r.suggestion_key || null,
         createdAt: r.created_at,
       }))
     const conversations = new Map()
@@ -65,12 +82,15 @@ export default async function handler(req, res) {
       if (!conversations.has(key)) conversations.set(key, [])
       conversations.get(key).push(row)
     }
+    const grouped = [...conversations.entries()].map(([id, messages]) => ({
+      id,
+      messages,
+      updatedAt: messages[messages.length - 1]?.createdAt || null,
+    }))
+    // Nueva conversación primero (más reciente arriba).
+    grouped.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))
     return res.status(200).json({
-      conversations: [...conversations.entries()].map(([id, messages]) => ({
-        id,
-        messages,
-        updatedAt: messages[messages.length - 1]?.createdAt || null,
-      })),
+      conversations: grouped,
       total: rows.length,
     })
   } catch (err) {

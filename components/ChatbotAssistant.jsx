@@ -24,6 +24,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Bot, Send, X, Sparkles, ChevronUp, ChevronDown, MessageCircleQuestion } from 'lucide-react'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { useAuth } from '@/lib/hooks/useAuth'
 
@@ -239,16 +240,19 @@ function randomConversationId() {
   return `conv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`.slice(0, 80)
 }
 
-function getOrCreateConversationId() {
+/**
+ * Inicio de cero en cada recarga: siempre conversación nueva.
+ * No se reutiliza el conversation_id guardado en sessionStorage; el historial
+ * de logueados vive en Turso y se consulta en /profile?tab=chat.
+ */
+function freshConversationId() {
+  const fresh = randomConversationId()
   try {
-    const existing = window.sessionStorage.getItem(CONVERSATION_KEY)
-    if (existing) return existing
-    const fresh = randomConversationId()
     window.sessionStorage.setItem(CONVERSATION_KEY, fresh)
-    return fresh
   } catch {
-    return randomConversationId()
+    /* noop */
   }
+  return fresh
 }
 
 function storageKeyFor(conversationId) {
@@ -456,22 +460,20 @@ export default function ChatbotAssistant() {
   // oculta las sugerencias.
   const actions = SUGGESTED_FOUR[isEs ? 'es' : 'en']
 
-  // Inicio fresco: cada visita (nueva pestaña) crea una conversación nueva
-  // con cero mensajes. Dentro de la misma pestaña se conserva hasta que el
-  // usuario elige "Nueva charla". Los mensajes se guardan por conversación.
+  // Inicio de cero en cada recarga de página: conversación nueva con 0 mensajes.
+  // Abrir/cerrar el panel dentro de la misma carga conserva la charla;
+  // "Nueva charla" también crea una nueva. El logueado la consulta luego
+  // en /profile?tab=chat (se guardó en Turso con su user_id).
   useEffect(() => {
     if (loadedRef.current) return
     loadedRef.current = true
     try {
-      const convId = getOrCreateConversationId()
+      const convId = freshConversationId()
       setConversationId(convId)
-      const raw = window.sessionStorage.getItem(storageKeyFor(convId))
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed)) setMessages(parsed)
-      }
+      setMessages([])
     } catch {
-      /* noop */
+      setConversationId(randomConversationId())
+      setMessages([])
     }
   }, [])
 
@@ -800,13 +802,23 @@ export default function ChatbotAssistant() {
                     Calpulli AI
                   </p>
                   <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-                    {user
-                      ? isEs
-                        ? 'Tu guía local · guardado en tu cuenta'
-                        : 'Your local guide · saved to your account'
-                      : isEs
-                      ? 'Tu guía local · en línea'
-                      : 'Your local guide · online'}
+                    {user ? (
+                      <>
+                        {isEs
+                          ? 'Tu guía local · guardado en tu cuenta · '
+                          : 'Your local guide · saved to your account · '}
+                        <Link
+                          href="/profile?tab=chat"
+                          className="underline decoration-zinc-300 underline-offset-2 hover:text-orange-600 hover:decoration-orange-300 dark:decoration-zinc-700 dark:hover:text-orange-400"
+                        >
+                          {isEs ? 'Historial en /profile' : 'History in /profile'}
+                        </Link>
+                      </>
+                    ) : isEs ? (
+                      'Tu guía local · en línea'
+                    ) : (
+                      'Your local guide · online'
+                    )}
                   </p>
                 </div>
               </div>
