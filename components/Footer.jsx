@@ -71,6 +71,20 @@ export default function Footer() {
           </p>
         </div>
 
+        <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-zinc-500 dark:text-zinc-400">
+          <Link href="/partners" className="hover:text-orange-500">
+            Partner with Amaxing
+          </Link>
+          <span aria-hidden>·</span>
+          <Link href="/partners/login" className="hover:text-orange-500">
+            Partner login
+          </Link>
+          <span aria-hidden>·</span>
+          <Link href="/partners/terms" className="hover:text-orange-500">
+            Partner terms
+          </Link>
+        </nav>
+
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
           {footerLinks.map((item) => {
             const Icon = item.icon

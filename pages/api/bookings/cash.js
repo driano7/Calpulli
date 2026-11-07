@@ -12,7 +12,12 @@ import { checkRateLimit, rateLimitHeaders } from '@/lib/booking/rateLimit'
 import { trySend } from '@/lib/mail/service'
 import { BRAND } from '@/lib/brand'
 import { getSessionOptional } from '@/lib/auth/session'
-import { resolvePartnerForRequest, priceForExperience, createAttribution } from '@/lib/partners'
+import {
+  resolvePartnerForRequest,
+  priceForExperience,
+  createAttribution,
+  attributionMetaFromRequest,
+} from '@/lib/partners'
 import { applyDiscount } from '@/lib/partners/pricing'
 
 export const config = { runtime: 'nodejs' }
@@ -117,6 +122,7 @@ export default async function handler(req, res) {
             originalAmount: originalUnit * peopleCount,
             currency: 'MXN',
             status: 'PENDING', // cash: unpaid, commission only after payment+completion
+            ...attributionMetaFromRequest(req, body),
           })
         } catch (err) {
           console.error('[partners] cash attribution failed:', err)

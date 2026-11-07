@@ -14,6 +14,7 @@ import {
   priceForExperience,
   createAttribution,
   recordPartnerEvent,
+  attributionMetaFromRequest,
 } from '@/lib/partners'
 import { applyDiscount } from '@/lib/partners/pricing'
 
@@ -47,6 +48,7 @@ async function persistBookings({
   responsiblePosition = 1,
   partner = null,
   partnerSource = 'PARTNER_LINK',
+  attributionMeta = {},
 }) {
   const created = []
   for (const item of items) {
@@ -94,6 +96,8 @@ async function persistBookings({
           originalAmount: originalUnit * peopleCount,
           currency: currency || 'MXN',
           status,
+          placement: attributionMeta.placement || null,
+          campaign: attributionMeta.campaign || null,
         })
         if (status === 'CONFIRMED') {
           await recordPartnerEvent({
@@ -257,6 +261,7 @@ export default async function handler(req, res) {
         responsiblePosition: Number(responsiblePosition) || 1,
         partner: mockPartner,
         partnerSource: req.body?.referralCode ? 'REFERRAL_CODE' : 'PARTNER_LINK',
+        attributionMeta: attributionMetaFromRequest(req, req.body || {}),
       })
 
       await registerReferralConversions(mockBookings, {
@@ -343,6 +348,7 @@ export default async function handler(req, res) {
       },
       partner: realPartner,
       partnerSource: req.body?.referralCode ? 'REFERRAL_CODE' : 'PARTNER_LINK',
+      attributionMeta: attributionMetaFromRequest(req, req.body || {}),
     })
 
     const bookings = await findBookingsByStripeSession(sessionId)

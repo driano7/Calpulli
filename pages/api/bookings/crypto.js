@@ -27,6 +27,7 @@ import {
   priceForExperience,
   createAttribution,
   recordPartnerEvent,
+  attributionMetaFromRequest,
 } from '@/lib/partners'
 import { applyDiscount } from '@/lib/partners/pricing'
 
@@ -184,6 +185,7 @@ export default async function handler(req, res) {
             originalAmount: originalUnit * peopleCount,
             currency: booking.currency || 'MXN',
             status: 'CONFIRMED',
+            ...attributionMetaFromRequest(req, req.body || {}),
           })
           await recordPartnerEvent({
             partner,

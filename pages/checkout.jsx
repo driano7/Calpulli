@@ -55,6 +55,15 @@ export default function CheckoutPage() {
   const partnerReferral = usePartnerReferral()
   const partnerRef = partnerReferral?.ref || ''
   const partnerExpiresAt = partnerReferral?.expiresAt || null
+  const partnerPlacement = partnerReferral?.placement || null
+  const partnerCampaign = partnerReferral?.campaign || null
+  const partnerSessionId = (() => {
+    try {
+      return localStorage.getItem('amaxing_anon_session') || null
+    } catch {
+      return null
+    }
+  })()
   const partnerPct = Number(partnerReferral?.partner?.guestDiscountPct || 0)
   const discounted = getDiscountedPrice(subtotal, partnerReferral)
   const displaySubtotal = partnerReferral?.partner ? discounted.finalAmount : subtotal
@@ -575,6 +584,9 @@ export default function CheckoutPage() {
             ? `${user.firstName} ${user.lastName || ''}`.trim()
             : undefined,
           referralCode: partnerRef || undefined,
+          placement: partnerPlacement || undefined,
+          campaign: partnerCampaign || undefined,
+          partnerSessionId: partnerSessionId || undefined,
           referralExpiresAt: partnerExpiresAt || undefined,
           locale,
         }),
@@ -677,6 +689,9 @@ export default function CheckoutPage() {
             paymentMethod: payMethod,
             customerPhone: customerPhone.trim() || undefined,
             referralCode: partnerRef || undefined,
+            placement: partnerPlacement || undefined,
+            campaign: partnerCampaign || undefined,
+            partnerSessionId: partnerSessionId || undefined,
             referralExpiresAt: partnerExpiresAt || undefined,
           }),
         })
@@ -793,6 +808,9 @@ export default function CheckoutPage() {
             currency: locale === 'es' ? 'MXN' : 'USD',
             responsiblePosition: isGuest ? responsiblePosition : 1,
             referralCode: partnerRef || undefined,
+            placement: partnerPlacement || undefined,
+            campaign: partnerCampaign || undefined,
+            partnerSessionId: partnerSessionId || undefined,
             referralExpiresAt: partnerExpiresAt || undefined,
             locale,
           }),
@@ -1781,6 +1799,9 @@ export default function CheckoutPage() {
                             customerPhone: customerPhone.trim(),
                             responsiblePosition,
                             referralCode: partnerRef || undefined,
+                            placement: partnerPlacement || undefined,
+                            campaign: partnerCampaign || undefined,
+                            partnerSessionId: partnerSessionId || undefined,
                             referralExpiresAt: partnerExpiresAt || undefined,
                             locale,
                           }),

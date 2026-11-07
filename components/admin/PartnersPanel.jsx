@@ -309,6 +309,58 @@ export default function PartnersPanel({ isEs }) {
               </button>
             </div>
 
+            <div className="mt-2 flex flex-wrap gap-2">
+              <input
+                placeholder="Invite email (admin)"
+                value={manual[p.id]?.email || ''}
+                onChange={(e) =>
+                  setManual((m) => ({
+                    ...m,
+                    [p.id]: { ...(m[p.id] || {}), email: e.target.value },
+                  }))
+                }
+                className="min-w-[180px] flex-1 rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-xs dark:border-white/10 dark:bg-zinc-950"
+              />
+              <select
+                value={manual[p.id]?.role || 'VIEWER'}
+                onChange={(e) =>
+                  setManual((m) => ({ ...m, [p.id]: { ...(m[p.id] || {}), role: e.target.value } }))
+                }
+                className="rounded-lg border px-2 py-1.5 text-xs dark:border-white/10 dark:bg-zinc-950"
+              >
+                <option>VIEWER</option>
+                <option>STAFF</option>
+                <option>MANAGER</option>
+                <option>OWNER</option>
+              </select>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={async () => {
+                  const token = localStorage.getItem('authToken')
+                  const email = manual[p.id]?.email || ''
+                  const role = manual[p.id]?.role || 'VIEWER'
+                  const res = await fetch('/api/admin/partners/invite', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ email, partnerId: p.id, role }),
+                  })
+                  const json = await res.json().catch(() => ({}))
+                  if (!res.ok) setError(json.error || 'invite failed')
+                  else {
+                    setNotice(`${email} — enlace (una sola vez): ${json.acceptUrl}`)
+                    setManual((m) => ({ ...m, [p.id]: { ...(m[p.id] || {}), email: '' } }))
+                  }
+                }}
+                className="rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white"
+              >
+                {isEs ? 'Invitar socio' : 'Invite partner'}
+              </button>
+            </div>
+
             {p.attributions?.length ? (
               <div className="mt-3 space-y-2">
                 {p.attributions.slice(0, 8).map((a) => (

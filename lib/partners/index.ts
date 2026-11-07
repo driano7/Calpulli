@@ -51,6 +51,12 @@ export interface Partner {
   commissionPct: number
   attributionDays: number
   userId: string | null
+  type: string | null
+  contactPerson: string | null
+  contactEmail: string | null
+  contactPhone: string | null
+  preferredLanguage: string | null
+  notificationPrefs: string | null
 }
 
 export interface PublicPartner {
@@ -178,6 +184,12 @@ function mapPartner(row: any): Partner | null {
     commissionPct: Number(row.commission_pct ?? 0.1),
     attributionDays: Number(row.attribution_days ?? 30),
     userId: row.user_id ?? null,
+    type: row.type ?? null,
+    contactPerson: row.contact_person ?? null,
+    contactEmail: row.contact_email ?? null,
+    contactPhone: row.contact_phone ?? null,
+    preferredLanguage: row.preferred_language ?? null,
+    notificationPrefs: row.notification_prefs ?? null,
   }
 }
 
@@ -209,8 +221,32 @@ export async function resolvePartner(ref: unknown): Promise<Partner | null> {
   return mapPartner(result.rows[0])
 }
 
+/**
+ * Environment-controlled demo seed. ONLY when SEED_DEMO_PARTNER=1.
+ * Creates Hostal MX Demo (HOSTEL, 10%/10%/30d) idempotently; never touches
+ * bookings/events/commissions. No-op otherwise (production stays clean).
+ */
+export async function ensureDemoPartnerIfEnabled(ref: unknown): Promise<void> {
+  if (process.env.SEED_DEMO_PARTNER !== '1') return
+  const slug = normalizeSlug(ref)
+  if (slug !== 'hostal-mx-demo' && normalizeCode(ref) !== 'hostalmxdemo') return
+  await ensurePartnerSchema()
+  const { ensurePartnerAccountSchema } = await import('./accounts')
+  await ensurePartnerAccountSchema()
+  try {
+    await turso.execute({
+      sql: `INSERT OR IGNORE INTO partners (slug, referral_code, name, type, status, guest_discount_pct, commission_pct, attribution_days)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: ['hostal-mx-demo', 'hostalmxdemo', 'Hostal MX Demo', 'HOSTEL', 'ACTIVE', 0.1, 0.1, 30],
+    })
+  } catch {
+    // best effort
+  }
+}
+
 /** Resolve and only return if ACTIVE (generates benefits). */
 export async function resolveActivePartner(ref: unknown): Promise<Partner | null> {
+  await ensureDemoPartnerIfEnabled(ref)
   const partner = await resolvePartner(ref)
   return isPartnerActive(partner) ? partner : null
 }
@@ -234,20 +270,31 @@ export async function recordPartnerEvent(params: {
   eventType: PartnerEventType
   eventKey: string
   path?: string | null
+  sessionId?: string | null
+  placement?: string | null
+  campaign?: string | null
+  utmContent?: string | null
 }): Promise<boolean> {
   await ensurePartnerSchema()
+  const { ensurePartnerAccountSchema } = await import('./accounts')
+  await ensurePartnerAccountSchema()
   if (!ALLOWED_EVENTS.includes(params.eventType)) return false
   if (!params.eventKey) return false
   try {
     const result = await turso.execute({
-      sql: `INSERT OR IGNORE INTO partner_referral_events (partner_id, referral_code, event_type, event_key, path)
-            VALUES (?, ?, ?, ?, ?)`,
+      sql: `INSERT OR IGNORE INTO partner_referral_events
+              (partner_id, referral_code, event_type, event_key, path, session_id, placement, campaign, utm_content)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         params.partner.id,
         params.partner.referralCode,
         params.eventType,
         String(params.eventKey).slice(0, 200),
         params.path ? String(params.path).slice(0, 300) : null,
+        params.sessionId ? String(params.sessionId).slice(0, 120) : null,
+        params.placement ? String(params.placement).slice(0, 60) : null,
+        params.campaign ? String(params.campaign).slice(0, 80) : null,
+        params.utmContent ? String(params.utmContent).slice(0, 80) : null,
       ],
     })
     return Boolean((result as any).rowsAffected)
@@ -275,6 +322,11 @@ export interface Attribution {
   commissionAmount: number
   currency: string
   refundedAmount: number
+  placement: string | null
+  campaign: string | null
+  payableAt: string | null
+  paidAt: string | null
+  payoutReference: string | null
 }
 
 function mapAttribution(row: any): Attribution | null {
@@ -293,6 +345,11 @@ function mapAttribution(row: any): Attribution | null {
     commissionAmount: Number(row.commission_amount) || 0,
     currency: row.currency || 'MXN',
     refundedAmount: Number(row.refunded_amount) || 0,
+    placement: row.placement ?? null,
+    campaign: row.campaign ?? null,
+    payableAt: row.payable_at ?? null,
+    paidAt: row.paid_at ?? null,
+    payoutReference: row.payout_reference ?? null,
   }
 }
 
@@ -317,6 +374,8 @@ export async function createAttribution(params: {
   originalAmount: number
   currency?: string
   status?: AttributionStatus
+  placement?: string | null
+  campaign?: string | null
 }): Promise<Attribution | null> {
   await ensurePartnerSchema()
   const discounted = applyDiscount(params.originalAmount, params.partner.guestDiscountPct)
@@ -326,8 +385,8 @@ export async function createAttribution(params: {
     await turso.execute({
       sql: `INSERT OR IGNORE INTO booking_attributions
               (booking_id, partner_id, source, status, original_amount, discount_pct,
-               discount_amount, final_amount, commission_pct, commission_amount, currency)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+               discount_amount, final_amount, commission_pct, commission_amount, currency, placement, campaign)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         params.bookingId,
         params.partner.id,
@@ -340,6 +399,8 @@ export async function createAttribution(params: {
         Number(params.partner.commissionPct) || 0,
         commission,
         params.currency || 'MXN',
+        params.placement ? String(params.placement).slice(0, 60) : null,
+        params.campaign ? String(params.campaign).slice(0, 80) : null,
       ],
     })
   } catch (err) {
@@ -388,6 +449,7 @@ export async function transitionAttribution(params: {
   reason?: string | null
   refundedAmount?: number
   eventType?: PartnerEventType
+  payoutReference?: string | null
 }): Promise<Attribution | null> {
   await ensurePartnerSchema()
   const current = await getAttributionByBooking(params.bookingId)
@@ -420,11 +482,26 @@ export async function transitionAttribution(params: {
     }
   }
 
+  const nowIso = new Date().toISOString()
   await turso.execute({
     sql: `UPDATE booking_attributions
-          SET status = ?, commission_amount = ?, refunded_amount = ?, reversed_reason = COALESCE(?, reversed_reason)
+          SET status = ?, commission_amount = ?, refunded_amount = ?, reversed_reason = COALESCE(?, reversed_reason),
+              payable_at = CASE WHEN ? = 'PAYABLE' AND payable_at IS NULL THEN ? ELSE payable_at END,
+              paid_at = CASE WHEN ? = 'PAID' THEN ? ELSE paid_at END,
+              payout_reference = COALESCE(NULLIF(?, ''), payout_reference)
           WHERE booking_id = ?`,
-    args: [nextStatus, commission, refunded, params.reason ?? null, params.bookingId],
+    args: [
+      nextStatus,
+      commission,
+      refunded,
+      params.reason ?? null,
+      nextStatus,
+      nowIso,
+      nextStatus,
+      nowIso,
+      params.payoutReference ? String(params.payoutReference).slice(0, 80) : null,
+      params.bookingId,
+    ],
   })
 
   // Server-side lifecycle event (idempotent per booking+type).
@@ -471,7 +548,13 @@ export function parseCookies(header?: string): Record<string, string> {
 export function referralFromRequest(
   req: any,
   body: any
-): { ref: string | null; expiresAt: string | null } {
+): {
+  ref: string | null
+  expiresAt: string | null
+  placement: string | null
+  campaign: string | null
+  sessionId: string | null
+} {
   const fromBody =
     (typeof body?.referralCode === 'string' && body.referralCode) ||
     (typeof body?.partnerRef === 'string' && body.partnerRef) ||
@@ -482,13 +565,40 @@ export function referralFromRequest(
   const fromHeader =
     (typeof req?.headers?.['x-partner-ref'] === 'string' && req.headers['x-partner-ref']) || null
   const fromQuery = typeof req?.query?.ref === 'string' ? (req.query.ref as string) : null
+  const placement =
+    (typeof body?.placement === 'string' && body.placement) ||
+    (typeof req?.query?.placement === 'string' && req.query.placement) ||
+    null
+  const campaign =
+    (typeof body?.campaign === 'string' && body.campaign) ||
+    (typeof body?.utm_campaign === 'string' && body.utm_campaign) ||
+    (typeof req?.query?.utm_campaign === 'string' && req.query.utm_campaign) ||
+    null
+  const sessionId =
+    (typeof body?.partnerSessionId === 'string' && body.partnerSessionId) ||
+    (typeof body?.anonSessionId === 'string' && body.anonSessionId) ||
+    (typeof body?.sessionId === 'string' &&
+    !String(body.sessionId).startsWith('cs_') &&
+    !String(body.sessionId).startsWith('mock_cs_') &&
+    !String(body.sessionId).startsWith('pi_')
+      ? body.sessionId
+      : null) ||
+    null
   return {
     ref: fromBody || fromQuery || fromHeader || fromCookie,
     expiresAt:
       (typeof body?.referralExpiresAt === 'string' && body.referralExpiresAt) ||
       (typeof body?.expiresAt === 'string' && body.expiresAt) ||
       null,
+    placement: placement ? String(placement).slice(0, 60) : null,
+    campaign: campaign ? String(campaign).slice(0, 80) : null,
+    sessionId: sessionId ? String(sessionId).slice(0, 120) : null,
   }
+}
+
+export function attributionMetaFromRequest(req: any, body: any) {
+  const { placement, campaign } = referralFromRequest(req, body)
+  return { placement, campaign }
 }
 
 /**

@@ -1,8 +1,7 @@
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX
 // POST /api/partners/track — deduplicated partner events.
-// Body: { ref, eventType, eventKey, path }
+// Body: { ref, eventType, eventKey, path, sessionId, placement, campaign, utmContent }
 // eventKey must be stable per logical event (server uses INSERT OR IGNORE).
-// Unknown/inactive partners are ignored (analytics only, never security).
 import { resolveActivePartner, recordPartnerEvent } from '@/lib/partners'
 
 export const config = { runtime: 'nodejs' }
@@ -28,6 +27,10 @@ export default async function handler(req, res) {
       eventType,
       eventKey,
       path: typeof body.path === 'string' ? body.path.slice(0, 300) : null,
+      sessionId: typeof body.sessionId === 'string' ? body.sessionId.slice(0, 120) : null,
+      placement: typeof body.placement === 'string' ? body.placement.slice(0, 60) : null,
+      campaign: typeof body.campaign === 'string' ? body.campaign.slice(0, 80) : null,
+      utmContent: typeof body.utmContent === 'string' ? body.utmContent.slice(0, 80) : null,
     })
     return res.status(200).json({ tracked: recorded })
   } catch (err) {
