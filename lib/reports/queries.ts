@@ -70,6 +70,7 @@ export interface AdminReportData {
   referrals: ReferralConversion[]
   upcoming: UpcomingTour[]
   newUsers: number
+  chat: ChatSummary
 }
 
 export interface EmployeeReportData {
@@ -77,6 +78,69 @@ export interface EmployeeReportData {
   byDay: DayTours[]
   byExperience: ExperienceDemand[]
   upcoming: UpcomingTour[]
+  chat?: ChatSummary
+}
+
+export interface ChatTopicCount {
+  topic: string
+  label: string
+  questions: number
+}
+
+export interface ChatSuggestionCount {
+  suggestionKey: string
+  questions: number
+}
+
+export interface ChatTopQuestion {
+  question: string
+  count: number
+  topic: string
+}
+
+export interface ChatPathCount {
+  path: string
+  questions: number
+}
+
+export interface ChatSummary {
+  total: number
+  conversations: number
+  uniqueUsers: number
+  filtered: number
+  es: number
+  en: number
+  byTopic: ChatTopicCount[]
+  bySuggestion: ChatSuggestionCount[]
+  byPath: ChatPathCount[]
+  topQuestions: ChatTopQuestion[]
+}
+
+export const CHAT_TOPIC_LABELS: Record<string, string> = {
+  museos: 'Museos',
+  comida: 'Comida',
+  bares: 'Bares',
+  atracciones: 'Atracciones y barrios',
+  luchas: 'Luchas',
+  journeys: 'Journeys y guías',
+  'reservas-precios': 'Reservas y precios',
+  'transporte-seguridad': 'Transporte y seguridad',
+  'local-mes': 'Local del mes',
+  mapas: 'Mapas',
+  'museos-comida-bares': 'Museos / comida / bares / atracciones (flujo)',
+  buscar: 'Buscar en el sitio',
+  'duda-pagina': 'Duda sobre lo que veo',
+  'a-medida': 'Journey a la medida',
+  general: 'General',
+}
+
+export function redactChatQuestion(question: string): string {
+  return String(question || '')
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[correo]')
+    .replace(/\+?\d[\d\s\-()]{7,}\d/g, '[teléfono]')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 140)
 }
 
 const createdAtRange = `datetime(b.created_at) >= datetime(?)
@@ -184,15 +248,109 @@ async function loadByDay(period: ReportPeriod): Promise<DayTours[]> {
   }))
 }
 
+/**
+ * Qué busca la gente en el chatbot, desde Turso chat_questions.
+ * Sin PII: top questions se redactan (correo/teléfono) y se truncan.
+ */
+export async function loadChatSummary(period: ReportPeriod): Promise<ChatSummary> {
+  const from = period.startUtc
+  const to = period.endUtc
+  const empty: ChatSummary = {
+    total: 0,
+    conversations: 0,
+    uniqueUsers: 0,
+    filtered: 0,
+    es: 0,
+    en: 0,
+    byTopic: [],
+    bySuggestion: [],
+    byPath: [],
+    topQuestions: [],
+  }
+  try {
+    const totalResult = await query(
+      `SELECT COUNT(*) AS total,
+              COUNT(DISTINCT conversation_id) AS conversations,
+              COUNT(DISTINCT user_id) AS unique_users,
+              COALESCE(SUM(CASE WHEN filtered IS NOT NULL AND filtered != '' THEN 1 ELSE 0 END), 0) AS filtered,
+              COALESCE(SUM(CASE WHEN locale = 'en' THEN 1 ELSE 0 END), 0) AS en,
+              COALESCE(SUM(CASE WHEN locale != 'en' THEN 1 ELSE 0 END), 0) AS es
+       FROM chat_questions
+       WHERE datetime(created_at) >= datetime(?) AND datetime(created_at) < datetime(?)`,
+      [from, to]
+    )
+    const row: any = totalResult.rows[0]
+    const byTopicResult = await query(
+      `SELECT COALESCE(NULLIF(topic, ''), 'general') AS topic, COUNT(*) AS n
+       FROM chat_questions
+       WHERE datetime(created_at) >= datetime(?) AND datetime(created_at) < datetime(?)
+       GROUP BY topic ORDER BY n DESC LIMIT 15`,
+      [from, to]
+    )
+    const bySuggestionResult = await query(
+      `SELECT COALESCE(NULLIF(suggestion_key, ''), '') AS suggestion_key, COUNT(*) AS n
+       FROM chat_questions
+       WHERE datetime(created_at) >= datetime(?) AND datetime(created_at) < datetime(?)
+         AND suggestion_key IS NOT NULL AND suggestion_key != ''
+       GROUP BY suggestion_key ORDER BY n DESC LIMIT 10`,
+      [from, to]
+    )
+    const byPathResult = await query(
+      `SELECT COALESCE(NULLIF(path, ''), '/') AS path, COUNT(*) AS n
+       FROM chat_questions
+       WHERE datetime(created_at) >= datetime(?) AND datetime(created_at) < datetime(?)
+       GROUP BY path ORDER BY n DESC LIMIT 10`,
+      [from, to]
+    )
+    const topResult = await query(
+      `SELECT question, COALESCE(NULLIF(topic, ''), 'general') AS topic, COUNT(*) AS n
+       FROM chat_questions
+       WHERE datetime(created_at) >= datetime(?) AND datetime(created_at) < datetime(?)
+       GROUP BY question, topic ORDER BY n DESC, MAX(created_at) DESC LIMIT 10`,
+      [from, to]
+    )
+    return {
+      total: num(row?.total),
+      conversations: num(row?.conversations),
+      uniqueUsers: num(row?.unique_users),
+      filtered: num(row?.filtered),
+      en: num(row?.en),
+      es: num(row?.es),
+      byTopic: byTopicResult.rows.map((r: any) => ({
+        topic: String(r.topic || 'general'),
+        label: CHAT_TOPIC_LABELS[String(r.topic || 'general')] || String(r.topic || 'general'),
+        questions: num(r.n),
+      })),
+      bySuggestion: bySuggestionResult.rows.map((r: any) => ({
+        suggestionKey: String(r.suggestion_key || ''),
+        questions: num(r.n),
+      })),
+      byPath: byPathResult.rows.map((r: any) => ({
+        path: String(r.path || '/'),
+        questions: num(r.n),
+      })),
+      // No se expone texto crudo con PII: redactado y truncado.
+      topQuestions: topResult.rows.map((r: any) => ({
+        question: redactChatQuestion(String(r.question || '')),
+        count: num(r.n),
+        topic: String(r.topic || 'general'),
+      })),
+    }
+  } catch {
+    return empty
+  }
+}
+
 export async function loadEmployeeReportData(period: ReportPeriod): Promise<EmployeeReportData> {
-  const [tours, byDay, byExperience, upcoming] = await Promise.all([
+  const [tours, byDay, byExperience, upcoming, chat] = await Promise.all([
     loadTours(period),
     loadByDay(period),
     loadByExperience(period),
     loadUpcoming(period),
+    loadChatSummary(period),
   ])
 
-  return { tours, byDay, byExperience, upcoming }
+  return { tours, byDay, byExperience, upcoming, chat }
 }
 
 export async function loadAdminReportData(period: ReportPeriod): Promise<AdminReportData> {
@@ -204,6 +362,7 @@ export async function loadAdminReportData(period: ReportPeriod): Promise<AdminRe
     referralsResult,
     upcoming,
     newUsersResult,
+    chat,
   ] = await Promise.all([
     query(
       `SELECT COUNT(*) AS bookings,
@@ -252,6 +411,7 @@ export async function loadAdminReportData(period: ReportPeriod): Promise<AdminRe
          AND datetime(created_at) < datetime(?)`,
       [period.startUtc, period.endUtc]
     ),
+    loadChatSummary(period),
   ])
 
   const createdRow: any = createdResult.rows[0]
@@ -281,5 +441,6 @@ export async function loadAdminReportData(period: ReportPeriod): Promise<AdminRe
     })),
     upcoming,
     newUsers: num(newUsersRow?.total),
+    chat,
   }
 }

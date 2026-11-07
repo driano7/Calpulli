@@ -109,8 +109,36 @@ function baseNotes(): string[] {
   ]
 }
 
+function chatTopicRows(chat: AdminReportData['chat'] | undefined): string[][] {
+  if (!chat?.byTopic?.length) return []
+  return chat.byTopic.map((row) => [row.label, formatNumber(row.questions)])
+}
+
+function chatTopRows(chat: AdminReportData['chat'] | undefined): string[][] {
+  if (!chat?.topQuestions?.length) return []
+  return chat.topQuestions.map((row) => [row.question, row.topic, formatNumber(row.count)])
+}
+
+function chatSuggestionRows(chat: AdminReportData['chat'] | undefined): string[][] {
+  if (!chat?.bySuggestion?.length) return []
+  const labels: Record<string, string> = {
+    'museos-comida-bares': 'Museos / comida / bares / atracciones (flujo)',
+    buscar: '¿Qué buscas? Te ayudo a encontrarlo',
+    'duda-pagina': 'Tengo una duda sobre lo que veo',
+  }
+  return chat.bySuggestion.map((row) => [
+    labels[row.suggestionKey] || row.suggestionKey,
+    formatNumber(row.questions),
+  ])
+}
+
+function chatPathRows(chat: AdminReportData['chat'] | undefined): string[][] {
+  if (!chat?.byPath?.length) return []
+  return chat.byPath.map((row) => [row.path, formatNumber(row.questions)])
+}
+
 function buildAdminReport(period: ReportPeriod, data: AdminReportData): PartnerReport {
-  const { created, tours } = data
+  const { created, tours, chat } = data
   const revenueHint =
     data.revenue.length > 1
       ? 'Desglose por moneda; no se suman monedas distintas'
@@ -153,6 +181,22 @@ function buildAdminReport(period: ReportPeriod, data: AdminReportData): PartnerR
         data.upcoming.reduce((sum, row) => sum + row.guests, 0)
       )} viajeros ya reservados`,
     },
+    {
+      label: 'Preguntas al chatbot',
+      value: formatNumber(chat?.total ?? 0),
+      hint: `${formatNumber(chat?.conversations ?? 0)} conversaciones · ${formatNumber(
+        chat?.uniqueUsers ?? 0
+      )} usuarios con cuenta`,
+    },
+    {
+      label: 'Qué buscan más (chat)',
+      value: chat?.byTopic?.[0]?.label || '—',
+      hint: `${formatNumber(chat?.byTopic?.[0]?.questions ?? 0)} preguntas${
+        chat?.filtered
+          ? ` · ${formatNumber(chat.filtered)} filtradas (fuera de tema/sensibles)`
+          : ''
+      }`,
+    },
   ]
 
   const tables: ReportTable[] = [
@@ -184,11 +228,36 @@ function buildAdminReport(period: ReportPeriod, data: AdminReportData): PartnerR
       rows: upcomingRows(data.upcoming),
       empty: 'No hay reservas para los próximos 7 días.',
     },
+    {
+      title: 'Qué busca la gente (por tema)',
+      headers: ['Tema', 'Preguntas'],
+      rows: chatTopicRows(chat),
+      empty: 'No hubo preguntas al chatbot en este periodo.',
+    },
+    {
+      title: 'Sugerencias del chatbot (qué se clickea)',
+      headers: ['Sugerencia', 'Usos'],
+      rows: chatSuggestionRows(chat),
+      empty: 'Nadie usó las sugerencias en este periodo (o aún no se registra).',
+    },
+    {
+      title: 'Preguntas más repetidas',
+      headers: ['Pregunta (redactada)', 'Tema', 'Veces'],
+      rows: chatTopRows(chat),
+      empty: 'No hubo preguntas repetidas en este periodo.',
+    },
+    {
+      title: 'Dudas por página',
+      headers: ['Página', 'Preguntas'],
+      rows: chatPathRows(chat),
+      empty: 'No hubo dudas por página en este periodo.',
+    },
   ]
 
   const notes = [
     ...baseNotes(),
     '“Ingresos por reservas pagadas” usa la fecha de creación de la reserva. La columna paid_at no se interpreta como fecha de cobro porque el sistema la llena con la fecha del tour.',
+    'Chatbot: temas clasificados por palabras clave (museos/comida/bares/atracciones…) y clics en sugerencias. Preguntas redactadas: sin correos ni teléfonos.',
   ]
 
   if (tours.pendingPayment) {
@@ -211,7 +280,7 @@ function buildAdminReport(period: ReportPeriod, data: AdminReportData): PartnerR
 }
 
 function buildEmployeeReport(period: ReportPeriod, data: EmployeeReportData): PartnerReport {
-  const { tours } = data
+  const { tours, chat } = data
   const upcomingTours = data.upcoming.reduce((sum, row) => sum + row.tours, 0)
   const upcomingGuests = data.upcoming.reduce((sum, row) => sum + row.guests, 0)
 
@@ -235,6 +304,11 @@ function buildEmployeeReport(period: ReportPeriod, data: EmployeeReportData): Pa
       label: 'Próximos 7 días',
       value: formatNumber(upcomingTours),
       hint: `${formatNumber(upcomingGuests)} viajeros ya reservados`,
+    },
+    {
+      label: 'Preguntas al chatbot',
+      value: formatNumber(chat?.total ?? 0),
+      hint: `Tema top: ${chat?.byTopic?.[0]?.label || '—'}`,
     },
   ]
 
@@ -262,11 +336,23 @@ function buildEmployeeReport(period: ReportPeriod, data: EmployeeReportData): Pa
       rows: upcomingRows(data.upcoming),
       empty: 'No hay reservas para los próximos 7 días.',
     },
+    {
+      title: 'Qué busca la gente (por tema)',
+      headers: ['Tema', 'Preguntas'],
+      rows: chatTopicRows(chat),
+      empty: 'No hubo preguntas al chatbot en este periodo.',
+    },
+    {
+      title: 'Sugerencias del chatbot (qué se clickea)',
+      headers: ['Sugerencia', 'Usos'],
+      rows: chatSuggestionRows(chat),
+      empty: 'Nadie usó las sugerencias en este periodo.',
+    },
   ]
 
   const notes = [
     ...baseNotes(),
-    'Versión operativa: no incluye ingresos, datos de contacto ni información personal de los clientes.',
+    'Versión operativa: no incluye ingresos, datos de contacto ni información personal de los clientes. Chatbot: solo conteos por tema, sin preguntas crudas.',
   ]
 
   return {

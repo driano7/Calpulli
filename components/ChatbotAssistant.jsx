@@ -141,7 +141,10 @@ const PRESET_BY_SECTION = {
 }
 
 // 4 respuestas sugeridas permanentes (siempre visibles, en ambos idiomas).
-// 1) Museos/restaurantes/bares/atracciones con mini-serie -> Journey/Guía o WhatsApp.
+// 1) Museos/restaurantes/bares/atracciones: el asistente hace las preguntas
+//    que necesite (sin máximo de 4) para dar el Journey o Guía que más se
+//    adapte; si no hay, WhatsApp. Las preguntas/respuestas se alojan en
+//    Turso (chat_questions) para medir qué busca la gente.
 // 2) "¿Qué buscas?" -> detectar y mandar al blog más cercano o fuentes confiables.
 // 3) "Tengo una duda sobre lo que veo" -> explicar blog, qué hacer y qué agendar.
 // 4) Journey a la medida -> WhatsApp con mensaje precargado.
@@ -153,18 +156,21 @@ const SUGGESTED_FOUR = {
   es: [
     {
       kind: 'send',
+      suggestionKey: 'museos-comida-bares',
       label: 'Museos, restaurantes, bares, atracciones',
       message:
-        'Quiero recomendaciones de museos, restaurantes, bares o atracciones en CDMX. Hazme tus preguntas (máx. 4) para darme el Journey o guía que más se adapte; si no hay, te doy WhatsApp para armarlo.',
+        'Quiero recomendaciones de museos, restaurantes, bares o atracciones en CDMX. Pregúntame lo que necesites para recomendarme bien (colonia, presupuesto, día/horario, ambiente, qué me late) y llévame al Journey o guía que más se adapte; si no hay, ofréceme WhatsApp para armarlo.',
     },
     {
       kind: 'send',
+      suggestionKey: 'buscar',
       label: '¿Qué buscas? Te ayudo a encontrarlo',
       message:
         '¿Qué buscas en el sitio? Te ayudo a encontrarlo: dime qué necesitas y llévame al blog o resultado más cercano; si no lo tienen, dime fuentes confiables.',
     },
     {
       kind: 'send',
+      suggestionKey: 'duda-pagina',
       label: 'Tengo una duda sobre lo que veo',
       message:
         'Tengo una duda sobre lo que veo en esta página: explícame en qué blog o sección está, qué puedo hacer ahí y qué me recomiendas ver o agendar.',
@@ -174,18 +180,21 @@ const SUGGESTED_FOUR = {
   en: [
     {
       kind: 'send',
+      suggestionKey: 'museos-comida-bares',
       label: 'Museums, restaurants, bars, attractions',
       message:
-        'I want recommendations for museums, restaurants, bars or attractions in CDMX. Ask me up to 4 questions to point me to the Journey or Guide that fits best; if there is none, give me WhatsApp to build it.',
+        'I want recommendations for museums, restaurants, bars or attractions in CDMX. Ask me whatever you need to recommend me well (neighborhood, budget, day/time, vibe, what I am into) and point me to the Journey or Guide that fits best; if there is none, offer WhatsApp to build it.',
     },
     {
       kind: 'send',
+      suggestionKey: 'buscar',
       label: 'What are you looking for? I can find it',
       message:
         'What are you looking for on the site? Help me find it: take me to the closest blog or result; if you do not have it, suggest reliable sources.',
     },
     {
       kind: 'send',
+      suggestionKey: 'duda-pagina',
       label: 'I have a question about what I see',
       message:
         'I have a question about what I see on this page: explain which blog or section it is in, what I can do there, and what you recommend seeing or booking.',
@@ -523,13 +532,15 @@ export default function ChatbotAssistant() {
   }, [input, inputExpanded, open])
 
   const sendMessage = useCallback(
-    async (text) => {
+    async (text, suggestionKey = null) => {
       const clean = String(text || '').trim()
       if (!clean || loading || streaming) return
 
       setError('')
       setInput('')
       setInputExpanded(false)
+      // suggestions clickeadas se alojan en Turso para la métrica de
+      // "qué busca la gente" (ver /api/chatbot + REPORTES).
 
       const userMsg = {
         id: `u-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -563,6 +574,7 @@ export default function ChatbotAssistant() {
             stream: true,
             path: router?.asPath || '/',
             conversationId: conversationId || null,
+            suggestionKey,
           }),
           signal: abortRef.current.signal,
         })
@@ -803,7 +815,7 @@ export default function ChatbotAssistant() {
                   <button
                     type="button"
                     onClick={clearChat}
-                    className="rounded-full px-2 py-1 text-[11px] font-medium text-zinc-500 transition-colors hover:bg-zinc-200/70 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-full bg-black px-3.5 py-1.5 text-[11px] font-bold text-white shadow-md transition-all hover:bg-white hover:text-black hover:ring-1 hover:ring-black/20 active:scale-95 dark:bg-white dark:text-black dark:hover:bg-zinc-900 dark:hover:text-white dark:hover:ring-white/30"
                   >
                     {isEs ? 'Nueva charla' : 'New chat'}
                   </button>
@@ -893,7 +905,7 @@ export default function ChatbotAssistant() {
                       key={action.label}
                       type="button"
                       disabled={loading || streaming}
-                      onClick={() => sendMessage(action.message)}
+                      onClick={() => sendMessage(action.message, action.suggestionKey || null)}
                       className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-medium text-zinc-700 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-orange-500/40 dark:hover:bg-orange-500/10 dark:hover:text-orange-300"
                     >
                       <Sparkles className="h-3 w-3 text-orange-500" aria-hidden />

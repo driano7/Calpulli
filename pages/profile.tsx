@@ -1079,6 +1079,130 @@ function SummaryCard({
   )
 }
 
+function ChatMetricsSection({ isEs }: { isEs: boolean }) {
+  const [metrics, setMetrics] = useState<any>(null)
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        const token = localStorage.getItem('authToken')
+        const res = await fetch('/api/profile/chat-metrics?range=30', {
+          headers: { Authorization: token ? `Bearer ${token}` : '' },
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled) setMetrics(data)
+      } catch {
+        /* sin métrica, el historial sigue */
+      }
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+  if (!metrics) return null
+  const isGlobal = metrics.scope === 'global'
+  const topicData = (metrics.byTopic || []).map((row: any) => ({
+    label: row.label,
+    value: row.questions,
+  }))
+  return (
+    <div className="mb-6 space-y-4">
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatCard
+          label={isEs ? 'Preguntas (30 días)' : 'Questions (30 days)'}
+          value={metrics.total}
+          color="#f97316"
+        />
+        <StatCard
+          label={isEs ? 'Conversaciones' : 'Conversations'}
+          value={metrics.conversations}
+          color="#22c55e"
+        />
+        <StatCard
+          label={isEs ? 'Tema más buscado' : 'Top topic'}
+          value={metrics.byTopic?.[0]?.label || '—'}
+          color="#3b82f6"
+        />
+      </div>
+      {topicData.length > 0 ? (
+        <SequentialBarChart
+          data={topicData}
+          title={
+            isEs
+              ? isGlobal
+                ? 'Qué busca la gente (por tema)'
+                : 'Qué buscas (por tema)'
+              : isGlobal
+              ? 'What people look for (by topic)'
+              : 'What you look for (by topic)'
+          }
+          description={
+            isEs
+              ? isGlobal
+                ? 'Preguntas al chatbot en los últimos 30 días, clasificadas por tema. Lo mismo viaja en el reporte mensual por correo.'
+                : 'Tus preguntas al chatbot en los últimos 30 días. Lo mismo alimenta el reporte mensual de Calpulli.'
+              : isGlobal
+              ? 'Chatbot questions in the last 30 days, classified by topic. The same goes in the monthly email report.'
+              : 'Your chatbot questions in the last 30 days. The same feeds Calpulli’s monthly report.'
+          }
+          dataKey="value"
+          nameKey="label"
+          color="#f97316"
+          layout="horizontal"
+          pngFilename="chat-by-topic"
+          stepMs={80}
+        />
+      ) : null}
+      {metrics.bySuggestion?.length > 0 ? (
+        <div className="rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-white/10 dark:bg-zinc-900/50">
+          <p className="text-sm font-bold text-zinc-900 dark:text-white">
+            {isEs ? 'Sugerencias del chatbot' : 'Chatbot suggestions'}
+          </p>
+          <ul className="mt-2 space-y-1 text-sm text-zinc-600 dark:text-zinc-300">
+            {metrics.bySuggestion.map((row: any) => (
+              <li key={row.suggestionKey} className="flex justify-between gap-4">
+                <span>
+                  {row.suggestionKey === 'museos-comida-bares'
+                    ? isEs
+                      ? 'Museos / comida / bares / atracciones (flujo)'
+                      : 'Museums / food / bars / attractions (flow)'
+                    : row.suggestionKey === 'buscar'
+                    ? isEs
+                      ? '¿Qué buscas?'
+                      : 'What are you looking for?'
+                    : row.suggestionKey === 'duda-pagina'
+                    ? isEs
+                      ? 'Tengo una duda sobre lo que veo'
+                      : 'I have a question about what I see'
+                    : row.suggestionKey}
+                </span>
+                <span className="font-bold text-orange-600">{row.questions}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {isGlobal && metrics.topQuestions?.length > 0 ? (
+        <div className="rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-white/10 dark:bg-zinc-900/50">
+          <p className="text-sm font-bold text-zinc-900 dark:text-white">
+            {isEs ? 'Preguntas más repetidas (redactadas)' : 'Most repeated questions (redacted)'}
+          </p>
+          <ul className="mt-2 space-y-1 text-sm text-zinc-600 dark:text-zinc-300">
+            {metrics.topQuestions.slice(0, 8).map((row: any, index: number) => (
+              <li key={index} className="flex justify-between gap-4">
+                <span className="line-clamp-2">{row.question}</span>
+                <span className="shrink-0 font-bold text-orange-600">×{row.count}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function ChatHistorySection({ isEs }: { isEs: boolean }) {
   const [conversations, setConversations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -1128,15 +1252,19 @@ function ChatHistorySection({ isEs }: { isEs: boolean }) {
 
   if (conversations.length === 0)
     return (
-      <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 text-sm text-zinc-500 dark:border-white/10 dark:bg-zinc-900/50">
-        {isEs
-          ? 'Aún no tienes conversaciones guardadas. Abre Calpulli AI desde el botón de robot y tu charla quedará aquí.'
-          : 'No saved conversations yet. Open Calpulli AI from the robot button and your chat will appear here.'}
+      <div className="space-y-4">
+        <ChatMetricsSection isEs={isEs} />
+        <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 text-sm text-zinc-500 dark:border-white/10 dark:bg-zinc-900/50">
+          {isEs
+            ? 'Aún no tienes conversaciones guardadas. Abre Calpulli AI desde el botón de robot y tu charla quedará aquí.'
+            : 'No saved conversations yet. Open Calpulli AI from the robot button and your chat will appear here.'}
+        </div>
       </div>
     )
 
   return (
     <div className="space-y-4">
+      <ChatMetricsSection isEs={isEs} />
       {conversations.map((conv) => (
         <div
           key={conv.id}

@@ -320,7 +320,7 @@ MANDATORY LANGUAGE: ALWAYS answer in English. Never answer in Spanish unless the
 6. NO MEDICAL, LEGAL OR FINANCIAL ADVICE.
 
 === SUGGESTED FLOWS ===
-1. MUSEUMS / RESTAURANTS / BARS / ATTRACTIONS: ask up to 4 short questions (neighborhood, budget, day/time, vibe) to match the closest Journey or Guide from the catalog; if none fits, offer WhatsApp +52 55 1229 1607 to build it.
+1. MUSEUMS / RESTAURANTS / BARS / ATTRACTIONS: ask the questions you need (neighborhood, budget, day/time, vibe, what they are into) with no 4-question cap. You make the questions and the visitor answers; those Q/A pairs are logged in Turso to measure what people are looking for. Use the answers to match the closest Journey or Guide from the catalog; if none fits, offer WhatsApp +52 55 1229 1607 to build it.
 2. SEARCH HELP: detect what the user wants and send them to the closest blog/result (/blog/...); if we do not have it, kindly explain and recommend reliable sources (official: gob.mx, inah.gob.mx, bellasartes.gob.mx, antropologia.inah.gob.mx, cmll.com, ticketmaster.com.mx).
 3. QUESTION ABOUT WHAT THEY SEE: explain which blog/section they are on, what they can do there, and what they would like to see or book.
 4. CUSTOM JOURNEY: give WhatsApp +52 55 1229 1607, ask what they were looking for, and say it will be a pleasure to make it.
@@ -379,7 +379,7 @@ IDIOMA OBLIGATORIO: responde SIEMPRE en español de México, aunque el usuario e
 6. NO DES CONSEJO MÉDICO, LEGAL NI FINANCIERO.
 
 === FLUJOS SUGERIDOS ===
-1. MUSEOS / RESTAURANTES / BARES / ATRACCIONES: haz hasta 4 preguntas cortas (colonia, presupuesto, día/horario, ambiente) para llevar al Journey o Guía del catálogo que más se adapte; si no hay, ofrece WhatsApp +52 55 1229 1607 para armarlo.
+1. MUSEOS / RESTAURANTES / BARES / ATRACCIONES: haz las preguntas que necesites (colonia, presupuesto, día/horario, ambiente, qué les late) sin límite de 4; tú haces las preguntas y el visitante responde. Esas preguntas/respuestas se alojan en Turso para medir qué busca la gente. Úsalas para llevar al Journey o Guía del catálogo que más se adapte; si no hay, ofrece WhatsApp +52 55 1229 1607 para armarlo.
 2. AYUDAR A ENCONTRAR: detecta lo que busca y llévalo al blog/resultado más cercano (/blog/...); si no lo tenemos, responde con amabilidad y recomienda fuentes confiables (oficiales: gob.mx, inah.gob.mx, bellasartes.gob.mx, antropologia.inah.gob.mx, cmll.com, ticketmaster.com.mx).
 3. DUDA SOBRE LO QUE VE: explícale en qué blog o sección está, qué puede hacer ahí y qué le gustaría ver o agendar.
 4. JOURNEY A LA MEDIDA: pásale WhatsApp +52 55 1229 1607, pregúntale qué deseaba encontrar y dile que será un placer hacerlo.
@@ -442,10 +442,103 @@ function cleanPath(value) {
 }
 
 /**
+ * Clasifica qué busca la gente a partir de la pregunta (sin LLM).
+ * Debe coincidir con lib/reports/queries.ts (TOPICS) para que el reporte
+ * mensual y /profile agreguen igual.
+ */
+function classifyChatTopic(question, path, suggestionKey, filtered) {
+  if (suggestionKey === 'museos-comida-bares') {
+    // El flujo deja que el asistente pregunte libremente; la primera
+    // intención manda, y los follow-ups quedan en su propio tema.
+    const text = String(question || '').toLowerCase()
+    if (/museo|museum|expos|exhibit|galer/.test(text)) return 'museos'
+    if (/bar|cantina|mezcal|chela|copas|nocturn|night|club/.test(text)) return 'bares'
+    if (/restaurante|comida|comer|food|taco|desayuno|cena|almuerzo|brunch|mezcal/.test(text))
+      return 'comida'
+    if (/atracci|attraction|xochimilco|chapultepec|paseo|parque|park|tour|recorrid/.test(text))
+      return 'atracciones'
+    if (/journey|gu[ií]a|guide|ruta|route|itinerario/.test(text)) return 'journeys'
+    return 'museos-comida-bares'
+  }
+  if (suggestionKey === 'buscar') return 'buscar'
+  if (suggestionKey === 'duda-pagina') return 'duda-pagina'
+  if (filtered === 'custom-journey') return 'a-medida'
+  if (filtered === 'fast-path') return 'general'
+  const text = String(question || '').toLowerCase()
+  const p = String(path || '').toLowerCase()
+  if (
+    /museo|museum|antropolog|bellas|jumex|soumaya|inah|expos|exhibit/.test(text) ||
+    p.includes('/journeys/antropologia')
+  )
+    return 'museos'
+  if (
+    /restaurante|comida|comer|food|taco|tamales|pozole|mole|desayuno|cena|brunch|mercado|caf[eé]/.test(
+      text
+    )
+  )
+    return 'comida'
+  if (/bar|cantina|mezcal|chela|copas|nocturn|night|club|antro/.test(text)) return 'bares'
+  if (
+    /luchas|lucha|arena m[eé]xico|arena coliseo|cmll|cartelera/.test(text) ||
+    p.includes('/journeys/luchas')
+  )
+    return 'luchas'
+  if (
+    /atracci|attraction|xochimilco|chapultepec|paseo en bici|parque|park|centro hist|colonias|barrio/.test(
+      text
+    )
+  )
+    return 'atracciones'
+  if (
+    /journey|tour|recorrid|gu[ií]a|guide|self-guided|autoguiad/.test(text) ||
+    p.startsWith('/journeys') ||
+    p.startsWith('/guides')
+  )
+    return 'journeys'
+  if (
+    /reserv|book|pago|pagar|precio|costo|price|cost|cu[aá]nto vale|efectivo|cash|tarjeta|card|descuento|discount/.test(
+      text
+    )
+  )
+    return 'reservas-precios'
+  if (/metro|metrob[uú]s|transporte|segur|safe|taxi|uber|di|insegur|robo/.test(text))
+    return 'transporte-seguridad'
+  if (
+    /local|recomendaciones|del mes|fin de semana|weekend|este mes/.test(text) ||
+    p.startsWith('/local')
+  )
+    return 'local-mes'
+  if (/mapa|maps|ruta de 1|1 d[ií]a|one day|d[oó]nde estar/.test(text) || p.startsWith('/maps'))
+    return 'mapas'
+  if (/a la medida|custom/.test(text)) return 'a-medida'
+  if (/hola|buenas|gracias|thank|hi|hello/.test(text)) return 'general'
+  return 'general'
+}
+
+const CHAT_TOPIC_LABELS = {
+  museos: 'Museos',
+  comida: 'Comida',
+  bares: 'Bares',
+  atracciones: 'Atracciones y barrios',
+  luchas: 'Luchas',
+  journeys: 'Journeys y guías',
+  'reservas-precios': 'Reservas y precios',
+  'transporte-seguridad': 'Transporte y seguridad',
+  'local-mes': 'Local del mes',
+  mapas: 'Mapas',
+  'museos-comida-bares': 'Museos / comida / bares / atracciones (flujo)',
+  buscar: 'Buscar en el sitio',
+  'duda-pagina': 'Duda sobre lo que veo',
+  'a-medida': 'Journey a la medida',
+  general: 'General',
+}
+
+/**
  * Totem de preguntas del chatbot en Turso para análisis + historial por usuario.
  * Sin IP, user-agent ni cookies. user_id se resuelve server-side desde el
  * token Bearer; conversation_id agrupa una conversación (NULL = invitado
- * sin id). No bloqueante: cualquier error se ignora para no romper el chat.
+ * sin id). topic/suggestion_key alimentan el reporte mensual y /profile.
+ * No bloqueante: cualquier error se ignora para no romper el chat.
  */
 async function logChatQuestion({
   question,
@@ -455,6 +548,8 @@ async function logChatQuestion({
   filtered,
   userId,
   conversationId,
+  topic,
+  suggestionKey,
 }) {
   try {
     if (!question || !process.env.TURSO_URL) return
@@ -471,10 +566,12 @@ async function logChatQuestion({
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`,
     })
-    // Migración best-effort para BDs creadas antes de user_id/conversation_id.
+    // Migración best-effort para BDs creadas antes de user_id/conversation_id/topic.
     for (const sql of [
       `ALTER TABLE chat_questions ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE SET NULL`,
       `ALTER TABLE chat_questions ADD COLUMN conversation_id TEXT`,
+      `ALTER TABLE chat_questions ADD COLUMN topic TEXT`,
+      `ALTER TABLE chat_questions ADD COLUMN suggestion_key TEXT`,
     ]) {
       try {
         await turso.execute({ sql })
@@ -491,10 +588,19 @@ async function logChatQuestion({
     await turso.execute({
       sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_conv ON chat_questions(conversation_id, created_at)`,
     })
-    const cleanConv = typeof conversationId === 'string' ? conversationId.slice(0, 80) : null
     await turso.execute({
-      sql: `INSERT INTO chat_questions (user_id, conversation_id, question, answer, locale, path, filtered)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_topic_created ON chat_questions(topic, created_at DESC)`,
+    })
+    const cleanConv = typeof conversationId === 'string' ? conversationId.slice(0, 80) : null
+    // Si el handler ya clasificó en "general" pero el filtro (custom/fast)
+    // da más señal, se re-clasifica con filtered para el reporte.
+    const finalTopic =
+      topic && topic !== 'general'
+        ? topic
+        : classifyChatTopic(question, path, suggestionKey, filtered) || topic
+    await turso.execute({
+      sql: `INSERT INTO chat_questions (user_id, conversation_id, question, answer, locale, path, filtered, topic, suggestion_key)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         userId || null,
         cleanConv || null,
@@ -503,6 +609,8 @@ async function logChatQuestion({
         locale === 'en' ? 'en' : 'es',
         cleanPath(path),
         filtered ? String(filtered).slice(0, 50) : null,
+        finalTopic || null,
+        suggestionKey ? String(suggestionKey).slice(0, 50) : null,
       ],
     })
   } catch (err) {
@@ -599,11 +707,16 @@ export default async function handler(req, res) {
   const conversationId = cleanConversationId(body.conversationId)
 
   // ── Filtros previos: no gastan tokens ──────────────────────────────
+  const suggestionKey =
+    typeof body.suggestionKey === 'string' ? body.suggestionKey.slice(0, 50) : null
+  const topic = classifyChatTopic(message, body.path || '/', suggestionKey, null)
   const logCtx = {
     locale: isEs ? 'es' : 'en',
     path: body.path || '/',
     userId: actorUserId,
     conversationId,
+    topic,
+    suggestionKey,
   }
   const filteredReply = async (reply, filtered) => {
     await logChatQuestion({ question: message, answer: reply, ...logCtx, filtered })
