@@ -58,7 +58,7 @@ export function JourneyDateTimePicker({
   const minDate = new Date(today)
   minDate.setDate(today.getDate() + 3)
   const maxDate = dateTimeMap
-    ? new Date(today.getTime() + 60 * 24 * 60 * 60 * 1000)
+    ? new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
     : new Date(today.setMonth(today.getMonth() + 2))
 
   const allowedDatesSet = useMemo(() => {

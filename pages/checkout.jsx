@@ -326,9 +326,8 @@ export default function CheckoutPage() {
     const fetchLuchaEvents = async () => {
       try {
         const from = new Date().toISOString().slice(0, 10)
-        // Límite de checkout: 60 días (antes 7, que dejaba fuera funciones
-        // reales a 8-60 días y bloqueaba el cobro).
-        const to = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+        // Calendario de Luchas: máximo 1 semana (igual que el picker).
+        const to = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
         const res = await fetch(`/api/lucha/events?from=${from}&to=${to}`)
         if (!res.ok) return
         const data = await res.json()

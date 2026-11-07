@@ -372,13 +372,28 @@ export async function deleteOldLuchaEvents(beforeDate: string) {
 }
 
 /**
- * Límite server-side de checkout para Luchas: si la tabla tiene funciones,
- * la fecha debe ser una de ellas. Si está vacía (sin semilla), se permite
- * (para no bloquear el checkout en entornos sin cron).
+ * Límite server-side de checkout para Luchas: máximo 1 semana (igual que el
+ * calendario del picker). Si la tabla tiene funciones, la fecha debe ser
+ * una de ellas dentro de la ventana de 7 días. Si está vacía (sin semilla),
+ * la ventana igual se aplica y si Turso cae, no se bloquea el cobro.
  */
 export async function isLuchaDateValid(date: string): Promise<boolean> {
   const normalized = String(date || '').slice(0, 10)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return false
+  // Ventana máxima de 1 semana desde hoy (UTC, igual que el fetch del checkout).
+  const today = new Date()
+  const minDate = new Date(
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
+  )
+  const maxDate = new Date(minDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+  const eventDate = new Date(`${normalized}T00:00:00.000Z`)
+  if (
+    Number.isNaN(eventDate.getTime()) ||
+    eventDate.getTime() < minDate.getTime() ||
+    eventDate.getTime() > maxDate.getTime()
+  ) {
+    return false
+  }
   try {
     await initLuchaEventsTable()
     const { rows } = await turso.execute({
