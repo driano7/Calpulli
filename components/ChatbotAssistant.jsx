@@ -382,14 +382,60 @@ function BlinkingCursor() {
   )
 }
 
+function moneyFmt(n) {
+  return `$${Number(n || 0).toLocaleString('en-US')} MXN`
+}
+
+/**
+ * Tarjeta de cotización (flujo de ventas del chat). Los datos llegan del
+ * servidor (lib/chatbot/sales): precios reales del registro de journeys,
+ * nunca calculados por el modelo. La reserva se confirma contra
+ * /api/bookings/cash (efectivo) — sin Stripe en este flujo.
+ */
+function QuoteCard({ action, isEs }) {
+  if (!action || action.type !== 'quote') return null
+  return (
+    <div className="w-full max-w-[86%] rounded-2xl border border-orange-200 bg-orange-50/70 px-4 py-3 text-sm text-zinc-900 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-zinc-100">
+      <p className="font-bold">{action.title}</p>
+      <dl className="mt-1.5 space-y-0.5 text-[13px] leading-snug">
+        {action.dateLabel && (
+          <div className="flex justify-between gap-3">
+            <dt className="text-zinc-500 dark:text-zinc-400">{isEs ? 'Fecha' : 'Date'}</dt>
+            <dd className="text-right font-medium capitalize">{action.dateLabel}</dd>
+          </div>
+        )}
+        <div className="flex justify-between gap-3">
+          <dt className="text-zinc-500 dark:text-zinc-400">{isEs ? 'Personas' : 'People'}</dt>
+          <dd className="font-medium">{action.guests}</dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="text-zinc-500 dark:text-zinc-400">
+            {isEs ? 'Precio por persona' : 'Per person'}
+          </dt>
+          <dd className="font-medium">{moneyFmt(action.unitPrice)}</dd>
+        </div>
+        <div className="flex justify-between gap-3 border-t border-orange-200/70 pt-1 dark:border-orange-500/20">
+          <dt className="font-semibold">{isEs ? 'Total' : 'Total'}</dt>
+          <dd className="font-bold">{moneyFmt(action.total)}</dd>
+        </div>
+      </dl>
+      <p className="mt-1.5 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+        {isEs
+          ? 'Precio real del sitio. Pagas en efectivo en el punto de encuentro.'
+          : 'Real site price. You pay in cash at the meeting point.'}
+      </p>
+    </div>
+  )
+}
+
 /**
  * Burbuja del asistente con animación typewriter.
  * Mientras `isStreaming` es true, el texto se muestra con un cursor parpadeante.
  * Al terminar, se renderiza como RichText completo.
  */
-function AssistantBubble({ content, isStreaming }) {
+function AssistantBubble({ content, isStreaming, action, isEs }) {
   return (
-    <div className="flex justify-start">
+    <div className="flex flex-col items-start gap-2">
       <motion.div
         initial={{ opacity: 0, y: 6, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -405,6 +451,7 @@ function AssistantBubble({ content, isStreaming }) {
           <RichText text={content} />
         )}
       </motion.div>
+      {!isStreaming && action ? <QuoteCard action={action} isEs={isEs} /> : null}
     </div>
   )
 }
@@ -596,6 +643,7 @@ export default function ChatbotAssistant() {
           const decoder = new TextDecoder()
           let buffer = ''
           let fullText = ''
+          let pendingAction = null
 
           // eslint-disable-next-line no-constant-condition
           // eslint-disable-next-line no-constant-condition
@@ -614,6 +662,9 @@ export default function ChatbotAssistant() {
 
                 try {
                   const parsed = JSON.parse(jsonStr)
+                  // Evento de acción (cotización de ventas): se adjunta a
+                  // la burbuja al cerrar el stream para pintar la tarjeta.
+                  if (parsed.action) pendingAction = parsed.action
                   const chunk = parsed.text || ''
                   if (chunk) {
                     fullText += chunk
@@ -641,6 +692,13 @@ export default function ChatbotAssistant() {
               prev.map((m) => (m.id === assistantMsgId ? { ...m, content: fallback } : m))
             )
           }
+
+          if (pendingAction) {
+            const capturedAction = pendingAction
+            setMessages((prev) =>
+              prev.map((m) => (m.id === assistantMsgId ? { ...m, action: capturedAction } : m))
+            )
+          }
           return
         }
 
@@ -660,6 +718,13 @@ export default function ChatbotAssistant() {
         setMessages((prev) => [...prev, { id: assistantMsgId, role: 'assistant', content: '' }])
 
         await typewriterAnimate(assistantMsgId, reply)
+
+        if (data.action) {
+          const capturedAction = data.action
+          setMessages((prev) =>
+            prev.map((m) => (m.id === assistantMsgId ? { ...m, action: capturedAction } : m))
+          )
+        }
 
         setStreaming(false)
         setStreamingMsgId(null)
@@ -858,6 +923,8 @@ export default function ChatbotAssistant() {
                     key={msg.id}
                     content={msg.content}
                     isStreaming={streaming && msg.id === streamingMsgId}
+                    action={msg.action || null}
+                    isEs={isEs}
                   />
                 ) : (
                   <div key={msg.id} className="flex justify-end">

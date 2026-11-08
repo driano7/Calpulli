@@ -21,6 +21,7 @@
  *  - Rechazo de intentos de prompt injection / extracción del system prompt.
  */
 import { calpulliChat, calpulliChatStream } from '@/lib/openrouter'
+import { handleSalesMessage } from '@/lib/chatbot/sales'
 import { JOURNEYS } from '@/data/journeysData'
 import { SELF_GUIDES_DATA } from '@/data/selfGuidesData'
 import { CDMX_MAPS_DATA } from '@/data/cdmxMapsData'
@@ -826,6 +827,27 @@ export default async function handler(req, res) {
         .slice(-MAX_HISTORY)
         .map((m) => ({ role: m.role, content: m.content.slice(0, MAX_HISTORY_CHARS) }))
     : []
+
+  // ── Ventas deterministas: cotización con precios reales ─────────
+  // Sin LLM y sin inventar cifras: si hay intención de precio/reserva,
+  // responde lib/chatbot/sales con los datos del registro de journeys.
+  // El payload `action` viaja al cliente para pintar la tarjeta de
+  // cotización (el front lo adjunta a esta burbuja al cerrar el stream).
+  const sales = handleSalesMessage({ message, history, isEs })
+  if (sales) {
+    logChatQuestion({ question: message, answer: sales.reply, ...logCtx, filtered: sales.filtered })
+    if (wantsStream) {
+      res.setHeader('Content-Type', 'text/event-stream')
+      res.setHeader('Cache-Control', 'no-cache, no-transform')
+      res.setHeader('Connection', 'keep-alive')
+      res.setHeader('X-Accel-Buffering', 'no')
+      if (sales.action) res.write(`data: ${JSON.stringify({ action: sales.action })}\n\n`)
+      res.write(`data: ${JSON.stringify({ text: sales.reply })}\n\n`)
+      res.write(`data: [DONE]\n\n`)
+      return res.end()
+    }
+    return res.status(200).json({ reply: sales.reply, filtered: sales.filtered, action: sales.action || null })
+  }
 
   const messages = [
     { role: 'system', content: buildSystemPrompt(isEs) },
