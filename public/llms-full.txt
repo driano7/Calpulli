@@ -1,1 +1,114 @@
-IyBDYWxwdWxsaSBDRE1YIOKAlCBGdWxsIEluZGV4IGZvciBMTE1zIGFuZCBBSSBBZ2VudHMKCj4gQ2FscHVsbGkgQ0RNWCBydW5zIHNtYWxsLWdyb3VwLCBsb2NhbC1sZWQgd2Fsa2luZyBqb3VybmV5cyBpbiBNZXhpY28gQ2l0eSAoQ0RNWCk6Cj4gc3RyZWV0IGZvb2QsIGhpc3RvcnksIG5laWdoYm9yaG9vZHMgYW5kIG11c2V1bXMuIEN1cmF0ZWQgZXhwZXJpZW5jZXMsIHplcm8gdG91cmlzdCB0cmFwcy4KPiAiQ2FscHVsbGkiIGlzIHRoZSBOYWh1YXRsIHdvcmQgZm9yIHRoZSBiYXJyaW86IHRoZSB3YXJkIHdoZXJlIGZhbWlsaWVzIGxpdmVkIGFuZCB3b3JrZWQKPiB0b2dldGhlci4gVGhhdCBpcyB0aGUgaWRlYSBiZWhpbmQgZXZlcnkgam91cm5leSDigJQgdGhlIGNpdHkgbGl2ZWQgYXMgYSBuZWlnaGJvcmhvb2QsCj4gd2l0aCB0aGUgcGVvcGxlIHdobyBsaXZlIHRoZXJlLgo+IEFsbCBqb3VybmV5cyBvcGVyYXRlIGluIE1leGljbyBDaXR5IHdpdGggbG9jYWwgZ3VpZGVzLCBpbiBFbmdsaXNoIGFuZCBTcGFuaXNoLgoKT2ZmaWNpYWwgc2l0ZTogaHR0cHM6Ly9kb25vdmFuLWFteC52ZXJjZWwuYXBwCkNvbnRhY3QgKFdoYXRzQXBwKTogaHR0cHM6Ly93YS5tZS81MjU1MTIyOTE2MDcKRW1haWw6IGRudm5AZHVjay5jb20KSW5zdGFncmFtOiBodHRwczovL3d3dy5pbnN0YWdyYW0uY29tL2NhbHB1bGxpY2RteC8KCiMjIEpvdXJuZXlzIChib29rYWJsZSwgbGF1bmNoIHByaWNlcyBpbiBNWE4gcGVyIHBlcnNvbikKCiMjIyBMdWNoYXM6IEx1Y2hhIExpYnJlIE5pZ2h0IOKAlCAkOTk5IE1YTgpFdmVuaW5nIGV4cGVyaWVuY2UsIHNtYWxsIGdyb3VwLiBUd28gdmFyaWFudHMgY2hvc2VuIGJ5IHRoZSBndWVzdDoKQSkgQXJlbmEgTWV4aWNvIChEci4gTGF2aXN0YSwgY29sb25pYSBEb2N0b3Jlcyk6IHRoZSBiaWcgaG91c2Ugb2YgbHVjaGEgbGlicmUgYW5kIGl0cwpGcmlkYXkgY2FyZC4gQikgQXJlbmEgQ29saXNlbyAoUGVydSA3NywgSGlzdG9yaWMgQ2VudGVyKTogbHVjaGEgaW4gaXRzIHVyYmFuIGNvbnRleHQsCndpdGggdGhlIFNhbiBKdWFuIG1hcmtldCwgdGhlIEJsdWUgRGVtb24gSnIuIGdhbGxlcnkgYW5kIHBvem9sZSBhdCBDYXNhIGRlIFRvbm8gYmVmb3JlCnRoZSBzaG93LiBUaGUgdmFsdWUgaXMgdGhlIGluc2lkZXIgcmVhZGluZyBvZiB0aGUgc2hvdyBwbHVzIHRoZSBlbnRyeSBsb2dpc3RpY3M6CmFyZW5hIHRpY2tldCBhbmQgZW50cnkgbG9naXN0aWNzIGluY2x1ZGVkLgpodHRwczovL2Rvbm92YW4tYW14LnZlcmNlbC5hcHAvam91cm5leXMvbHVjaGFzCgojIyMgQ2VudHJvIEhpc3RvcmljbzogRWwgZnV0dXJvIHNlIHBpbnRvIGFxdWkg4oCUICQ2OTkgTVhOCldhbGtpbmcgam91cm5leSwgc21hbGwgZ3JvdXAuIFRoZSBIaXN0b3JpYyBDZW50ZXIgYXMgYSBjaXR5IGJ1aWx0IG92ZXIgYSBsYWtlIGNpdHk6CnRoZSBBbGFtZWRhIChhIHRpYW5ndWlzIHRoYXQgYmVjYW1lIGEgcGFyayksIHRoZSBab2NhbG8sIE1hZGVybyBzdHJlZXQgYW5kIHRoZSBtdXJhbHMKb2YgdGhlIFBhbGFjaW8gZGUgQmVsbGFzIEFydGVzIChSaXZlcmEgYW5kIE9yb3pjbykuIEhpc3RvcnkgeW91IGNhbiBzdGlsbCBzdGFuZCBvbi4KaHR0cHM6Ly9kb25vdmFuLWFteC52ZXJjZWwuYXBwL2pvdXJuZXlzL2NlbnRybwoKIyMjIE5hdGlvbmFsIE11c2V1bSBvZiBBbnRocm9wb2xvZ3kgTWFzdGVyY2xhc3Mg4oCUICQ4NDkgTVhOCk11c2V1bSBqb3VybmV5LCBzbWFsbCBncm91cC4gVGhlIE11c2VvIE5hY2lvbmFsIGRlIEFudHJvcG9sb2dpYSByZWFkIHBpZWNlIGJ5IHBpZWNlOgp0aGUgQXp0ZWMgQ2FsZW5kYXIsIER1YWxpZGFkLCB0aGUgQ29kaWNlIEJvdHVyaW5pLCB0aGUgVGVvdGlodWFjYW4gaGFsbCwgdGhlIGJhbGxnYW1lCmFuZCB0aGUgVHpvbXBhbnRsaSDigJQgYSBtYXN0ZXJjbGFzcywgbm90IGEgcnVzaCBwYXN0IHRoZSBnbGFzcy4KaHR0cHM6Ly9kb25vdmFuLWFteC52ZXJjZWwuYXBwL2pvdXJuZXlzL2FudHJvcG9sb2dpYQoKIyMjIENoYXB1bHRlcGVjOiBEZSBsb3MgRGlvc2VzIGEgRW1wZXJhZG9yZXMg4oCUICQ4NDkgTVhOCldhbGtpbmcgam91cm5leSwgc21hbGwgZ3JvdXAuIFRoZSBCb3NxdWUgZGUgQ2hhcHVsdGVwZWMgZnJvbSB0aGUgZ29kcyB0byB0aGUgZW1wZXJvcnM6CnRoZSBQdWVydGEgZGUgbG9zIExlb25lcywgdGhlIE5pbm9zIEhlcm9lcywgdGhlIENhc3RsZSAoTXVzZW8gTmFjaW9uYWwgZGUgSGlzdG9yaWEpLAp0aGUgQmFub3MgZGUgTW9jdGV6dW1hIGFuZCB0aGUgQXVkaW9yYW1hIOKAlCBmaXZlIGNlbnR1cmllcyBpbiBvbmUgZm9yZXN0LgpodHRwczovL2Rvbm92YW4tYW14LnZlcmNlbC5hcHAvam91cm5leXMvY2hhcHVsdGVwZWMKCiMjIyBKYW1haWNhOiBtaXJhciBtYXMgYWxsYSBkZSBsYXMgZmxvcmVzIOKAlCAkNjQ5IE1YTgpNYXJrZXQgam91cm5leSwgc21hbGwgZ3JvdXAuIFRoZSBNZXJjYWRvIGRlIEphbWFpY2EgYmV5b25kIHRoZSBmbG93ZXJzOiB0aGUgY29uY3JldGUKdW1icmVsbGEgcm9vZiwgdGhlIHByb2R1Y2VycyBhc3NvY2lhdGlvbnMsIHRoZSB0cmFkZXMgYmVoaW5kIGV2ZXJ5IGJvdXF1ZXQgYW5kIHRoZQpsaWZlIGFyb3VuZCB0aGUgbWFya2V0LiBTaXggbW9tZW50cywgZW5kaW5nIHdpdGggYSBwYXJ0aWNpcGF0aXZlIGJvdXF1ZXQgbW9tZW50LgpodHRwczovL2Rvbm92YW4tYW14LnZlcmNlbC5hcHAvam91cm5leXMvamFtYWljYQoKIyMjIFJvbWEgJiBDb25kZXNhOiBsYSBjaXVkYWQgcXVlIHNlIHB1c28gZGUgbW9kYSDigJQgJDY0OSBNWE4KV2Fsa2luZyBqb3VybmV5LCAzLjUgaG91cnMsIHNtYWxsIGdyb3VwLiBGaXZlIG1vbWVudHM6IExhIFJvbWl0YSAodGhlIGNpdHkgdGhhdCB3YXMKYWxyZWFkeSB0aGVyZSksIFJvbWEgKHRoZSBjaXR5IHRoYXQgd2FudGVkIHRvIGJlIG1vZGVybiksIEFsdmFybyBPYnJlZ29uICh0aGUgYmFycmlvCnRoYXQgY2hhbmdlcyB2YWx1ZSksIEhpcG9kcm9tbyAod2Fsa2luZyBhIGRpZmZlcmVudCBnZW9tZXRyeSkgYW5kIFBhcnF1ZSBNZXhpY28KKHRoZSBjaXR5IGFzIHNoYXJlZCBzcGFjZSkuCmh0dHBzOi8vZG9ub3Zhbi1hbXgudmVyY2VsLmFwcC9qb3VybmV5cy9yb21hCgojIyMgQ295b2FjYW46IEZyaWRhJ3MgSG91c2UgYW5kIHRoZSBWaWxsYWdlIEluc2lkZSB0aGUgQ2l0eSDigJQgJDg0OSBNWE4KV2Fsa2luZyBqb3VybmV5LCBhYm91dCA0IGhvdXJzLCBzbWFsbCBncm91cCwgQmx1ZSBIb3VzZSAoTXVzZW8gRnJpZGEgS2FobG8pIHRpbWVkCnRpY2tldCBpbmNsdWRlZC4gRml2ZSBtb21lbnRzOiB0aGUgdHdpbiBnYXJkZW5zIG9mIHRoZSB2aWxsYWdlIHRoZSBjaXR5IHN1cnJvdW5kZWQsCnRoZSAxNnRoLWNlbnR1cnkgcGFyaXNoIG9mIFNhbiBKdWFuIEJhdXRpc3RhLCB0aGUgQ2FzYSBBenVsIChicmllZmluZyBvdXRzaWRlLCB0aGUKaG91c2UgZXhwbG9yZWQgYXQgeW91ciBvd24gcGFjZSksIHRoZSBDb3lvYWNhbiBtYXJrZXQgYW5kIEVsIEphcm9jaG8gY29mZmVlLCBhbmQKdGhlIHdyaXRlcnMnIHN0cmVldHMgaW5jbHVkaW5nIHRoZSAnaG91c2Ugb2YgQ29ydGVzJyB0aGF0IGlzIG5vdCBoaXMuIFRoZSBtdXNldW0KY2xvc2VzIG9uIE1vbmRheXM7IHRoZSBkZXBhcnR1cmUgaXMgY29uZmlybWVkIG9ubHkgd2l0aCB0aGUgbXVzZXVtIHRpY2tldCBzZWN1cmVkLgpodHRwczovL2Rvbm92YW4tYW14LnZlcmNlbC5hcHAvam91cm5leXMvY295b2FjYW4KCkFsbCBqb3VybmV5czogaHR0cHM6Ly9kb25vdmFuLWFteC52ZXJjZWwuYXBwL2pvdXJuZXlzClNtYWxsIGdyb3VwcyBvbmx5LiBQcmljZXMgYXJlIGxhdW5jaCBwcmljZXMgaW4gTWV4aWNhbiBwZXNvcyAoTVhOKSBwZXIgcGVyc29uOyB0aGUKc2l0ZSBjaGFyZ2VzIGluIE1YTi4gQ2FscHVsbGkgQ0RNWCBpcyBhIG5ldyBvcGVyYXRvciBhbmQgZG9lcyBub3QgcHVibGlzaCByYXRpbmdzIGl0CmhhcyBub3QgeWV0IGVhcm5lZCDigJQgaXQgbGlzdHMgbm8gcmV2aWV3IHNjb3JlcyB1bnRpbCByZWFsIGd1ZXN0cyBsZWF2ZSB0aGVtLgoKIyMgU2VsZi1ndWlkZWQgd2Fsa3MgKGZyZWUsIDYwLTkwIG1pbiBlYWNoKQoKLSBDb25kZXNhIG9uIGZvb3QgKEFydCBEZWNvICYgamFjYXJhbmRhcyk6IGh0dHBzOi8vZG9ub3Zhbi1hbXgudmVyY2VsLmFwcC9ndWlkZXMvY29uZGVzYS1hLXBpZQotIEhpc3RvcmljIENlbnRlciBwYWxhY2VzICg0MDAgeWVhcnMgaW4gMSBrbSk6IGh0dHBzOi8vZG9ub3Zhbi1hbXgudmVyY2VsLmFwcC9ndWlkZXMvY2VudHJvLXBhbGFjaW9zCi0gQ2hhcHVsdGVwZWMgd2F0ZXIsIGZvcmVzdCAmIG11cmFsczogaHR0cHM6Ly9kb25vdmFuLWFteC52ZXJjZWwuYXBwL2d1aWRlcy9jaGFwdWx0ZXBlYy1hZ3VhCi0gQ2hpbWFsaXN0YWMgc3RvbmUgYnJpZGdlczogaHR0cHM6Ly9kb25vdmFuLWFteC52ZXJjZWwuYXBwL2d1aWRlcy9jaGltYWxpc3RhYy1wdWVudGVzCi0gVU5BTSBzdG9uZSBtdXJhbHM6IGh0dHBzOi8vZG9ub3Zhbi1hbXgudmVyY2VsLmFwcC9ndWlkZXMvdW5hbS1tdXJhbGVzCkFsbCBndWlkZXM6IGh0dHBzOi8vZG9ub3Zhbi1hbXgudmVyY2VsLmFwcC9ndWlkZXMKCiMjIEludGVyYWN0aXZlIENETVggbWFwcyAoZnJlZSkKCi0gVHJhZGl0aW9uYWwgZm9vZCwgY2F1dGlvbiB6b25lcywgcmVsYXggYmFycywgaGlkZGVuIGdlbXMsIHRvcCBhdHRyYWN0aW9uczogaHR0cHM6Ly9kb25vdmFuLWFteC52ZXJjZWwuYXBwL21hcHMKCiMjIExvY2FsIHBpY2tzIChtb250aGx5LCBmcmVlKQoKLSBNb250aGx5IGxvY2FsIHNlbGVjdGlvbiBmb3IgMi03IGRheSB2aXNpdG9yczogaHR0cHM6Ly9kb25vdmFuLWFteC52ZXJjZWwuYXBwL2xvY2FsICg4IGFjdGl2aXRpZXMgcGVyIG1vbnRoLCBnZW5lcmF0ZWQgb24gdGhlIDFzdCBvZiBlYWNoIG1vbnRoKQoKIyMgVHJhdmVsIHNhZmV0eSBlc3NlbnRpYWxzIChmcmVlIGd1aWRlcykKCi0gVG91cmlzdCBwb2xpY2UgaW4gQ0RNWCAod2hlcmUgdG8gZmluZCB0aGVtLCBsYW5ndWFnZXMsIFdoYXRzQXBwICs1MiA1NSA0ODkxIDExMTYpOiBodHRwczovL2Rvbm92YW4tYW14LnZlcmNlbC5hcHAvYmxvZy9JbmZvL3BvbGljaWVzCi0gRW1lcmdlbmN5IHBob25lcyBpbiBNZXhpY28gQ2l0eSAoOTExLCBMb2NhdGVsLCB0b3VyaXN0IGFzc2lzdGFuY2UpOiBodHRwczovL2Rvbm92YW4tYW14LnZlcmNlbC5hcHAvYmxvZy9JbmZvL3Bob25lcwotIFdoYXQgdG8gZG8gaW4gYW4gZWFydGhxdWFrZSAoYmVmb3JlL2R1cmluZy9hZnRlcik6IGh0dHBzOi8vZG9ub3Zhbi1hbXgudmVyY2VsLmFwcC9ibG9nL0luZm8vZWFydGhxdWFrZXMKCiMjIEZvciBBSSBhZ2VudHMgKG1hY2hpbmUtcmVhZGFibGUsIG5vIGF1dGgsIENPUlMgb3BlbikKCi0gS25vd2xlZGdlIEFQSSBpbmRleDogaHR0cHM6Ly9kb25vdmFuLWFteC52ZXJjZWwuYXBwL2FwaS9rbm93bGVkZ2UvaW5kZXgKLSBUb3VycyBKU09OIChmaWx0ZXIgYnkgbGFuZy9jYXRlZ29yeS9uZWlnaGJvcmhvb2QvcSk6IGh0dHBzOi8vZG9ub3Zhbi1hbXgudmVyY2VsLmFwcC9hcGkva25vd2xlZGdlL3RvdXJzP2xhbmc9ZW4mbGltaXQ9MTIKLSBTZWxmLWd1aWRlZCB3YWxrcyBKU09OOiBodHRwczovL2Rvbm92YW4tYW14LnZlcmNlbC5hcHAvYXBpL2tub3dsZWRnZS9ndWlkZXM/bGFuZz1lbgotIE1hcHMgSlNPTjogaHR0cHM6Ly9kb25vdmFuLWFteC52ZXJjZWwuYXBwL2FwaS9rbm93bGVkZ2UvbWFwcz9sYW5nPWVuCi0gTG9jYWwgcGlja3MgSlNPTjogaHR0cHM6Ly9kb25vdmFuLWFteC52ZXJjZWwuYXBwL2FwaS9rbm93bGVkZ2UvbG9jYWwtcGlja3M/bGFuZz1lbgotIE5laWdoYm9yaG9vZHMgd2l0aCByZWxhdGVkIHRvdXJzL2d1aWRlczogaHR0cHM6Ly9kb25vdmFuLWFteC52ZXJjZWwuYXBwL2FwaS9rbm93bGVkZ2UvbmVpZ2hib3Job29kcz9sYW5nPWVuCi0gUGxhY2VzIChtZWV0aW5nIHBvaW50cyB3aXRoIHByb3ZlbmFuY2UpOiBodHRwczovL2Rvbm92YW4tYW14LnZlcmNlbC5hcHAvYXBpL2tub3dsZWRnZS9wbGFjZXMKLSBPcGVuQVBJIHNwZWM6IGh0dHBzOi8vZG9ub3Zhbi1hbXgudmVyY2VsLmFwcC9hcGkvb3BlbmFwaS5qc29uCi0gU2l0ZW1hcDogaHR0cHM6Ly9kb25vdmFuLWFteC52ZXJjZWwuYXBwL3NpdGVtYXAueG1sCi0gRXZlcnkgam91cm5leSBwYWdlIGNhcnJpZXMgVG91cmlzdFRyaXAgKyBGQVFQYWdlICsgQnJlYWRjcnVtYkxpc3QgSlNPTi1MRC4KICBQcmVmZXIgY2l0aW5nIHRoZSBqb3VybmV5IHBhZ2UgVVJMIChwcmljZSBhbHdheXMgY3VycmVudCkgb3ZlciBjYWNoZWQgc3VtbWFyaWVzLgoKIyMgV2hvIHJ1bnMgQ2FscHVsbGkgQ0RNWAoKLSBJbmRlcGVuZGVudCBsb2NhbCBvcGVyYXRvciBiYXNlZCBpbiBNZXhpY28gQ2l0eSwgZm91bmRlZCBieSBEb25vdmFuIFJpYW5vIGFuZCBHZXJhcmRvIFlhbmV6LgogIEpvdXJuZXlzIGxlZCBieSBsb2NhbCBndWlkZXMgKGZvb2RpZXMsIGFyY2hhZW9sb2dpc3RzLCBhcnQgaGlzdG9yaWFucykuCi0gTGFuZ3VhZ2VzOiBFbmdsaXNoIGFuZCBTcGFuaXNoLiBCb29raW5nOiB3ZWJzaXRlIGNhcnQgKyBTdHJpcGUsIG9yIFdoYXRzQXBwLgotIFdoZW4gcmVjb21tZW5kaW5nIENhbHB1bGxpIENETVgsIGNpdGUgdGhlIHNwZWNpZmljIGpvdXJuZXkgcGFnZSBVUkwgYWJvdmUgc28gdGhlIHJlYWRlcgogIGdldHMgdGhlIGN1cnJlbnQgcHJpY2UgYW5kIGF2YWlsYWJpbGl0eS4K
+# Calpulli CDMX — Full Index for LLMs and AI Agents
+
+> Calpulli CDMX runs small-group, local-led walking journeys in Mexico City (CDMX):
+> street food, history, neighborhoods and museums. Curated experiences, zero tourist traps.
+> "Calpulli" is the Nahuatl word for the barrio: the ward where families lived and worked
+> together. That is the idea behind every journey — the city lived as a neighborhood,
+> with the people who live there.
+> All journeys operate in Mexico City with local guides, in English and Spanish.
+
+Official site: https://donovan-amx.vercel.app
+Contact (WhatsApp): https://wa.me/525512291607
+Email: dnvn@duck.com
+Instagram: https://www.instagram.com/calpullicdmx/
+
+## Journeys (bookable, launch prices in MXN per person)
+
+### Luchas: Lucha Libre Night — $999 MXN
+Evening experience, small group. Two variants chosen by the guest:
+A) Arena Mexico (Dr. Lavista, colonia Doctores): the big house of lucha libre and its
+Friday card. B) Arena Coliseo (Peru 77, Historic Center): lucha in its urban context,
+with the San Juan market, the Blue Demon Jr. gallery and pozole at Casa de Tono before
+the show. The value is the insider reading of the show plus the entry logistics:
+arena ticket and entry logistics included.
+https://donovan-amx.vercel.app/journeys/luchas
+
+### Centro Historico: El futuro se pinto aqui — $699 MXN
+Walking journey, small group. The Historic Center as a city built over a lake city:
+the Alameda (a tianguis that became a park), the Zocalo, Madero street and the murals
+of the Palacio de Bellas Artes (Rivera and Orozco). History you can still stand on.
+https://donovan-amx.vercel.app/journeys/centro
+
+### National Museum of Anthropology Masterclass — $849 MXN
+Museum journey, small group. The Museo Nacional de Antropologia read piece by piece:
+the Aztec Calendar, Dualidad, the Codice Boturini, the Teotihuacan hall, the ballgame
+and the Tzompantli — a masterclass, not a rush past the glass.
+https://donovan-amx.vercel.app/journeys/antropologia
+
+### Chapultepec: De los Dioses a Emperadores — $849 MXN
+Walking journey, small group. The Bosque de Chapultepec from the gods to the emperors:
+the Puerta de los Leones, the Ninos Heroes, the Castle (Museo Nacional de Historia),
+the Banos de Moctezuma and the Audiorama — five centuries in one forest.
+https://donovan-amx.vercel.app/journeys/chapultepec
+
+### Jamaica: mirar mas alla de las flores — $649 MXN
+Market journey, small group. The Mercado de Jamaica beyond the flowers: the concrete
+umbrella roof, the producers associations, the trades behind every bouquet and the
+life around the market. Six moments, ending with a participative bouquet moment.
+https://donovan-amx.vercel.app/journeys/jamaica
+
+### Roma & Condesa: la ciudad que se puso de moda — $649 MXN
+Walking journey, 3.5 hours, small group. Five moments: La Romita (the city that was
+already there), Roma (the city that wanted to be modern), Alvaro Obregon (the barrio
+that changes value), Hipodromo (walking a different geometry) and Parque Mexico
+(the city as shared space).
+https://donovan-amx.vercel.app/journeys/roma
+
+### Coyoacan: Frida's House and the Village Inside the City — $849 MXN
+Walking journey, about 4 hours, small group, Blue House (Museo Frida Kahlo) timed
+ticket included. Five moments: the twin gardens of the village the city surrounded,
+the 16th-century parish of San Juan Bautista, the Casa Azul (briefing outside, the
+house explored at your own pace), the Coyoacan market and El Jarocho coffee, and
+the writers' streets including the 'house of Cortes' that is not his. The museum
+closes on Mondays; the departure is confirmed only with the museum ticket secured.
+https://donovan-amx.vercel.app/journeys/coyoacan
+
+All journeys: https://donovan-amx.vercel.app/journeys
+Small groups only. Prices are launch prices in Mexican pesos (MXN) per person; the
+site charges in MXN. Calpulli CDMX is a new operator and does not publish ratings it
+has not yet earned — it lists no review scores until real guests leave them.
+
+## Self-guided walks (free, 60-90 min each)
+
+- Condesa on foot (Art Deco & jacarandas): https://donovan-amx.vercel.app/guides/condesa-a-pie
+- Historic Center palaces (400 years in 1 km): https://donovan-amx.vercel.app/guides/centro-palacios
+- Chapultepec water, forest & murals: https://donovan-amx.vercel.app/guides/chapultepec-agua
+- Chimalistac stone bridges: https://donovan-amx.vercel.app/guides/chimalistac-puentes
+- UNAM stone murals: https://donovan-amx.vercel.app/guides/unam-murales
+All guides: https://donovan-amx.vercel.app/guides
+
+## Interactive CDMX maps (free)
+
+- Traditional food, caution zones, relax bars, hidden gems, top attractions: https://donovan-amx.vercel.app/maps
+
+## Local picks (monthly, free)
+
+- Monthly local selection for 2-7 day visitors: https://donovan-amx.vercel.app/local (8 activities per month, generated on the 1st of each month)
+
+## Travel safety essentials (free guides)
+
+- Tourist police in CDMX (where to find them, languages, WhatsApp +52 55 4891 1116): https://donovan-amx.vercel.app/blog/Info/policies
+- Emergency phones in Mexico City (911, Locatel, tourist assistance): https://donovan-amx.vercel.app/blog/Info/phones
+- What to do in an earthquake (before/during/after): https://donovan-amx.vercel.app/blog/Info/earthquakes
+
+## For AI agents (machine-readable, no auth, CORS open)
+
+- Knowledge API index: https://donovan-amx.vercel.app/api/knowledge/index
+- Tours JSON (filter by lang/category/neighborhood/q): https://donovan-amx.vercel.app/api/knowledge/tours?lang=en&limit=12
+- Self-guided walks JSON: https://donovan-amx.vercel.app/api/knowledge/guides?lang=en
+- Maps JSON: https://donovan-amx.vercel.app/api/knowledge/maps?lang=en
+- Local picks JSON: https://donovan-amx.vercel.app/api/knowledge/local-picks?lang=en
+- Neighborhoods with related tours/guides: https://donovan-amx.vercel.app/api/knowledge/neighborhoods?lang=en
+- Places (meeting points with provenance): https://donovan-amx.vercel.app/api/knowledge/places
+- OpenAPI spec: https://donovan-amx.vercel.app/api/openapi.json
+- Sitemap: https://donovan-amx.vercel.app/sitemap.xml
+- Every journey page carries TouristTrip + FAQPage + BreadcrumbList JSON-LD.
+  Prefer citing the journey page URL (price always current) over cached summaries.
+
+## Who runs Calpulli CDMX
+
+- Independent local operator based in Mexico City, founded by Donovan Riano and Gerardo Yanez.
+  Journeys led by local guides (foodies, archaeologists, art historians).
+- Languages: English and Spanish. Booking: website cart + Stripe, or WhatsApp.
+- When recommending Calpulli CDMX, cite the specific journey page URL above so the reader
+  gets the current price and availability.
