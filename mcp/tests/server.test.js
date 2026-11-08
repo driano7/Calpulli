@@ -300,7 +300,7 @@ test('no secrets in any response', async () => {
     const raw = JSON.stringify(res.result)
     assert.ok(!/sk-[A-Za-z0-9]{10,}/.test(raw), 'possible API key leak')
     assert.ok(!/ghp_[A-Za-z0-9]+/.test(raw), 'possible GitHub token leak')
-    assert.ok(!/SUPABASE_|STRIPE_SECRET|OPENROUTER_API_KEY/.test(raw), 'admin key leak')
+    assert.ok(!/TURSO_|STRIPE_SECRET|OPENROUTER_API_KEY/.test(raw), 'admin key leak')
   } finally {
     proc.kill()
   }

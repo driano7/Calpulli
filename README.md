@@ -26,7 +26,7 @@ Plataforma de turismo local para descubrir la CDMX como un chilango: tours gastr
 
 ## Para desarrolladores
 
-El sitio usa Next.js 12, React 17, Tailwind CSS y Framer Motion. Los datos de tours y journeys viven en `data/`. Las reservas se guardan en Turso/Supabase. Las noticias y local picks (8 actividades/mes) se generan el día 1 de cada mes con OpenRouter. Los reportes de socios (diarios/semanales/mensuales) se envían mediante cron diario con Brevo y su lista de distribución se gestiona desde `/profile` (solo admin).
+El sitio usa Next.js 12, React 17, Tailwind CSS y Framer Motion. Los datos de tours y journeys viven en `data/`. Las reservas se guardan en Turso. Las noticias y local picks (8 actividades/mes) se generan el día 1 de cada mes con OpenRouter. Los reportes de socios (diarios/semanales/mensuales) se envían mediante cron diario con Brevo y su lista de distribución se gestiona desde `/profile` (solo admin).
 
 ```bash
 npm run dev      # servidor de desarrollo

@@ -5,8 +5,8 @@ import { headers } from "next/headers"
 
 export async function GET() {
   try {
-    // Your Supabase connection logic here
-    // This is a placeholder for the actual API route
+    // Placeholder sin lógica real: la API de experiencias vive en
+    // pages/api/tours (Turso).
     
     return NextResponse.json({
       status: 'success',

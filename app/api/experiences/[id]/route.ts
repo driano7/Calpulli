@@ -7,8 +7,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
   try {
     const { id } = params
     
-    // Your Supabase query logic here
-    // This is a placeholder for the actual API route
+    // Placeholder sin lógica real: la API de experiencias vive en
+    // pages/api/tours (Turso).
     
     return NextResponse.json({
       status: 'success',
