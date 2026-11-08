@@ -534,6 +534,65 @@ const CHAT_TOPIC_LABELS = {
 }
 
 /**
+ * Esquema de chat_questions, asegurado UNA sola vez por proceso.
+ * Antes esto corría en cada mensaje (1 CREATE TABLE + 4 ALTER + 4 CREATE
+ * INDEX = 9 viajes extra a Turso antes del INSERT) y el handler esperaba
+ * toda la cadena antes de responder: era la mayor latencia fija por mensaje,
+ * peor bajo volumen. Ahora solo el primer mensaje del proceso paga el DDL;
+ * el resto va directo al INSERT. Si el DDL falla, se limpia la promesa para
+ * reintentar en el siguiente mensaje.
+ */
+let chatLogSchemaPromise = null
+function ensureChatLogSchema() {
+  if (!chatLogSchemaPromise) {
+    chatLogSchemaPromise = (async () => {
+      await turso.execute({
+        sql: `CREATE TABLE IF NOT EXISTS chat_questions (
+          id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+          user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+          conversation_id TEXT,
+          question TEXT NOT NULL,
+          answer TEXT,
+          locale TEXT NOT NULL DEFAULT 'es',
+          path TEXT,
+          filtered TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )`,
+      })
+      // Migración best-effort para BDs creadas antes de user_id/conversation_id/topic.
+      for (const sql of [
+        `ALTER TABLE chat_questions ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE SET NULL`,
+        `ALTER TABLE chat_questions ADD COLUMN conversation_id TEXT`,
+        `ALTER TABLE chat_questions ADD COLUMN topic TEXT`,
+        `ALTER TABLE chat_questions ADD COLUMN suggestion_key TEXT`,
+      ]) {
+          try {
+            await turso.execute({ sql })
+          } catch {
+            // duplicate column: ya existe
+          }
+      }
+      await turso.execute({
+        sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_created_at ON chat_questions(created_at)`,
+      })
+      await turso.execute({
+        sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_user_created ON chat_questions(user_id, created_at DESC)`,
+      })
+      await turso.execute({
+        sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_conv ON chat_questions(conversation_id, created_at)`,
+      })
+      await turso.execute({
+        sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_topic_created ON chat_questions(topic, created_at DESC)`,
+      })
+    })().catch((err) => {
+      chatLogSchemaPromise = null
+      throw err
+    })
+  }
+  return chatLogSchemaPromise
+}
+
+/**
  * Totem de preguntas del chatbot en Turso para análisis + historial por usuario.
  * Sin IP, user-agent ni cookies. user_id se resuelve server-side desde el
  * token Bearer; conversation_id agrupa una conversación (NULL = invitado
@@ -553,44 +612,7 @@ async function logChatQuestion({
 }) {
   try {
     if (!question || !process.env.TURSO_URL) return
-    await turso.execute({
-      sql: `CREATE TABLE IF NOT EXISTS chat_questions (
-        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-        user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
-        conversation_id TEXT,
-        question TEXT NOT NULL,
-        answer TEXT,
-        locale TEXT NOT NULL DEFAULT 'es',
-        path TEXT,
-        filtered TEXT,
-        created_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )`,
-    })
-    // Migración best-effort para BDs creadas antes de user_id/conversation_id/topic.
-    for (const sql of [
-      `ALTER TABLE chat_questions ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE SET NULL`,
-      `ALTER TABLE chat_questions ADD COLUMN conversation_id TEXT`,
-      `ALTER TABLE chat_questions ADD COLUMN topic TEXT`,
-      `ALTER TABLE chat_questions ADD COLUMN suggestion_key TEXT`,
-    ]) {
-      try {
-        await turso.execute({ sql })
-      } catch {
-        // duplicate column: ya existe
-      }
-    }
-    await turso.execute({
-      sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_created_at ON chat_questions(created_at)`,
-    })
-    await turso.execute({
-      sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_user_created ON chat_questions(user_id, created_at DESC)`,
-    })
-    await turso.execute({
-      sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_conv ON chat_questions(conversation_id, created_at)`,
-    })
-    await turso.execute({
-      sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_topic_created ON chat_questions(topic, created_at DESC)`,
-    })
+    await ensureChatLogSchema()
     const cleanConv = typeof conversationId === 'string' ? conversationId.slice(0, 80) : null
     // Si el handler ya clasificó en "general" pero el filtro (custom/fast)
     // da más señal, se re-clasifica con filtered para el reporte.
