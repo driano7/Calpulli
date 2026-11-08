@@ -741,7 +741,9 @@ export default async function handler(req, res) {
     suggestionKey,
   }
   const filteredReply = async (reply, filtered) => {
-    await logChatQuestion({ question: message, answer: reply, ...logCtx, filtered })
+    // Log best-effort sin bloquear: estas respuestas son instantáneas por
+    // diseño (filtros/fast-paths) y no deben pagar la latencia de Turso.
+    logChatQuestion({ question: message, answer: reply, ...logCtx, filtered })
     if (wantsStream) {
       res.setHeader('Content-Type', 'text/event-stream')
       res.setHeader('Cache-Control', 'no-cache, no-transform')
@@ -840,7 +842,7 @@ export default async function handler(req, res) {
 
       // Si recibimos un string (fallback no-streaming), enviarlo completo
       if (typeof streamResult === 'string') {
-        await logChatQuestion({
+        logChatQuestion({
           question: message,
           answer: streamResult,
           ...logCtx,
@@ -892,12 +894,12 @@ export default async function handler(req, res) {
         }
       }
 
-      await logChatQuestion({ question: message, answer: fullAnswer, ...logCtx, filtered: null })
+      logChatQuestion({ question: message, answer: fullAnswer, ...logCtx, filtered: null })
       res.write(`data: [DONE]\n\n`)
       return res.end()
     } catch (err) {
       console.error('Chatbot stream error:', err)
-      await logChatQuestion({ question: message, answer: t.error, ...logCtx, filtered: 'error' })
+      logChatQuestion({ question: message, answer: t.error, ...logCtx, filtered: 'error' })
       res.write(`data: ${JSON.stringify({ text: t.error, error: true })}\n\n`)
       res.write(`data: [DONE]\n\n`)
       return res.end()
@@ -918,7 +920,7 @@ export default async function handler(req, res) {
         : isEs
         ? 'No alcancé a formular una respuesta. ¿Me lo preguntas de otra forma o te paso con el equipo por WhatsApp?'
         : 'I could not put an answer together. Could you rephrase, or shall I connect you with the team on WhatsApp?'
-    await logChatQuestion({ question: message, answer: finalReply, ...logCtx, filtered: null })
+    logChatQuestion({ question: message, answer: finalReply, ...logCtx, filtered: null })
     return res.status(200).json({
       reply: finalReply,
       timestamp: new Date().toISOString(),
