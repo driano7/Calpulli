@@ -687,28 +687,28 @@ export default function ChatbotAssistant() {
   const typewriterAnimate = useCallback(async (msgId, fullText) => {
     const chars = [...fullText]
     let shown = ''
-    const baseDelay = 12 // ms por carácter
+    const baseDelay = 12 // ms por tick
     const punctuationDelay = 80 // pausa en puntos, comas, etc.
 
-    for (let i = 0; i < chars.length; i++) {
-      shown += chars[i]
+    // Velocidad adaptativa: las respuestas de filtros/fast-paths llegan
+    // completas al instante, pero con 1-2 caracteres por tick una respuesta
+    // de 300 caracteres tardaba ~3 s en terminar de "escribirse". Ahora el
+    // tamaño del bloque crece con la longitud para que la animación total
+    // no pase de ~90 ticks (~1.1 s); las cortas conservan el efecto
+    // carácter por carácter y se hace un solo setState por tick.
+    const chunkSize = Math.max(2, Math.ceil(chars.length / 90))
+
+    for (let i = 0; i < chars.length; i += chunkSize) {
+      shown += chars.slice(i, i + chunkSize).join('')
       const captured = shown
 
       setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, content: captured } : m)))
 
-      // Velocidad variable: pausa más en puntuación
-      const char = chars[i]
-      const isPunctuation = '.!?:;,\n'.includes(char)
-      const delay = isPunctuation ? punctuationDelay : baseDelay
+      // Velocidad variable: pausa más si el bloque cierra en puntuación
+      const lastChar = chars[Math.min(i + chunkSize, chars.length) - 1]
+      const isPunctuation = '.!?:;,\n'.includes(lastChar)
 
-      // Batch de 2-3 caracteres para rendimiento, con variabilidad
-      if (!isPunctuation && i + 1 < chars.length && chars[i + 1] !== ' ') {
-        shown += chars[++i]
-        const captured2 = shown
-        setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, content: captured2 } : m)))
-      }
-
-      await new Promise((r) => setTimeout(r, delay))
+      await new Promise((r) => setTimeout(r, isPunctuation ? punctuationDelay : baseDelay))
     }
   }, [])
 
