@@ -1,1 +1,270 @@
-Ly8gTUlUIExpY2Vuc2UgLSBDb3B5cmlnaHQgKGMpIDIwMjQtMjAyNiBEb25vdmFuIFJpYcOxbyAvIENhbHB1bGxpIENETVggLSBTZWUgTElDRU5TRQovKioKICogSm91cm5leSBlZGl0b3JpYWw6IENveW9hY8OhbiDigJQgTGEgY2FzYSBkZSBGcmlkYSB5IGVsIHB1ZWJsbyBkZW50cm8gZGUgbGEgY2l1ZGFkLgogKgogKiBTw6lwdGltbyBqb3VybmV5IGRlbCBjYXTDoWxvZ28uIEEgZGlmZXJlbmNpYSBkZSBsb3Mgc2VpcyBjYXDDrXR1bG9zIGNvbgogKiBjb21wb25lbnRlIGRlZGljYWRvLCBDb3lvYWPDoW4gc2UgcmVuZGVyaXphIGNvbiBsYSBwcmVzZW50YWNpw7NuIGVkaXRvcmlhbAogKiBnZW7DqXJpY2EgZGUgcGFnZXMvam91cm5leXMvW3NsdWddLmpzLCBhc8OtIHF1ZSBzdXMgTW9tZW50cyB2aXZlbiBlbiBlbAogKiByZWdpc3RybyBkZSBkYXRhL2pvdXJuZXlzRGF0YS5qcyAoY2FtcG8gYG1vbWVudHNgKSBjb24gZWwgZXNxdWVtYQogKiB0aXRsZV9lcy90aXRsZV9lbiwgaW50cm9fZXMvaW50cm9fZW4geSBzdGVwcyBjb24gYm9keV9lcy9ib2R5X2VuLgogKgogKiBGb3RvZ3JhZsOtYXM6IHBlbmRpZW50ZXMgZGUgdmVyaWZpY2FjacOzbiwgYGltYWdlOiBudWxsYCBhIHByb3DDs3NpdG8sCiAqIGlndWFsIHF1ZSBtYXJjYSBsYSBjb252ZW5jacOzbiBkZWwgbcOzZHVsbyBkZSBqb3VybmV5cy4KICoKICogTm90YSBvcGVyYXRpdmE6IGxhIENhc2EgQXp1bCBzZSByZWNvcnJlIHBvciBjdWVudGEgcHJvcGlhOyBlbCByZWxhdG8KICogZGVsIGd1w61hIHZhIGFudGVzIGRlIGVudHJhciAoYnJpZWZpbmcpIHkgYWwgc2FsaXIgKGNpZXJyZSkuIEJvbGV0b3MKICogc29sbyBlbiBsw61uZWEsIGNvbiBmcmFuamEgaG9yYXJpYTsgZWwgbXVzZW8gY2llcnJhIGxvcyBsdW5lcy4KICovCgpjb25zdCBDT1lPQUNBTl9NT01FTlRTID0gWwogIHsKICAgIGlkOiAncHVlYmxvJywKICAgIHRpdGxlX2VzOiAnRWwgcHVlYmxvIHF1ZSBsYSBjaXVkYWQgc2UgdHJhZ8OzJywKICAgIHRpdGxlX2VuOiAnVGhlIHZpbGxhZ2UgdGhlIGNpdHkgc3dhbGxvd2VkJywKICAgIGludHJvX2VzOgogICAgICAnQ295b2Fjw6FuIG5vIGVtcGV6w7MgY29tbyB1bmEgY29sb25pYSBkZSBsYSBDaXVkYWQgZGUgTcOpeGljbzogZW1wZXrDsyBjb21vIHVuIHB1ZWJsbyBjb24gbm9tYnJlIHByb3BpbyDigJQibHVnYXIgZGUgY295b3RlcyIgZW4gbsOhaHVhdGzigJQgcXVlIGxhIGNpdWRhZCB0ZXJtaW7DsyByb2RlYW5kby4gTG9zIGRvcyBqYXJkaW5lcyBnZW1lbG9zLCBDZW50ZW5hcmlvIGUgSGlkYWxnbywgc2lndWVuIGZ1bmNpb25hbmRvIGNvbW8gc3Ugc2FsYSBkZSBlc3Rhci4nLAogICAgaW50cm9fZW46CiAgICAgICdDb3lvYWPDoW4gZGlkIG5vdCBiZWdpbiBhcyBhIE1leGljbyBDaXR5IG5laWdoYm91cmhvb2Q6IGl0IGJlZ2FuIGFzIGEgdG93biB3aXRoIGl0cyBvd24gbmFtZSDigJQicGxhY2Ugb2YgY295b3RlcyIgaW4gTmFodWF0bOKAlCB0aGF0IHRoZSBjaXR5IGV2ZW50dWFsbHkgc3Vycm91bmRlZC4gVGhlIHR3aW4gZ2FyZGVucywgQ2VudGVuYXJpbyBhbmQgSGlkYWxnbywgc3RpbGwgd29yayBhcyBpdHMgbGl2aW5nIHJvb20uJywKICAgIGltYWdlOiBudWxsLAogICAgc3RlcHM6IFsKICAgICAgewogICAgICAgIHRpdGxlX2VzOiAnRG9zIGphcmRpbmVzLCB1biBwdWVibG8nLAogICAgICAgIHRpdGxlX2VuOiAnVHdvIGdhcmRlbnMsIG9uZSB0b3duJywKICAgICAgICBib2R5X2VzOgogICAgICAgICAgJ0VsIEphcmTDrW4gQ2VudGVuYXJpbyB5IGVsIEphcmTDrW4gSGlkYWxnbyBlc3TDoW4gc2VwYXJhZG9zIHBvciB1bmEgY2FsbGUgeSB1bmlkb3MgcG9yIGxhIGNvc3R1bWJyZTogZWwga2lvc2NvLCBsb3MgcG9ydGFsZXMsIGxhcyBuaWV2ZXMsIGxhcyBwYXJlamFzLCBsb3MgdmVuZGVkb3JlcyBkZSBnbG9ib3MuIEFxdcOtIGVsIHJlY29ycmlkbyBiYWphIGVsIHJpdG1vIGEgcHJvcMOzc2l0by4gQW50ZXMgZGUgdmVyIG1vbnVtZW50b3MgY29udmllbmUgdmVyIGVzdG86IHVuIHB1ZWJsbyBxdWUgc2UgbmllZ2EgYSB2b2x2ZXJzZSBjaXVkYWQgYXVucXVlIGxhIGNpdWRhZCBsbyByb2RlYSBwb3IgbG9zIGN1YXRybyBsYWRvcy4nLAogICAgICAgIGJvZHlfZW46CiAgICAgICAgICAnSmFyZMOtbiBDZW50ZW5hcmlvIGFuZCBKYXJkw61uIEhpZGFsZ28gYXJlIHNlcGFyYXRlZCBieSBvbmUgc3RyZWV0IGFuZCBqb2luZWQgYnkgaGFiaXQ6IHRoZSBiYW5kc3RhbmQsIHRoZSBhcmNhZGVzLCB0aGUgaWNlLWNyZWFtIGNhcnRzLCB0aGUgY291cGxlcywgdGhlIGJhbGxvb24gc2VsbGVycy4gSGVyZSB0aGUgd2FsayBkZWxpYmVyYXRlbHkgc2xvd3MgZG93bi4gQmVmb3JlIGFueSBtb251bWVudCwgbm90aWNlIHRoaXM6IGEgdG93biB0aGF0IHJlZnVzZXMgdG8gYmVjb21lIGNpdHkgZXZlbiB0aG91Z2ggdGhlIGNpdHkgc3Vycm91bmRzIGl0IG9uIGFsbCBmb3VyIHNpZGVzLicsCiAgICAgICAgb2JzZXJ2ZV9lczogWwogICAgICAgICAgJ0xhIGZ1ZW50ZSBkZSBsb3MgY295b3RlcywgZWwgc8OtbWJvbG8gZGVsIGJhcnJpbycsCiAgICAgICAgICAnTG9zIHBvcnRhbGVzIHkgc3VzIGNhZsOpcywgb2N1cGFkb3MgYSBjdWFscXVpZXIgaG9yYScsCiAgICAgICAgICAnRWwga2lvc2NvIGNvbW8gY2VudHJvIHNvY2lhbCwgbm8gY29tbyBkZWNvcmFjacOzbicsCiAgICAgICAgXSwKICAgICAgICBvYnNlcnZlX2VuOiBbCiAgICAgICAgICAnVGhlIGNveW90ZSBmb3VudGFpbiwgdGhlIGVtYmxlbSBvZiB0aGUgbmVpZ2hib3VyaG9vZCcsCiAgICAgICAgICAnVGhlIGFyY2FkZXMgYW5kIHRoZWlyIGNhZsOpcywgYnVzeSBhdCBhbnkgaG91cicsCiAgICAgICAgICAnVGhlIGJhbmRzdGFuZCBhcyBhIHNvY2lhbCBjZW50cmUsIG5vdCBkZWNvcmF0aW9uJywKICAgICAgICBdLAogICAgICAgIGltYWdlOiBudWxsLAogICAgICB9LAogICAgICB7CiAgICAgICAgdGl0bGVfZXM6ICdMYSBzZWRlIGRlIENvcnTDqXMnLAogICAgICAgIHRpdGxlX2VuOiAiQ29ydMOpcydzIGhlYWRxdWFydGVycyIsCiAgICAgICAgYm9keV9lczoKICAgICAgICAgICdUcmFzIGxhIGNhw61kYSBkZSBUZW5vY2h0aXRsYW4gZW4gMTUyMSwgSGVybsOhbiBDb3J0w6lzIHNlIGluc3RhbMOzIGVuIENveW9hY8OhbiBtaWVudHJhcyBzZSByZWNvbnN0cnXDrWEgbGEgY2FwaXRhbCBzb2JyZSBsYXMgcnVpbmFzIG1leGljYXMuIEFxdcOtIGZ1bmNpb27DsyBlbCBwcmltZXIgYXl1bnRhbWllbnRvIGRlIGxhIE51ZXZhIEVzcGHDsWEgeSBhcXXDrSBzZSB0b21hcm9uIGRlY2lzaW9uZXMgcXVlIHJlZGlidWphcm9uIHVuIGNvbnRpbmVudGUuIEVsIHB1ZWJsbyAicGVyaWbDqXJpY28iIGZ1ZSwgcG9yIHVub3MgYcOxb3MsIGVsIGNlbnRybyBkZWwgcG9kZXIuJywKICAgICAgICBib2R5X2VuOgogICAgICAgICAgIkFmdGVyIHRoZSBmYWxsIG9mIFRlbm9jaHRpdGxhbiBpbiAxNTIxLCBIZXJuw6FuIENvcnTDqXMgc2V0dGxlZCBpbiBDb3lvYWPDoW4gd2hpbGUgdGhlIGNhcGl0YWwgd2FzIHJlYnVpbHQgb3ZlciB0aGUgTWV4aWNhIHJ1aW5zLiBUaGUgZmlyc3QgY2l0eSBjb3VuY2lsIG9mIE5ldyBTcGFpbiB3b3JrZWQgaGVyZSwgYW5kIGRlY2lzaW9ucyB0aGF0IHJlZHJldyBhIGNvbnRpbmVudCB3ZXJlIHRha2VuIGhlcmUuIFRoZSAncGVyaXBoZXJhbCcgdG93biB3YXMsIGZvciBhIGZldyB5ZWFycywgdGhlIGNlbnRyZSBvZiBwb3dlci4iLAogICAgICAgIG9ic2VydmVfZXM6IFsKICAgICAgICAgICdMYSBlc2NhbGEgYmFqYSB5IGRvbcOpc3RpY2EgZGUgbGFzIGNvbnN0cnVjY2lvbmVzIGNvbG9uaWFsZXMnLAogICAgICAgICAgJ0xvcyBub21icmVzIGRlIGxhcyBjYWxsZXM6IHNhbnRvcywgaMOpcm9lcyB5IG9maWNpb3MnLAogICAgICAgIF0sCiAgICAgICAgb2JzZXJ2ZV9lbjogWwogICAgICAgICAgJ1RoZSBsb3csIGRvbWVzdGljIHNjYWxlIG9mIHRoZSBjb2xvbmlhbCBidWlsZGluZ3MnLAogICAgICAgICAgJ1N0cmVldCBuYW1lczogc2FpbnRzLCBoZXJvZXMgYW5kIHRyYWRlcycsCiAgICAgICAgXSwKICAgICAgICBpbWFnZTogbnVsbCwKICAgICAgfSwKICAgIF0sCiAgfSwKICB7CiAgICBpZDogJ3BhcnJvcXVpYScsCiAgICB0aXRsZV9lczogJ0xhIHBhcnJvcXVpYSB5IGVsIGNvbnZlbnRvJywKICAgIHRpdGxlX2VuOiAnVGhlIHBhcmlzaCBjaHVyY2ggYW5kIHRoZSBjb252ZW50JywKICAgIGludHJvX2VzOgogICAgICAnTGEgcGFycm9xdWlhIGRlIFNhbiBKdWFuIEJhdXRpc3RhIGVzIHVuYSBkZSBsYXMgaWdsZXNpYXMgbcOhcyBhbnRpZ3VhcyBkZSBNw6l4aWNvIGNvbnRpbmVudGFsLCBsZXZhbnRhZGEgcG9yIGZyYW5jaXNjYW5vcyBlbiBlbCBzaWdsbyBYVkkgc29icmUgZWwgYW50aWd1byBjZW50cm8gY2VyZW1vbmlhbCBkZSBDb3lvYWPDoW4uIEVsIHJlbGF0byBzZSBjdWVudGEgZW4gZWwgYXRyaW87IGFkZW50cm8sIHNpbGVuY2lvOiBlcyB1bmEgaWdsZXNpYSB2aXZhLCBubyB1bmEgcGllemEgZGUgbXVzZW8uJywKICAgIGludHJvX2VuOgogICAgICAiVGhlIHBhcmlzaCBjaHVyY2ggb2YgU2FuIEp1YW4gQmF1dGlzdGEgaXMgb25lIG9mIHRoZSBvbGRlc3QgY2h1cmNoZXMgb24gdGhlIE1leGljYW4gbWFpbmxhbmQsIHJhaXNlZCBieSBGcmFuY2lzY2FucyBpbiB0aGUgMTZ0aCBjZW50dXJ5IG92ZXIgQ295b2Fjw6FuJ3Mgb2xkIGNlcmVtb25pYWwgY2VudHJlLiBUaGUgc3RvcnkgaXMgdG9sZCBpbiB0aGUgYXRyaXVtOyBpbnNpZGUsIHNpbGVuY2U6IGl0IGlzIGEgbGl2aW5nIGNodXJjaCwgbm90IGEgbXVzZXVtIHBpZWNlLiIsCiAgICBpbWFnZTogbnVsbCwKICAgIHN0ZXBzOiBbCiAgICAgIHsKICAgICAgICB0aXRsZV9lczogJ1BpZWRyYSBzb2JyZSBwaWVkcmEnLAogICAgICAgIHRpdGxlX2VuOiAnU3RvbmUgdXBvbiBzdG9uZScsCiAgICAgICAgYm9keV9lczoKICAgICAgICAgICdFbCB0ZW1wbG8geSBzdSBhbnRpZ3VvIGNvbnZlbnRvIGRvbWluaWNhbm8tZnJhbmNpc2Nhbm8gc2UgY29uc3RydXllcm9uIGNvbiBsYSBwaWVkcmEgZGVsIG11bmRvIGFudGVyaW9yLCB1bmEgcHLDoWN0aWNhIGxpdGVyYWwgZW4gdG9kbyBlbCBjZW50cm8gZGUgTcOpeGljbzogZWwgbnVldm8gb3JkZW4gc2UgZWRpZmljw7MgY29uIGxvcyBibG9xdWVzIGRlbCB2aWVqby4gTGEgcG9ydGFkYSBwbGF0ZXJlc2NhIHkgbG9zIG11cmFsZXMgZGVsIGludGVyaW9yLCByZXN0YXVyYWRvcyBlbiBlbCBzaWdsbyBYWCwgY3VlbnRhbiBlc2Egc3VwZXJwb3NpY2nDs24gbWVqb3IgcXVlIGN1YWxxdWllciBwbGFjYS4nLAogICAgICAgIGJvZHlfZW46CiAgICAgICAgICAiVGhlIGNodXJjaCBhbmQgaXRzIG9sZCBjb252ZW50IHdlcmUgYnVpbHQgd2l0aCBzdG9uZSBmcm9tIHRoZSB3b3JsZCBiZWZvcmUsIGEgbGl0ZXJhbCBwcmFjdGljZSBhY3Jvc3MgY2VudHJhbCBNZXhpY286IHRoZSBuZXcgb3JkZXIgd2FzIHJhaXNlZCB3aXRoIHRoZSBvbGQgd29ybGQncyBibG9ja3MuIFRoZSBQbGF0ZXJlc3F1ZSBmYcOnYWRlIGFuZCB0aGUgbXVyYWxzIGluc2lkZSwgcmVzdG9yZWQgaW4gdGhlIDIwdGggY2VudHVyeSwgdGVsbCB0aGF0IGxheWVyaW5nIGJldHRlciB0aGFuIGFueSBwbGFxdWUuIiwKICAgICAgICBvYnNlcnZlX2VzOiBbCiAgICAgICAgICAnTG9zIGJsb3F1ZXMgcmV1dGlsaXphZG9zIGVuIGxvcyBtdXJvcyBleHRlcmlvcmVzJywKICAgICAgICAgICdMYSBjcnV6IGRlbCBhdHJpbywgcGVuc2FkYSBwYXJhIGV2YW5nZWxpemFyIGEgY2llbG8gYWJpZXJ0bycsCiAgICAgICAgICAnTGEgdmlkYSBwYXJyb3F1aWFsIGRlIGhveTogYm9kYXMsIG1pc2FzLCB2ZW5kZWRvcmVzIGVuIGxhIHB1ZXJ0YScsCiAgICAgICAgXSwKICAgICAgICBvYnNlcnZlX2VuOiBbCiAgICAgICAgICAnUmV1c2VkIGJsb2NrcyBpbiB0aGUgZXh0ZXJpb3Igd2FsbHMnLAogICAgICAgICAgJ1RoZSBhdHJpdW0gY3Jvc3MsIG1lYW50IGZvciBvcGVuLWFpciBldmFuZ2VsaXNhdGlvbicsCiAgICAgICAgICAiVG9kYXkncyBwYXJpc2ggbGlmZTogd2VkZGluZ3MsIG1hc3Nlcywgc2VsbGVycyBhdCB0aGUgZG9vciIsCiAgICAgICAgXSwKICAgICAgICBpbWFnZTogbnVsbCwKICAgICAgfSwKICAgIF0sCiAgfSwKICB7CiAgICBpZDogJ2Nhc2EtYXp1bCcsCiAgICB0aXRsZV9lczogJ0xhIENhc2EgQXp1bCcsCiAgICB0aXRsZV9lbjogJ1RoZSBCbHVlIEhvdXNlJywKICAgIGludHJvX2VzOgogICAgICAnRW4gbGEgY2FsbGUgZGUgTG9uZHJlcyAyNDcgZXN0w6EgbGEgY2FzYSBkb25kZSBGcmlkYSBLYWhsbyBuYWNpw7MsIHZpdmnDsyBjb24gRGllZ28gUml2ZXJhIHkgbXVyacOzLiBObyBlcyB1biBtdXNlbyBtb250YWRvIGVuIHVuYSBjYXNhOiBlcyB1bmEgY2FzYSBxdWUgc2UgcXVlZMOzIGRldGVuaWRhLCBjb24gc3VzIGNhbWFzLCBzdSBjb2NpbmEgZGUgdGFsYXZlcmEgeSBzdSBqYXJkw61uLiBMYSB2aXNpdGEgc2UgaGFjZSBwb3IgY3VlbnRhIHByb3BpYTsgbnVlc3RybyB0cmFiYWpvIGVzIGxsZWdhciBjb24gbG9zIGJvbGV0b3MgcmVzdWVsdG9zIHkgc2FiZXIgcXXDqSBidXNjYXIgYWRlbnRyby4nLAogICAgaW50cm9fZW46CiAgICAgICJBdCBMb25kcmVzIDI0NyBzdGFuZHMgdGhlIGhvdXNlIHdoZXJlIEZyaWRhIEthaGxvIHdhcyBib3JuLCBsaXZlZCB3aXRoIERpZWdvIFJpdmVyYSBhbmQgZGllZC4gSXQgaXMgbm90IGEgbXVzZXVtIGluc3RhbGxlZCBpbiBhIGhvdXNlOiBpdCBpcyBhIGhvdXNlIHRoYXQgc3RvcHBlZCBpbiB0aW1lLCB3aXRoIGl0cyBiZWRzLCBpdHMgVGFsYXZlcmEtdGlsZWQga2l0Y2hlbiBhbmQgaXRzIGdhcmRlbi4gVGhlIHZpc2l0IGlzIHNlbGYtcGFjZWQ7IG91ciBqb2IgaXMgdG8gYXJyaXZlIHdpdGggdGhlIHRpY2tldHMgc29sdmVkIGFuZCB0byBrbm93IHdoYXQgdG8gbG9vayBmb3IgaW5zaWRlLiIsCiAgICBpbWFnZTogbnVsbCwKICAgIHN0ZXBzOiBbCiAgICAgIHsKICAgICAgICB0aXRsZV9lczogJ0VsIGJvbGV0byBxdWUgc2UgYWNhYmEnLAogICAgICAgIHRpdGxlX2VuOiAnVGhlIHRpY2tldCB0aGF0IHNlbGxzIG91dCcsCiAgICAgICAgYm9keV9lczoKICAgICAgICAgICdMYSBDYXNhIEF6dWwgdmVuZGUgc3VzIGJvbGV0b3Mgc29sbyBlbiBsw61uZWEgeSBjb24gZnJhbmphIGhvcmFyaWE7IGVuIHRlbXBvcmFkYSBhbHRhIHNlIGFnb3RhbiBjb24gdW5hIG8gZG9zIHNlbWFuYXMgZGUgYW50aWNpcGFjacOzbiB5IGVsIG11c2VvIGNpZXJyYSBsb3MgbHVuZXMuIFBvciBlc28gZXN0ZSBqb3VybmV5IHNlIGNvbmZpcm1hIMO6bmljYW1lbnRlIGNvbiBlbCBib2xldG8gYXNlZ3VyYWRvOiBlcyBsYSBwYXJ0ZSBxdWUgZWwgdmlzaXRhbnRlIG5vIHF1aWVyZSByZXNvbHZlciBzb2xvLCB5IGVzIGxhIHBhcnRlIHF1ZSBub3NvdHJvcyByZXNvbHZlbW9zLicsCiAgICAgICAgYm9keV9lbjoKICAgICAgICAgICdUaGUgQmx1ZSBIb3VzZSBzZWxscyBpdHMgdGlja2V0cyBvbmxpbmUgb25seSwgaW4gdGltZWQgc2xvdHM7IGluIGhpZ2ggc2Vhc29uIHRoZXkgc2VsbCBvdXQgb25lIHRvIHR3byB3ZWVrcyBhaGVhZCwgYW5kIHRoZSBtdXNldW0gY2xvc2VzIG9uIE1vbmRheXMuIFRoYXQgaXMgd2h5IHRoaXMgam91cm5leSBpcyBvbmx5IGNvbmZpcm1lZCB3aXRoIHRoZSB0aWNrZXQgc2VjdXJlZDogaXQgaXMgdGhlIHBhcnQgdmlzaXRvcnMgbGVhc3Qgd2FudCB0byBzb2x2ZSBhbG9uZSwgYW5kIGl0IGlzIHRoZSBwYXJ0IHdlIHNvbHZlLicsCiAgICAgICAgb2JzZXJ2ZV9lczogWwogICAgICAgICAgJ0xhIGZpbGEgZGUgcXVpZW5lcyBsbGVnYW4gc2luIGJvbGV0bywgYSBsYSB2dWVsdGEgZGUgbGEgZXNxdWluYScsCiAgICAgICAgICAnTGEgZmFjaGFkYSBhenVsIGNvYmFsdG8sIGluY29uZnVuZGlibGUgZGVzZGUgbGEgY2FsbGUnLAogICAgICAgIF0sCiAgICAgICAgb2JzZXJ2ZV9lbjogWwogICAgICAgICAgJ1RoZSBsaW5lIG9mIHBlb3BsZSB3aG8gYXJyaXZlIHdpdGhvdXQgYSB0aWNrZXQsIGFyb3VuZCB0aGUgY29ybmVyJywKICAgICAgICAgICdUaGUgY29iYWx0LWJsdWUgZmHDp2FkZSwgdW5taXN0YWthYmxlIGZyb20gdGhlIHN0cmVldCcsCiAgICAgICAgXSwKICAgICAgICBpbWFnZTogbnVsbCwKICAgICAgfSwKICAgICAgewogICAgICAgIHRpdGxlX2VzOiAnUXXDqSBidXNjYXIgYWRlbnRybyAoYnJpZWZpbmcpJywKICAgICAgICB0aXRsZV9lbjogJ1doYXQgdG8gbG9vayBmb3IgaW5zaWRlIChicmllZmluZyknLAogICAgICAgIGJvZHlfZXM6CiAgICAgICAgICAnQW50ZXMgZGUgZW50cmFyLCBlbCBicmllZmluZzogbGEgY29jaW5hIGRlIGF6dWxlam8gY29uIGxhcyBvbGxhcyBkZSBiYXJybyB5IGxvcyBub21icmVzIGRlIEZyaWRhIHkgRGllZ28gZW4gbGEgcGFyZWQ7IGVsIGVzdHVkaW8gdW5pZG8gcG9yIHVuIHB1ZW50ZSwgY29uIGxhIHNpbGxhIGRlIHJ1ZWRhcyBmcmVudGUgYWwgY2FiYWxsZXRlOyBsYXMgY2FtYXMg4oCUbGEgZGUgbm9jaGUgeSBsYSBkZSBkw61h4oCUOyBsYSBjb2xlY2Npw7NuIGRlIGV4dm90b3MgeSBhcnRlIHBvcHVsYXIgcXVlIGFsaW1lbnRhYmEgc3UgcGludHVyYTsgeSBlbiBlbCBqYXJkw61uLCBsYSBwaXLDoW1pZGUgZXNjYWxvbmFkYSBxdWUgRGllZ28gbWFuZMOzIGNvbnN0cnVpciBwYXJhIHN1IGNvbGVjY2nDs24gcHJlaGlzcMOhbmljYS4gQWwgc2FsaXIsIGNlcnJhbW9zIGVuIHVuIGNhZsOpOiBsYSBjYXNhIHNlIGVudGllbmRlIG1lam9yIGNvbnZlcnNhZGEuJywKICAgICAgICBib2R5X2VuOgogICAgICAgICAgIkJlZm9yZSBnb2luZyBpbiwgdGhlIGJyaWVmaW5nOiB0aGUgdGlsZWQga2l0Y2hlbiB3aXRoIGl0cyBjbGF5IHBvdHMgYW5kIEZyaWRhIGFuZCBEaWVnbydzIG5hbWVzIG9uIHRoZSB3YWxsOyB0aGUgc3R1ZGlvIGpvaW5lZCBieSBhIGJyaWRnZSwgd2l0aCB0aGUgd2hlZWxjaGFpciBiZWZvcmUgdGhlIGVhc2VsOyB0aGUgYmVkcyDigJR0aGUgbmlnaHQgYmVkIGFuZCB0aGUgZGF5IGJlZOKAlDsgdGhlIGV4LXZvdG8gYW5kIGZvbGstYXJ0IGNvbGxlY3Rpb24gdGhhdCBmZWQgaGVyIHBhaW50aW5nOyBhbmQgaW4gdGhlIGdhcmRlbiwgdGhlIHN0ZXBwZWQgcHlyYW1pZCBEaWVnbyBoYWQgYnVpbHQgZm9yIGhpcyBwcmUtSGlzcGFuaWMgY29sbGVjdGlvbi4gQWZ0ZXJ3YXJkcyB3ZSBjbG9zZSBvdmVyIGNvZmZlZTogdGhlIGhvdXNlIGlzIGJlc3QgdW5kZXJzdG9vZCBpbiBjb252ZXJzYXRpb24uIiwKICAgICAgICBvYnNlcnZlX2VzOiBbCiAgICAgICAgICAnTG9zIGV4dm90b3M6IEZyaWRhIGNvbGVjY2lvbmFiYSBlbCBhcnRlIHF1ZSBsYSBjb2xlY2Npb25hYmEgYSBlbGxhJywKICAgICAgICAgICdFbCBlc3Blam8gc29icmUgbGEgY2FtYSwgcGFyYSBwaW50YXJzZSBhY29zdGFkYScsCiAgICAgICAgICAnTG9zIMO6bHRpbW9zIGN1YWRyb3M6IGxhcyBzYW5kw61hcyBkZSAiVml2YSBsYSBWaWRhIicsCiAgICAgICAgXSwKICAgICAgICBvYnNlcnZlX2VuOiBbCiAgICAgICAgICAnVGhlIGV4LXZvdG9zOiBGcmlkYSBjb2xsZWN0ZWQgdGhlIGFydCB0aGF0IGNvbGxlY3RlZCBoZXInLAogICAgICAgICAgJ1RoZSBtaXJyb3IgYWJvdmUgdGhlIGJlZCwgZm9yIHBhaW50aW5nIGx5aW5nIGRvd24nLAogICAgICAgICAgJ1RoZSBsYXN0IHBhaW50aW5nczogdGhlICJWaXZhIGxhIFZpZGEiIHdhdGVybWVsb25zJywKICAgICAgICBdLAogICAgICAgIGltYWdlOiBudWxsLAogICAgICB9LAogICAgICB7CiAgICAgICAgdGl0bGVfZXM6ICdBIHVuYXMgY2FsbGVzOiBUcm90c2t5JywKICAgICAgICB0aXRsZV9lbjogJ0EgZmV3IHN0cmVldHMgYXdheTogVHJvdHNreScsCiAgICAgICAgYm9keV9lczoKICAgICAgICAgICdFbCBiYXJyaW8gZ3VhcmRhYmEgYSBvdHJvIGV4aWxpYWRvIGZhbW9zby4gTGXDs24gVHJvdHNreSB2aXZpw7MgcHJpbWVybyBlbiBsYSBDYXNhIEF6dWwgeSBsdWVnbyBlbiBzdSBjYXNhLWZvcnRhbGV6YSBkZSBsYSBjYWxsZSBWaWVuYSwgZG9uZGUgZnVlIGFzZXNpbmFkbyBlbiAxOTQwLiBTaSBlbCB0aWVtcG8geSBlbCBncnVwbyBsbyBwaWRlbiwgZWwgTXVzZW8gQ2FzYSBkZSBMZcOzbiBUcm90c2t5IHF1ZWRhIGEgdW5hcyBjYWxsZXMgeSBjb21wbGV0YSBlbCBtYXBhIGRlIGxhIENveW9hY8OhbiByZWZ1Z2lvIGRlIGV4aWxpb3MuJywKICAgICAgICBib2R5X2VuOgogICAgICAgICAgIlRoZSBuZWlnaGJvdXJob29kIHNoZWx0ZXJlZCBhbm90aGVyIGZhbW91cyBleGlsZS4gTGVvbiBUcm90c2t5IGxpdmVkIGZpcnN0IGF0IHRoZSBCbHVlIEhvdXNlIGFuZCBsYXRlciBpbiBoaXMgZm9ydHJlc3MtaG91c2Ugb24gVmllbmEgc3RyZWV0LCB3aGVyZSBoZSB3YXMgbXVyZGVyZWQgaW4gMTk0MC4gSWYgdGltZSBhbmQgdGhlIGdyb3VwIGFsbG93LCB0aGUgTGVvbiBUcm90c2t5IEhvdXNlIE11c2V1bSBpcyBhIGZldyBzdHJlZXRzIGF3YXkgYW5kIGNvbXBsZXRlcyB0aGUgbWFwIG9mIENveW9hY8OhbiBhcyBhIHJlZnVnZSBmb3IgZXhpbGVzLiIsCiAgICAgICAgb2JzZXJ2ZV9lczogWydMYXMgbWFyY2FzIGRlbCBhdGVudGFkbyBlbiBsb3MgbXVyb3MgZGUgbGEgY2FzYSBkZSBWaWVuYSddLAogICAgICAgIG9ic2VydmVfZW46IFsnVGhlIGJ1bGxldCBtYXJrcyBvbiB0aGUgd2FsbHMgb2YgdGhlIFZpZW5hIGhvdXNlJ10sCiAgICAgICAgaW1hZ2U6IG51bGwsCiAgICAgIH0sCiAgICBdLAogIH0sCiAgewogICAgaWQ6ICdtZXJjYWRvJywKICAgIHRpdGxlX2VzOiAnRWwgbWVyY2FkbyB5IGxvcyBzYWJvcmVzJywKICAgIHRpdGxlX2VuOiAnVGhlIG1hcmtldCBhbmQgdGhlIGZsYXZvdXJzJywKICAgIGludHJvX2VzOgogICAgICAnRWwgTWVyY2FkbyBkZSBDb3lvYWPDoW4gZXMgbGEgY29jaW5hIGRlbCBwdWVibG86IHF1ZXNhZGlsbGFzLCB0b3N0YWRhcyBmYW1vc2FzIGVuIHRvZG8gZWwgc3VyIGRlIGxhIGNpdWRhZCwgYWd1YXMgZnJlc2NhcyB5IHB1ZXN0b3MgZGUgZHVsY2VzLiBBcXXDrSBlbCByZWNvcnJpZG8gc2UgY29tZS4gWSBkZSBwb3N0cmUsIGxvcyBjaHVycm9zIGRlbCBqYXJkw61uIHkgZWwgY2Fmw6kgZGUgRWwgSmFyb2NobywgaW5zdGl0dWNpw7NuIGNveW9hY2FuZW5zZSBkZXNkZSAxOTUzLicsCiAgICBpbnRyb19lbjoKICAgICAgIkNveW9hY8OhbiBNYXJrZXQgaXMgdGhlIHRvd24ncyBraXRjaGVuOiBxdWVzYWRpbGxhcywgdG9zdGFkYXMgZmFtb3VzIGFjcm9zcyB0aGUgc291dGggb2YgdGhlIGNpdHksIGZyZXNoIGZydWl0IHdhdGVycyBhbmQgc3dlZXQgc3RhbGxzLiBIZXJlIHRoZSB3YWxrIGlzIGVhdGVuLiBBbmQgZm9yIGRlc3NlcnQsIHRoZSBjaHVycm9zIGJ5IHRoZSBnYXJkZW4gYW5kIGNvZmZlZSBhdCBFbCBKYXJvY2hvLCBhIENveW9hY8OhbiBpbnN0aXR1dGlvbiBzaW5jZSAxOTUzLiIsCiAgICBpbWFnZTogbnVsbCwKICAgIHN0ZXBzOiBbCiAgICAgIHsKICAgICAgICB0aXRsZV9lczogJ0NvbWVyIGNvbW8gdmVjaW5vJywKICAgICAgICB0aXRsZV9lbjogJ0VhdGluZyBsaWtlIGEgbmVpZ2hib3VyJywKICAgICAgICBib2R5X2VzOgogICAgICAgICAgJ0xhIHJlZ2xhIGRlbCBtZXJjYWRvIGVzIG1pcmFyIGTDs25kZSBjb21lbiBsb3MgZGUgYXF1w60uIExhcyB0b3N0YWRhcyBkZSBwYXRhLCB0aW5nYSB5IG1hcmlzY29zIG11ZXZlbiBmaWxhcyBlbnRlcmFzOyBsYXMgcXVlc2FkaWxsYXMgYWJyZW4gZWwgZGViYXRlIGV0ZXJubyBkZSBsYSBjaXVkYWQg4oCUZW4gbGEgY2FwaXRhbCwgbGEgcXVlc2FkaWxsYSBwdWVkZSBpciBzaW4gcXVlc2/igJQgeSBsYXMgYWd1YXMgZGUgaG9yY2hhdGEgeSBqYW1haWNhIGNpZXJyYW4gZWwgdHJhdG8uIENvbWVyIGVuIGVsIG1lcmNhZG8gbm8gZXMgdW5hIHBhdXNhIGRlbCByZWNvcnJpZG86IGVzIGVsIHJlY29ycmlkby4nLAogICAgICAgIGJvZHlfZW46CiAgICAgICAgICAiVGhlIG1hcmtldCdzIHJ1bGUgaXMgdG8gd2F0Y2ggd2hlcmUgdGhlIGxvY2FscyBlYXQuIFRoZSB0b3N0YWRhcyDigJRwYXRhLCB0aW5nYSwgc2VhZm9vZOKAlCBkcmF3IHdob2xlIGxpbmVzOyB0aGUgcXVlc2FkaWxsYXMgb3BlbiB0aGUgY2l0eSdzIGV0ZXJuYWwgZGViYXRlIOKAlGluIHRoZSBjYXBpdGFsLCBhIHF1ZXNhZGlsbGEgbWF5IGNvbWUgd2l0aG91dCBjaGVlc2XigJQgYW5kIHRoZSBob3JjaGF0YSBhbmQgaGliaXNjdXMgd2F0ZXJzIHNlYWwgdGhlIGRlYWwuIEVhdGluZyBhdCB0aGUgbWFya2V0IGlzIG5vdCBhIGJyZWFrIGZyb20gdGhlIHdhbGs6IGl0IGlzIHRoZSB3YWxrLiIsCiAgICAgICAgb2JzZXJ2ZV9lczogWwogICAgICAgICAgJ0xvcyBwdWVzdG9zIGNvbiBtw6FzIGZpbGEgZGUgdmVjaW5vcywgbm8gZGUgdHVyaXN0YXMnLAogICAgICAgICAgJ0xvcyBwcmVjaW9zIGVzY3JpdG9zIGEgbWFubzogYXF1w60gc2UgY29tZSBjb24gcG9jbycsCiAgICAgICAgICAnTGEgc2VjY2nDs24gZGUgZHVsY2VzIHTDrXBpY29zIHkgcGnDsWF0YXMnLAogICAgICAgIF0sCiAgICAgICAgb2JzZXJ2ZV9lbjogWwogICAgICAgICAgJ1RoZSBzdGFsbHMgd2l0aCBsaW5lcyBvZiBuZWlnaGJvdXJzLCBub3QgdG91cmlzdHMnLAogICAgICAgICAgJ0hhbmR3cml0dGVuIHByaWNlczogaGVyZSB5b3UgZWF0IHdlbGwgZm9yIGxpdHRsZScsCiAgICAgICAgICAnVGhlIHRyYWRpdGlvbmFsIHN3ZWV0cyBhbmQgcGnDsWF0YSBzZWN0aW9uJywKICAgICAgICBdLAogICAgICAgIGltYWdlOiBudWxsLAogICAgICB9LAogICAgICB7CiAgICAgICAgdGl0bGVfZXM6ICdDaHVycm9zIHkgY2Fmw6kgZGUgb2xsYScsCiAgICAgICAgdGl0bGVfZW46ICdDaHVycm9zIGFuZCBjYWbDqSBkZSBvbGxhJywKICAgICAgICBib2R5X2VzOgogICAgICAgICAgJ0VsIGNpZXJyZSBkdWxjZSBlcyBlbiBlbCBqYXJkw61uOiBjaHVycm9zIHJlY2nDqW4gaGVjaG9zIGNvbiBjaG9jb2xhdGUgeSB1bmEgYmFuY2EgcGFyYSB2ZXIgcGFzYXIgZWwgcHVlYmxvLiBTaSBlbCBncnVwbyBlcyBkZSBjYWbDqSwgRWwgSmFyb2NobyBzaXJ2ZSBkZXNkZSAxOTUzIGEgZXN0dWRpYW50ZXMsIGVzY3JpdG9yZXMgeSB2ZWNpbm9zIGVuIGxhIG1pc21hIGVzcXVpbmEuIENveW9hY8OhbiBzZSBkZXNwaWRlIGNvbW8gc2UgcHJlc2VudMOzOiBzZW50YWRvIGVuIHN1IHNhbGEgZGUgZXN0YXIuJywKICAgICAgICBib2R5X2VuOgogICAgICAgICAgIlRoZSBzd2VldCBjbG9zZSBpcyBpbiB0aGUgZ2FyZGVuOiBmcmVzaCBjaHVycm9zIHdpdGggY2hvY29sYXRlIGFuZCBhIGJlbmNoIHRvIHdhdGNoIHRoZSB0b3duIGdvIGJ5LiBJZiB0aGUgZ3JvdXAgcnVucyBvbiBjb2ZmZWUsIEVsIEphcm9jaG8gaGFzIHNlcnZlZCBzdHVkZW50cywgd3JpdGVycyBhbmQgbmVpZ2hib3VycyBvbiB0aGUgc2FtZSBjb3JuZXIgc2luY2UgMTk1My4gQ295b2Fjw6FuIHNheXMgZ29vZGJ5ZSBhcyBpdCBpbnRyb2R1Y2VkIGl0c2VsZjogc2l0dGluZyBpbiBpdHMgbGl2aW5nIHJvb20uIiwKICAgICAgICBvYnNlcnZlX2VzOiBbJ0VsIHJpdHVhbCBkZSBsYSBiYW5jYTogbmFkaWUgdGllbmUgcHJpc2EgZW4gQ295b2Fjw6FuJ10sCiAgICAgICAgb2JzZXJ2ZV9lbjogWyJUaGUgYmVuY2ggcml0dWFsOiBub2JvZHkgaXMgaW4gYSBodXJyeSBpbiBDb3lvYWPDoW4iXSwKICAgICAgICBpbWFnZTogbnVsbCwKICAgICAgfSwKICAgIF0sCiAgfSwKICB7CiAgICBpZDogJ2NhbGxlcycsCiAgICB0aXRsZV9lczogJ0NhbGxlcyBkZSBlc2NyaXRvcmVzJywKICAgIHRpdGxlX2VuOiAnU3RyZWV0cyBvZiB3cml0ZXJzJywKICAgIGludHJvX2VzOgogICAgICAnQ295b2Fjw6FuIGZ1ZSByZWZ1Z2lvIGRlIGVzY3JpdG9yZXMsIHBpbnRvcmVzIHkgZXhpbGlhZG9zLCB5IHN1cyBjYWxsZXMgZW1wZWRyYWRhcyBndWFyZGFuIGxhcyBjYXNhcy4gTGEgY2FsbGUgRnJhbmNpc2NvIFNvc2EsIGNvbiBzdXMgY2Fzb25hcyB5IHN1IHB1ZW50ZSwgZXMgZGUgbGFzIG3DoXMgaGVybW9zYXMgZGUgbGEgY2l1ZGFkOyBlbCBDYWxsZWrDs24gZGVsIEFndWFjYXRlIGd1YXJkYSBsYSBsZXllbmRhIHF1ZSB0b2RvIHZlY2lubyBjb25vY2UgeSBuaW5nw7puIGhpc3RvcmlhZG9yIGNvbmZpcm1hLicsCiAgICBpbnRyb19lbjoKICAgICAgIkNveW9hY8OhbiB3YXMgYSByZWZ1Z2UgZm9yIHdyaXRlcnMsIHBhaW50ZXJzIGFuZCBleGlsZXMsIGFuZCBpdHMgY29iYmxlZCBzdHJlZXRzIGtlZXAgdGhlaXIgaG91c2VzLiBGcmFuY2lzY28gU29zYSBzdHJlZXQsIHdpdGggaXRzIG9sZCBob21lcyBhbmQgaXRzIGJyaWRnZSwgaXMgYW1vbmcgdGhlIGNpdHkncyBtb3N0IGJlYXV0aWZ1bDsgdGhlIENhbGxlasOzbiBkZWwgQWd1YWNhdGUga2VlcHMgdGhlIGxlZ2VuZCBldmVyeSBuZWlnaGJvdXIga25vd3MgYW5kIG5vIGhpc3RvcmlhbiBjb25maXJtcy4iLAogICAgaW1hZ2U6IG51bGwsCiAgICBzdGVwczogWwogICAgICB7CiAgICAgICAgdGl0bGVfZXM6ICdMYSAiY2FzYSBkZSBDb3J0w6lzIiBxdWUgbm8gZXMgZGUgQ29ydMOpcycsCiAgICAgICAgdGl0bGVfZW46ICdUaGUgImhvdXNlIG9mIENvcnTDqXMiIHRoYXQgaXMgbm90IENvcnTDqXNcJ3MnLAogICAgICAgIGJvZHlfZXM6CiAgICAgICAgICAnU29icmUgZWwgSmFyZMOtbiBDZW50ZW5hcmlvIHNlIGxldmFudGEgdW4gZWRpZmljaW8gcXVlIGxhIHRyYWRpY2nDs24gcG9wdWxhciBsbGFtYSBkZXNkZSBoYWNlIHNpZ2xvcyBsYSBDYXNhIGRlIEhlcm7DoW4gQ29ydMOpcy4gRWwgcHJvYmxlbWE6IHNlIGNvbnN0cnV5w7MgZW4gZWwgc2lnbG8gWFZJSUksIGRvc2NpZW50b3MgYcOxb3MgZGVzcHXDqXMuIEVsIG1pdG8gdmFsZSBvcm8gcG9ycXVlIGVuc2XDsWEgY8OzbW8gZnVuY2lvbmEgbGEgbWVtb3JpYSBkZSB1biBwdWVibG86IGEgdmVjZXMgaW1wb3J0YSBtZW5vcyBxdWnDqW4gdml2acOzIGVuIGxhIGNhc2EgcXVlIGVsIGhlY2hvIGRlIHF1ZSBlbCBiYXJyaW8gZGVjaWRpw7MgcmVjb3JkYXJsYSBhc8OtLicsCiAgICAgICAgYm9keV9lbjoKICAgICAgICAgICJPdmVybG9va2luZyBKYXJkw61uIENlbnRlbmFyaW8gc3RhbmRzIGEgYnVpbGRpbmcgcG9wdWxhciB0cmFkaXRpb24gaGFzIGNhbGxlZCB0aGUgSG91c2Ugb2YgSGVybsOhbiBDb3J0w6lzIGZvciBjZW50dXJpZXMuIFRoZSBwcm9ibGVtOiBpdCB3YXMgYnVpbHQgaW4gdGhlIDE4dGggY2VudHVyeSwgdHdvIGh1bmRyZWQgeWVhcnMgdG9vIGxhdGUuIFRoZSBteXRoIGlzIGdvbGQgYmVjYXVzZSBpdCBzaG93cyBob3cgYSB0b3duJ3MgbWVtb3J5IHdvcmtzOiBzb21ldGltZXMgd2hvIGxpdmVkIGluIHRoZSBob3VzZSBtYXR0ZXJzIGxlc3MgdGhhbiB0aGUgZmFjdCB0aGF0IHRoZSBuZWlnaGJvdXJob29kIGNob3NlIHRvIHJlbWVtYmVyIGl0IHRoYXQgd2F5LiIsCiAgICAgICAgb2JzZXJ2ZV9lczogWwogICAgICAgICAgJ0VsIGVzY3VkbyB5IGxhIHBsYWNhIHF1ZSBhbGltZW50YW4gZWwgbWl0bycsCiAgICAgICAgICAnTGEgZGlmZXJlbmNpYSBlbnRyZSBsYSBmZWNoYSBkZWwgZWRpZmljaW8geSBsYSBmZWNoYSBkZSBsYSBsZXllbmRhJywKICAgICAgICBdLAogICAgICAgIG9ic2VydmVfZW46IFsKICAgICAgICAgICdUaGUgY29hdCBvZiBhcm1zIGFuZCBwbGFxdWUgdGhhdCBmZWVkIHRoZSBteXRoJywKICAgICAgICAgICdUaGUgZ2FwIGJldHdlZW4gdGhlIGJ1aWxkaW5nXCdzIGRhdGUgYW5kIHRoZSBsZWdlbmRcJ3MgZGF0ZScsCiAgICAgICAgXSwKICAgICAgICBpbWFnZTogbnVsbCwKICAgICAgfSwKICAgICAgewogICAgICAgIHRpdGxlX2VzOiAnQ2llcnJlOiBlbCBwdWVibG8gZGVudHJvIGRlIGxhIGNpdWRhZCcsCiAgICAgICAgdGl0bGVfZW46ICdDbG9zZTogdGhlIHZpbGxhZ2UgaW5zaWRlIHRoZSBjaXR5JywKICAgICAgICBib2R5X2VzOgogICAgICAgICAgJ0VsIHJlY29ycmlkbyB0ZXJtaW5hIGRvbmRlIGVtcGV6w7MsIGVuIGxvcyBqYXJkaW5lcywgY29uIGxhIGlkZWEgY29tcGxldGE6IGxhIENpdWRhZCBkZSBNw6l4aWNvIG5vIGVzIHVuYSBjaXVkYWQsIGVzIHVuIGFyY2hpcGnDqWxhZ28gZGUgcHVlYmxvcyBxdWUgbGEgbWFuY2hhIHVyYmFuYSBmdWUgdW5pZW5kby4gQ295b2Fjw6FuIGVzIGVsIG3DoXMgZmFtb3NvIGRlIGVzb3MgcHVlYmxvcywgcGVybyBsYSBtaXNtYSBsZWN0dXJhIHNpcnZlIHBhcmEgZWwgQ2VudHJvLCBwYXJhIEphbWFpY2EsIHBhcmEgdG9kbyBlbCBtYXBhIGRlIENhbHB1bGxpOiBjYWRhIGJhcnJpbyDigJRjYWRhIGNhbHB1bGxp4oCUIGd1YXJkYSBzdSBwcm9waW8gY2VudHJvIGRlbCBtdW5kby4nLAogICAgICAgIGJvZHlfZW46CiAgICAgICAgICAnVGhlIHdhbGsgZW5kcyB3aGVyZSBpdCBiZWdhbiwgaW4gdGhlIGdhcmRlbnMsIHdpdGggdGhlIHdob2xlIGlkZWE6IE1leGljbyBDaXR5IGlzIG5vdCBvbmUgY2l0eSwgaXQgaXMgYW4gYXJjaGlwZWxhZ28gb2YgdG93bnMgdGhhdCB0aGUgdXJiYW4gc3ByYXdsIHN0aXRjaGVkIHRvZ2V0aGVyLiBDb3lvYWPDoW4gaXMgdGhlIG1vc3QgZmFtb3VzIG9mIHRob3NlIHRvd25zLCBidXQgdGhlIHNhbWUgcmVhZGluZyB3b3JrcyBmb3IgdGhlIENlbnRybywgZm9yIEphbWFpY2EsIGZvciB0aGUgd2hvbGUgQ2FscHVsbGkgbWFwOiBldmVyeSBuZWlnaGJvdXJob29kIOKAlGV2ZXJ5IGNhbHB1bGxp4oCUIGtlZXBzIGl0cyBvd24gY2VudHJlIG9mIHRoZSB3b3JsZC4nLAogICAgICAgIG9ic2VydmVfZXM6IFsnTGEgZGlzdGFuY2lhIGVudHJlIENveW9hY8OhbiB5IGVsIFrDs2NhbG86IG90cmEgY2l1ZGFkLCBsYSBtaXNtYSBjaXVkYWQnXSwKICAgICAgICBvYnNlcnZlX2VuOiBbJ1RoZSBkaXN0YW5jZSBiZXR3ZWVuIENveW9hY8OhbiBhbmQgdGhlIFrDs2NhbG86IGFub3RoZXIgY2l0eSwgdGhlIHNhbWUgY2l0eSddLAogICAgICAgIGltYWdlOiBudWxsLAogICAgICB9LAogICAgXSwKICB9LApdCgpleHBvcnQgY29uc3QgQ09ZT0FDQU5fSk9VUk5FWSA9IHsKICBpZDogJ2NveW9hY2FuJywKICBzbHVnOiAnY295b2FjYW4nLAogIGV4cGVyaWVuY2U6ICdjb3lvYWNhbicsCiAgdGl0bGVfZXM6ICdDb3lvYWPDoW4g4oCUIExhIGNhc2EgZGUgRnJpZGEgeSBlbCBwdWVibG8gZGVudHJvIGRlIGxhIGNpdWRhZCcsCiAgdGl0bGVfZW46ICJDb3lvYWPDoW4g4oCUIEZyaWRhJ3MgSG91c2UgYW5kIHRoZSBWaWxsYWdlIEluc2lkZSB0aGUgQ2l0eSIsCiAgc3VidGl0bGVfZXM6CiAgICAnRWwgcHVlYmxvIHF1ZSBsYSBjaXVkYWQgcm9kZcOzIHNpbiB0cmFnw6Fyc2VsbzogbGEgQ2FzYSBBenVsIGRlIEZyaWRhIEthaGxvLCBzdSBwYXJyb3F1aWEgZGVsIHNpZ2xvIFhWSSwgc3UgbWVyY2FkbyB5IHN1cyBjYWxsZXMgZGUgZXNjcml0b3Jlcy4nLAogIHN1YnRpdGxlX2VuOgogICAgIlRoZSB2aWxsYWdlIHRoZSBjaXR5IHN1cnJvdW5kZWQgd2l0aG91dCBzd2FsbG93aW5nOiBGcmlkYSBLYWhsbydzIEJsdWUgSG91c2UsIGl0cyAxNnRoLWNlbnR1cnkgcGFyaXNoLCBpdHMgbWFya2V0IGFuZCBpdHMgd3JpdGVycycgc3RyZWV0cy4iLAogIGludHJvX2VzOgogICAgJ0NveW9hY8OhbiBzZSByZWNvcnJlIGNvbW8gdW4gcHVlYmxvLCBubyBjb21vIHVuYSBjb2xvbmlhOiBkb3MgamFyZGluZXMgcXVlIHNvbiB1bmEgc2FsYSBkZSBlc3RhciwgdW5hIHBhcnJvcXVpYSBkZSBxdWluaWVudG9zIGHDsW9zLCBsYSBjYXNhIG3DoXMgZmFtb3NhIGRlIE3DqXhpY28gY29uIHN1IGJvbGV0byByZXN1ZWx0byBkZSBhbnRlbWFubywgdW4gbWVyY2FkbyBxdWUgc2UgY29tZSBjYW1pbmFuZG8geSBsYXMgY2FsbGVzIGRvbmRlIHNlIHJlZnVnaWFyb24gZXNjcml0b3JlcyB5IGV4aWxpYWRvcy4gQ3VhdHJvIGhvcmFzIHBhcmEgZW50ZW5kZXIgcXVlIGxhIENpdWRhZCBkZSBNw6l4aWNvIGVzIHVuIGFyY2hpcGnDqWxhZ28gZGUgcHVlYmxvcy4nLAogIGludHJvX2VuOgogICAgIkNveW9hY8OhbiBpcyB3YWxrZWQgbGlrZSBhIHZpbGxhZ2UsIG5vdCBhIG5laWdoYm91cmhvb2Q6IHR3byBnYXJkZW5zIHRoYXQgd29yayBhcyBhIGxpdmluZyByb29tLCBhIGZpdmUtaHVuZHJlZC15ZWFyLW9sZCBwYXJpc2gsIE1leGljbydzIG1vc3QgZmFtb3VzIGhvdXNlIHdpdGggaXRzIHRpY2tldCBzb2x2ZWQgaW4gYWR2YW5jZSwgYSBtYXJrZXQgeW91IGVhdCBhcyB5b3Ugd2FsaywgYW5kIHRoZSBzdHJlZXRzIHdoZXJlIHdyaXRlcnMgYW5kIGV4aWxlcyB0b29rIHJlZnVnZS4gRm91ciBob3VycyB0byB1bmRlcnN0YW5kIHRoYXQgTWV4aWNvIENpdHkgaXMgYW4gYXJjaGlwZWxhZ28gb2YgdG93bnMuIiwKICBleWVicm93X2VzOiAnQ295b2Fjw6FuIMK3IFN1ciBkZSBsYSBjaXVkYWQnLAogIGV5ZWJyb3dfZW46ICdDb3lvYWPDoW4gwrcgU291dGggb2YgdGhlIGNpdHknLAogIGR1cmF0aW9uX25vdGVfZXM6CiAgICAnUmVjb3JyaWRvIGRlIHVuYXMgY3VhdHJvIGhvcmFzIGNvbW8gZXN0aW1hY2nDs24uIExhIHNhbGlkYSBzZSBjb25maXJtYSBzb2xvIGNvbiBlbCBib2xldG8gZGUgbGEgQ2FzYSBBenVsIGFzZWd1cmFkbzsgZWwgbXVzZW8gY2llcnJhIGxvcyBsdW5lcy4nLAogIGR1cmF0aW9uX25vdGVfZW46CiAgICAnQSB3YWxrIG9mIGFib3V0IGZvdXIgaG91cnMgYXMgYW4gZXN0aW1hdGUuIFRoZSBkZXBhcnR1cmUgaXMgb25seSBjb25maXJtZWQgd2l0aCB0aGUgQmx1ZSBIb3VzZSB0aWNrZXQgc2VjdXJlZDsgdGhlIG11c2V1bSBjbG9zZXMgb24gTW9uZGF5cy4nLAogIGFjY2VudHM6IFsndGVycmFjb3RhJywgJ3RhbGF2ZXJhJ10sCiAgLy8gUHJlY2lvIGRlIGxhbnphbWllbnRvLCBlbiBwZXNvcywgY29uIGVsIGJvbGV0byBkZSBsYSBDYXNhIEF6dWwgaW5jbHVpZG8uCiAgcHJpY2U6IDg0OSwKICBoZXJvSW1hZ2U6IG51bGwsCiAgLy8gQ2FsaWZpY2FjaW9uOiBudWxsIG1pZW50cmFzIGVsIGpvdXJuZXkgbm8gdGVuZ2EgcmVzZcOxYXMuCiAgcmF0aW5nOiBudWxsLAogIHJldmlld0NvdW50OiAwLAogIG1vbWVudHM6IENPWU9BQ0FOX01PTUVOVFMsCn0K
+// MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
+/**
+ * Journey editorial: Coyoacán — La casa de Frida y el pueblo dentro de la ciudad.
+ *
+ * Séptimo journey del catálogo. A diferencia de los seis capítulos con
+ * componente dedicado, Coyoacán se renderiza con la presentación editorial
+ * genérica de pages/journeys/[slug].js, así que sus Moments viven en el
+ * registro de data/journeysData.js (campo `moments`) con el esquema
+ * title_es/title_en, intro_es/intro_en y steps con body_es/body_en.
+ *
+ * Fotografías: pendientes de verificación, `image: null` a propósito,
+ * igual que marca la convención del módulo de journeys.
+ *
+ * Nota operativa: la Casa Azul se recorre por cuenta propia; el relato
+ * del guía va antes de entrar (briefing) y al salir (cierre). Boletos
+ * solo en línea, con franja horaria; el museo cierra los lunes.
+ */
+
+const COYOACAN_MOMENTS = [
+  {
+    id: 'pueblo',
+    title_es: 'El pueblo que la ciudad se tragó',
+    title_en: 'The village the city swallowed',
+    intro_es:
+      'Coyoacán no empezó como una colonia de la Ciudad de México: empezó como un pueblo con nombre propio —"lugar de coyotes" en náhuatl— que la ciudad terminó rodeando. Los dos jardines gemelos, Centenario e Hidalgo, siguen funcionando como su sala de estar.',
+    intro_en:
+      'Coyoacán did not begin as a Mexico City neighbourhood: it began as a town with its own name —"place of coyotes" in Nahuatl— that the city eventually surrounded. The twin gardens, Centenario and Hidalgo, still work as its living room.',
+    image: null,
+    steps: [
+      {
+        title_es: 'Dos jardines, un pueblo',
+        title_en: 'Two gardens, one town',
+        body_es:
+          'El Jardín Centenario y el Jardín Hidalgo están separados por una calle y unidos por la costumbre: el kiosco, los portales, las nieves, las parejas, los vendedores de globos. Aquí el recorrido baja el ritmo a propósito. Antes de ver monumentos conviene ver esto: un pueblo que se niega a volverse ciudad aunque la ciudad lo rodea por los cuatro lados.',
+        body_en:
+          'Jardín Centenario and Jardín Hidalgo are separated by one street and joined by habit: the bandstand, the arcades, the ice-cream carts, the couples, the balloon sellers. Here the walk deliberately slows down. Before any monument, notice this: a town that refuses to become city even though the city surrounds it on all four sides.',
+        observe_es: [
+          'La fuente de los coyotes, el símbolo del barrio',
+          'Los portales y sus cafés, ocupados a cualquier hora',
+          'El kiosco como centro social, no como decoración',
+        ],
+        observe_en: [
+          'The coyote fountain, the emblem of the neighbourhood',
+          'The arcades and their cafés, busy at any hour',
+          'The bandstand as a social centre, not decoration',
+        ],
+        image: null,
+      },
+      {
+        title_es: 'La sede de Cortés',
+        title_en: "Cortés's headquarters",
+        body_es:
+          'Tras la caída de Tenochtitlan en 1521, Hernán Cortés se instaló en Coyoacán mientras se reconstruía la capital sobre las ruinas mexicas. Aquí funcionó el primer ayuntamiento de la Nueva España y aquí se tomaron decisiones que redibujaron un continente. El pueblo "periférico" fue, por unos años, el centro del poder.',
+        body_en:
+          "After the fall of Tenochtitlan in 1521, Hernán Cortés settled in Coyoacán while the capital was rebuilt over the Mexica ruins. The first city council of New Spain worked here, and decisions that redrew a continent were taken here. The 'peripheral' town was, for a few years, the centre of power.",
+        observe_es: [
+          'La escala baja y doméstica de las construcciones coloniales',
+          'Los nombres de las calles: santos, héroes y oficios',
+        ],
+        observe_en: [
+          'The low, domestic scale of the colonial buildings',
+          'Street names: saints, heroes and trades',
+        ],
+        image: null,
+      },
+    ],
+  },
+  {
+    id: 'parroquia',
+    title_es: 'La parroquia y el convento',
+    title_en: 'The parish church and the convent',
+    intro_es:
+      'La parroquia de San Juan Bautista es una de las iglesias más antiguas de México continental, levantada por franciscanos en el siglo XVI sobre el antiguo centro ceremonial de Coyoacán. El relato se cuenta en el atrio; adentro, silencio: es una iglesia viva, no una pieza de museo.',
+    intro_en:
+      "The parish church of San Juan Bautista is one of the oldest churches on the Mexican mainland, raised by Franciscans in the 16th century over Coyoacán's old ceremonial centre. The story is told in the atrium; inside, silence: it is a living church, not a museum piece.",
+    image: null,
+    steps: [
+      {
+        title_es: 'Piedra sobre piedra',
+        title_en: 'Stone upon stone',
+        body_es:
+          'El templo y su antiguo convento dominicano-franciscano se construyeron con la piedra del mundo anterior, una práctica literal en todo el centro de México: el nuevo orden se edificó con los bloques del viejo. La portada plateresca y los murales del interior, restaurados en el siglo XX, cuentan esa superposición mejor que cualquier placa.',
+        body_en:
+          "The church and its old convent were built with stone from the world before, a literal practice across central Mexico: the new order was raised with the old world's blocks. The Plateresque façade and the murals inside, restored in the 20th century, tell that layering better than any plaque.",
+        observe_es: [
+          'Los bloques reutilizados en los muros exteriores',
+          'La cruz del atrio, pensada para evangelizar a cielo abierto',
+          'La vida parroquial de hoy: bodas, misas, vendedores en la puerta',
+        ],
+        observe_en: [
+          'Reused blocks in the exterior walls',
+          'The atrium cross, meant for open-air evangelisation',
+          "Today's parish life: weddings, masses, sellers at the door",
+        ],
+        image: null,
+      },
+    ],
+  },
+  {
+    id: 'casa-azul',
+    title_es: 'La Casa Azul',
+    title_en: 'The Blue House',
+    intro_es:
+      'En la calle de Londres 247 está la casa donde Frida Kahlo nació, vivió con Diego Rivera y murió. No es un museo montado en una casa: es una casa que se quedó detenida, con sus camas, su cocina de talavera y su jardín. La visita se hace por cuenta propia; nuestro trabajo es llegar con los boletos resueltos y saber qué buscar adentro.',
+    intro_en:
+      "At Londres 247 stands the house where Frida Kahlo was born, lived with Diego Rivera and died. It is not a museum installed in a house: it is a house that stopped in time, with its beds, its Talavera-tiled kitchen and its garden. The visit is self-paced; our job is to arrive with the tickets solved and to know what to look for inside.",
+    image: null,
+    steps: [
+      {
+        title_es: 'El boleto que se acaba',
+        title_en: 'The ticket that sells out',
+        body_es:
+          'La Casa Azul vende sus boletos solo en línea y con franja horaria; en temporada alta se agotan con una o dos semanas de anticipación y el museo cierra los lunes. Por eso este journey se confirma únicamente con el boleto asegurado: es la parte que el visitante no quiere resolver solo, y es la parte que nosotros resolvemos.',
+        body_en:
+          'The Blue House sells its tickets online only, in timed slots; in high season they sell out one to two weeks ahead, and the museum closes on Mondays. That is why this journey is only confirmed with the ticket secured: it is the part visitors least want to solve alone, and it is the part we solve.',
+        observe_es: [
+          'La fila de quienes llegan sin boleto, a la vuelta de la esquina',
+          'La fachada azul cobalto, inconfundible desde la calle',
+        ],
+        observe_en: [
+          'The line of people who arrive without a ticket, around the corner',
+          'The cobalt-blue façade, unmistakable from the street',
+        ],
+        image: null,
+      },
+      {
+        title_es: 'Qué buscar adentro (briefing)',
+        title_en: 'What to look for inside (briefing)',
+        body_es:
+          'Antes de entrar, el briefing: la cocina de azulejo con las ollas de barro y los nombres de Frida y Diego en la pared; el estudio unido por un puente, con la silla de ruedas frente al caballete; las camas —la de noche y la de día—; la colección de exvotos y arte popular que alimentaba su pintura; y en el jardín, la pirámide escalonada que Diego mandó construir para su colección prehispánica. Al salir, cerramos en un café: la casa se entiende mejor conversada.',
+        body_en:
+          "Before going in, the briefing: the tiled kitchen with its clay pots and Frida and Diego's names on the wall; the studio joined by a bridge, with the wheelchair before the easel; the beds —the night bed and the day bed—; the ex-voto and folk-art collection that fed her painting; and in the garden, the stepped pyramid Diego had built for his pre-Hispanic collection. Afterwards we close over coffee: the house is best understood in conversation.",
+        observe_es: [
+          'Los exvotos: Frida coleccionaba el arte que la coleccionaba a ella',
+          'El espejo sobre la cama, para pintarse acostada',
+          'Los últimos cuadros: las sandías de "Viva la Vida"',
+        ],
+        observe_en: [
+          'The ex-votos: Frida collected the art that collected her',
+          'The mirror above the bed, for painting lying down',
+          'The last paintings: the "Viva la Vida" watermelons',
+        ],
+        image: null,
+      },
+      {
+        title_es: 'A unas calles: Trotsky',
+        title_en: 'A few streets away: Trotsky',
+        body_es:
+          'El barrio guardaba a otro exiliado famoso. León Trotsky vivió primero en la Casa Azul y luego en su casa-fortaleza de la calle Viena, donde fue asesinado en 1940. Si el tiempo y el grupo lo piden, el Museo Casa de León Trotsky queda a unas calles y completa el mapa de la Coyoacán refugio de exilios.',
+        body_en:
+          "The neighbourhood sheltered another famous exile. Leon Trotsky lived first at the Blue House and later in his fortress-house on Viena street, where he was murdered in 1940. If time and the group allow, the Leon Trotsky House Museum is a few streets away and completes the map of Coyoacán as a refuge for exiles.",
+        observe_es: ['Las marcas del atentado en los muros de la casa de Viena'],
+        observe_en: ['The bullet marks on the walls of the Viena house'],
+        image: null,
+      },
+    ],
+  },
+  {
+    id: 'mercado',
+    title_es: 'El mercado y los sabores',
+    title_en: 'The market and the flavours',
+    intro_es:
+      'El Mercado de Coyoacán es la cocina del pueblo: quesadillas, tostadas famosas en todo el sur de la ciudad, aguas frescas y puestos de dulces. Aquí el recorrido se come. Y de postre, los churros del jardín y el café de El Jarocho, institución coyoacanense desde 1953.',
+    intro_en:
+      "Coyoacán Market is the town's kitchen: quesadillas, tostadas famous across the south of the city, fresh fruit waters and sweet stalls. Here the walk is eaten. And for dessert, the churros by the garden and coffee at El Jarocho, a Coyoacán institution since 1953.",
+    image: null,
+    steps: [
+      {
+        title_es: 'Comer como vecino',
+        title_en: 'Eating like a neighbour',
+        body_es:
+          'La regla del mercado es mirar dónde comen los de aquí. Las tostadas de pata, tinga y mariscos mueven filas enteras; las quesadillas abren el debate eterno de la ciudad —en la capital, la quesadilla puede ir sin queso— y las aguas de horchata y jamaica cierran el trato. Comer en el mercado no es una pausa del recorrido: es el recorrido.',
+        body_en:
+          "The market's rule is to watch where the locals eat. The tostadas —pata, tinga, seafood— draw whole lines; the quesadillas open the city's eternal debate —in the capital, a quesadilla may come without cheese— and the horchata and hibiscus waters seal the deal. Eating at the market is not a break from the walk: it is the walk.",
+        observe_es: [
+          'Los puestos con más fila de vecinos, no de turistas',
+          'Los precios escritos a mano: aquí se come con poco',
+          'La sección de dulces típicos y piñatas',
+        ],
+        observe_en: [
+          'The stalls with lines of neighbours, not tourists',
+          'Handwritten prices: here you eat well for little',
+          'The traditional sweets and piñata section',
+        ],
+        image: null,
+      },
+      {
+        title_es: 'Churros y café de olla',
+        title_en: 'Churros and café de olla',
+        body_es:
+          'El cierre dulce es en el jardín: churros recién hechos con chocolate y una banca para ver pasar el pueblo. Si el grupo es de café, El Jarocho sirve desde 1953 a estudiantes, escritores y vecinos en la misma esquina. Coyoacán se despide como se presentó: sentado en su sala de estar.',
+        body_en:
+          "The sweet close is in the garden: fresh churros with chocolate and a bench to watch the town go by. If the group runs on coffee, El Jarocho has served students, writers and neighbours on the same corner since 1953. Coyoacán says goodbye as it introduced itself: sitting in its living room.",
+        observe_es: ['El ritual de la banca: nadie tiene prisa en Coyoacán'],
+        observe_en: ["The bench ritual: nobody is in a hurry in Coyoacán"],
+        image: null,
+      },
+    ],
+  },
+  {
+    id: 'calles',
+    title_es: 'Calles de escritores',
+    title_en: 'Streets of writers',
+    intro_es:
+      'Coyoacán fue refugio de escritores, pintores y exiliados, y sus calles empedradas guardan las casas. La calle Francisco Sosa, con sus casonas y su puente, es de las más hermosas de la ciudad; el Callejón del Aguacate guarda la leyenda que todo vecino conoce y ningún historiador confirma.',
+    intro_en:
+      "Coyoacán was a refuge for writers, painters and exiles, and its cobbled streets keep their houses. Francisco Sosa street, with its old homes and its bridge, is among the city's most beautiful; the Callejón del Aguacate keeps the legend every neighbour knows and no historian confirms.",
+    image: null,
+    steps: [
+      {
+        title_es: 'La "casa de Cortés" que no es de Cortés',
+        title_en: 'The "house of Cortés" that is not Cortés\'s',
+        body_es:
+          'Sobre el Jardín Centenario se levanta un edificio que la tradición popular llama desde hace siglos la Casa de Hernán Cortés. El problema: se construyó en el siglo XVIII, doscientos años después. El mito vale oro porque enseña cómo funciona la memoria de un pueblo: a veces importa menos quién vivió en la casa que el hecho de que el barrio decidió recordarla así.',
+        body_en:
+          "Overlooking Jardín Centenario stands a building popular tradition has called the House of Hernán Cortés for centuries. The problem: it was built in the 18th century, two hundred years too late. The myth is gold because it shows how a town's memory works: sometimes who lived in the house matters less than the fact that the neighbourhood chose to remember it that way.",
+        observe_es: [
+          'El escudo y la placa que alimentan el mito',
+          'La diferencia entre la fecha del edificio y la fecha de la leyenda',
+        ],
+        observe_en: [
+          'The coat of arms and plaque that feed the myth',
+          'The gap between the building\'s date and the legend\'s date',
+        ],
+        image: null,
+      },
+      {
+        title_es: 'Cierre: el pueblo dentro de la ciudad',
+        title_en: 'Close: the village inside the city',
+        body_es:
+          'El recorrido termina donde empezó, en los jardines, con la idea completa: la Ciudad de México no es una ciudad, es un archipiélago de pueblos que la mancha urbana fue uniendo. Coyoacán es el más famoso de esos pueblos, pero la misma lectura sirve para el Centro, para Jamaica, para todo el mapa de Calpulli: cada barrio —cada calpulli— guarda su propio centro del mundo.',
+        body_en:
+          'The walk ends where it began, in the gardens, with the whole idea: Mexico City is not one city, it is an archipelago of towns that the urban sprawl stitched together. Coyoacán is the most famous of those towns, but the same reading works for the Centro, for Jamaica, for the whole Calpulli map: every neighbourhood —every calpulli— keeps its own centre of the world.',
+        observe_es: ['La distancia entre Coyoacán y el Zócalo: otra ciudad, la misma ciudad'],
+        observe_en: ['The distance between Coyoacán and the Zócalo: another city, the same city'],
+        image: null,
+      },
+    ],
+  },
+]
+
+export const COYOACAN_JOURNEY = {
+  id: 'coyoacan',
+  slug: 'coyoacan',
+  experience: 'coyoacan',
+  title_es: 'Coyoacán — La casa de Frida y el pueblo dentro de la ciudad',
+  title_en: "Coyoacán — Frida's House and the Village Inside the City",
+  subtitle_es:
+    'El pueblo que la ciudad rodeó sin tragárselo: la Casa Azul de Frida Kahlo, su parroquia del siglo XVI, su mercado y sus calles de escritores.',
+  subtitle_en:
+    "The village the city surrounded without swallowing: Frida Kahlo's Blue House, its 16th-century parish, its market and its writers' streets.",
+  intro_es:
+    'Coyoacán se recorre como un pueblo, no como una colonia: dos jardines que son una sala de estar, una parroquia de quinientos años, la casa más famosa de México con su boleto resuelto de antemano, un mercado que se come caminando y las calles donde se refugiaron escritores y exiliados. Cuatro horas para entender que la Ciudad de México es un archipiélago de pueblos.',
+  intro_en:
+    "Coyoacán is walked like a village, not a neighbourhood: two gardens that work as a living room, a five-hundred-year-old parish, Mexico's most famous house with its ticket solved in advance, a market you eat as you walk, and the streets where writers and exiles took refuge. Four hours to understand that Mexico City is an archipelago of towns.",
+  eyebrow_es: 'Coyoacán · Sur de la ciudad',
+  eyebrow_en: 'Coyoacán · South of the city',
+  duration_note_es:
+    'Recorrido de unas cuatro horas como estimación. La salida se confirma solo con el boleto de la Casa Azul asegurado; el museo cierra los lunes.',
+  duration_note_en:
+    'A walk of about four hours as an estimate. The departure is only confirmed with the Blue House ticket secured; the museum closes on Mondays.',
+  accents: ['terracota', 'talavera'],
+  // Precio de lanzamiento, en pesos, con el boleto de la Casa Azul incluido.
+  price: 849,
+  heroImage: null,
+  // Calificacion: null mientras el journey no tenga reseñas.
+  rating: null,
+  reviewCount: 0,
+  moments: COYOACAN_MOMENTS,
+}
