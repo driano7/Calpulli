@@ -392,8 +392,64 @@ function moneyFmt(n) {
  * nunca calculados por el modelo. La reserva se confirma contra
  * /api/bookings/cash (efectivo) — sin Stripe en este flujo.
  */
-function QuoteCard({ action, isEs }) {
+function QuoteCard({ action, isEs, onBooked }) {
+  const [stage, setStage] = useState('idle') // idle | form | sending | done
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [date, setDate] = useState(action?.date || '')
+  const [errorMsg, setErrorMsg] = useState('')
+  const [bookingRef, setBookingRef] = useState('')
+
   if (!action || action.type !== 'quote') return null
+
+  const phoneDigits = phone.replace(/\D/g, '')
+  const canConfirm =
+    stage === 'form' && name.trim().length >= 2 && phoneDigits.length >= 10 && /^\d{4}-\d{2}-\d{2}$/.test(date)
+
+  const confirmBooking = async () => {
+    if (!canConfirm) return
+    setStage('sending')
+    setErrorMsg('')
+    try {
+      const res = await fetch('/api/bookings/cash', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: [
+            {
+              experienceId: action.experienceId,
+              date,
+              peopleCount: action.guests,
+              participantNames: [name.trim()],
+            },
+          ],
+          customerName: name.trim(),
+          customerPhone: phone.trim(),
+          locale: isEs ? 'es' : 'en',
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      const booking = Array.isArray(data.bookings) ? data.bookings[0] : null
+      if (!res.ok || !booking?.bookingReference) {
+        setErrorMsg(
+          data.error ||
+            (isEs ? 'No pudimos guardar la reserva. Intenta de nuevo.' : 'We could not save the booking. Please try again.')
+        )
+        setStage('form')
+        return
+      }
+      setBookingRef(booking.bookingReference)
+      setStage('done')
+      if (typeof onBooked === 'function') onBooked(action, booking)
+    } catch {
+      setErrorMsg(isEs ? 'Sin conexión. Revisa tu internet e intenta otra vez.' : 'No connection. Check your internet and try again.')
+      setStage('form')
+    }
+  }
+
+  const inputCls =
+    'w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-orange-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100'
+
   return (
     <div className="w-full max-w-[86%] rounded-2xl border border-orange-200 bg-orange-50/70 px-4 py-3 text-sm text-zinc-900 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-zinc-100">
       <p className="font-bold">{action.title}</p>
@@ -424,6 +480,81 @@ function QuoteCard({ action, isEs }) {
           ? 'Precio real del sitio. Pagas en efectivo en el punto de encuentro.'
           : 'Real site price. You pay in cash at the meeting point.'}
       </p>
+
+      {stage === 'done' ? (
+        <p className="mt-2 rounded-xl bg-emerald-100 px-3 py-2 text-[13px] font-semibold text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-200">
+          {isEs
+            ? `✅ Reserva confirmada · Folio ${bookingRef}. Te confirmamos por WhatsApp.`
+            : `✅ Booking confirmed · Reference ${bookingRef}. We will confirm on WhatsApp.`}
+        </p>
+      ) : stage === 'idle' ? (
+        <button
+          type="button"
+          onClick={() => setStage('form')}
+          className="mt-2.5 w-full rounded-full bg-gradient-to-br from-orange-500 to-pink-600 px-4 py-2 text-[13px] font-bold text-white shadow transition-opacity hover:opacity-90"
+        >
+          {isEs ? 'Reservar aquí mismo' : 'Book right here'}
+        </button>
+      ) : (
+        <div className="mt-2.5 space-y-2">
+          <label className="block">
+            <span className="mb-1 block text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+              {isEs ? 'Fecha del journey' : 'Journey date'}
+            </span>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+              {isEs ? 'Nombre de quien reserva' : 'Name of the person booking'}
+            </span>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={isEs ? 'Tu nombre' : 'Your name'}
+              autoComplete="name"
+              className={inputCls}
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+              {isEs ? 'Tu WhatsApp (para confirmarte)' : 'Your WhatsApp (to confirm with you)'}
+            </span>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+52 55 0000 0000"
+              autoComplete="tel"
+              className={inputCls}
+            />
+          </label>
+          {errorMsg && (
+            <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-300">
+              {errorMsg}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={confirmBooking}
+            disabled={!canConfirm || stage === 'sending'}
+            className="w-full rounded-full bg-gradient-to-br from-orange-500 to-pink-600 px-4 py-2 text-[13px] font-bold text-white shadow transition-opacity hover:opacity-90 disabled:opacity-40"
+          >
+            {stage === 'sending'
+              ? isEs
+                ? 'Reservando…'
+                : 'Booking…'
+              : isEs
+              ? `Confirmar reserva · ${moneyFmt(action.total)} en efectivo`
+              : `Confirm booking · ${moneyFmt(action.total)} in cash`}
+          </button>
+          <p className="text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+            {isEs
+              ? 'Sin pago en línea: apartas aquí y pagas en efectivo al llegar. La confirmación final llega por WhatsApp.'
+              : 'No online payment: you hold your spot here and pay in cash when you arrive. Final confirmation comes on WhatsApp.'}
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -433,7 +564,7 @@ function QuoteCard({ action, isEs }) {
  * Mientras `isStreaming` es true, el texto se muestra con un cursor parpadeante.
  * Al terminar, se renderiza como RichText completo.
  */
-function AssistantBubble({ content, isStreaming, action, isEs }) {
+function AssistantBubble({ content, isStreaming, action, isEs, onBooked }) {
   return (
     <div className="flex flex-col items-start gap-2">
       <motion.div
@@ -451,7 +582,7 @@ function AssistantBubble({ content, isStreaming, action, isEs }) {
           <RichText text={content} />
         )}
       </motion.div>
-      {!isStreaming && action ? <QuoteCard action={action} isEs={isEs} /> : null}
+      {!isStreaming && action ? <QuoteCard action={action} isEs={isEs} onBooked={onBooked} /> : null}
     </div>
   )
 }
@@ -777,6 +908,29 @@ export default function ChatbotAssistant() {
     }
   }, [])
 
+  // Mensaje de confirmación cuando la tarjeta crea la reserva (efectivo).
+  const handleBooked = useCallback(
+    (action, booking) => {
+      const ref = booking?.bookingReference || ''
+      const content = isEs
+        ? `✅ ¡Listo! Tu reserva de **${action.title}** quedó apartada con el folio **${ref}**. Pagas ${moneyFmt(
+            action.total
+          )} en efectivo en el punto de encuentro y te confirmamos los detalles por WhatsApp. ¿Te ayudo con algo más?`
+        : `✅ Done! Your **${action.title}** booking is held under reference **${ref}**. You pay ${moneyFmt(
+            action.total
+          )} in cash at the meeting point and we will confirm the details on WhatsApp. Anything else I can help with?`
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `a-booked-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          role: 'assistant',
+          content,
+        },
+      ])
+    },
+    [isEs]
+  )
+
   const handleSubmit = (event) => {
     event.preventDefault()
     sendMessage(input)
@@ -925,6 +1079,7 @@ export default function ChatbotAssistant() {
                     isStreaming={streaming && msg.id === streamingMsgId}
                     action={msg.action || null}
                     isEs={isEs}
+                    onBooked={handleBooked}
                   />
                 ) : (
                   <div key={msg.id} className="flex justify-end">
