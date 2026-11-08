@@ -74,7 +74,7 @@ https://donovan-amx.vercel.app/journeys/coyoacan
 All journeys: https://donovan-amx.vercel.app/journeys
 
 Good to know: every journey is a walking journey in English or Spanish, in small
-groups (capped at 10 guests). Prices are launch prices in Mexican pesos (MXN) per
+groups (capped at 20 guests). Prices are launch prices in Mexican pesos (MXN) per
 person. The meeting point for each journey is confirmed on booking. Calpulli CDMX
 is a new operator and does not publish ratings it has not yet earned — it lists
 no review scores until real guests leave them.
