@@ -1,4 +1,21 @@
-import { supabase } from '@/lib/supabase'
+// MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
+// /api/tours/experiences — Experiencias desde Turso (sin Supabase)
+// avg_rating / review_count se calculan desde la tabla reviews de Turso;
+// highlights_* viven como JSON en texto y se parsean aquí.
+import { turso } from '@/lib/turso'
+
+function parseHighlights(value) {
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed : [value]
+    } catch {
+      return [value]
+    }
+  }
+  return []
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -9,59 +26,45 @@ export default async function handler(req, res) {
     const { category, featured, limit, locale } = req.query
     const currentLocale = locale || 'en'
 
-    let query = supabase
-      .from('experiences')
-      .select(
-        `
-        id,
-        title_en,
-        title_es,
-        description_en,
-        description_es,
-        price,
-        duration_hours,
-        max_guests,
-        image_url,
-        location_en,
-        location_es,
-        highlights_en,
-        highlights_es,
-        is_featured,
-        avg_rating,
-        review_count,
-        category_id,
-        tour_categories!inner (
-          slug,
-          name_en,
-          name_es,
-          icon_name
-        )
-      `
-      )
-      .eq('is_active', true)
+    const conditions = ['e."isActive" = 1']
+    const args = []
 
     if (category) {
-      query = query.eq('tour_categories.slug', category)
+      conditions.push('c.slug = ?')
+      args.push(String(category))
     }
 
     if (featured === 'true') {
-      query = query.eq('is_featured', true)
+      conditions.push('e."isFeatured" = 1')
     }
+
+    let sql = `SELECT e.id, e.title_en, e.title_es, e.description_en, e.description_es,
+                      e.price, e.duration_hours, e.max_guests, e.image_url,
+                      e.location_en, e.location_es, e.highlights_en, e.highlights_es,
+                      e."isFeatured", e.category_id,
+                      c.slug AS cat_slug, c.name_en AS cat_name_en,
+                      c.name_es AS cat_name_es, c.icon_name AS cat_icon,
+                      COALESCE(r.avg_rating, 0) AS avg_rating,
+                      COALESCE(r.review_count, 0) AS review_count
+               FROM experiences e
+               JOIN tour_categories c ON c.id = e.category_id
+               LEFT JOIN (
+                 SELECT experience_id, AVG(rating) AS avg_rating, COUNT(*) AS review_count
+                 FROM reviews
+                 WHERE "isPublished" = 1
+                 GROUP BY experience_id
+               ) r ON r.experience_id = e.id
+               WHERE ${conditions.join(' AND ')}
+               ORDER BY e."createdAt" DESC`
 
     if (limit) {
-      query = query.limit(parseInt(limit, 10))
+      sql += ' LIMIT ?'
+      args.push(parseInt(limit, 10))
     }
 
-    query = query.order('created_at', { ascending: false })
+    const { rows } = await turso.execute({ sql, args })
 
-    const { data, error } = await query
-
-    if (error) {
-      console.error('[API] experiences error:', error)
-      return res.status(500).json({ error: error.message })
-    }
-
-    const experiences = data.map((exp) => ({
+    const experiences = rows.map((exp) => ({
       id: exp.id,
       title: currentLocale === 'es' ? exp.title_es : exp.title_en,
       description: currentLocale === 'es' ? exp.description_es : exp.description_en,
@@ -70,16 +73,15 @@ export default async function handler(req, res) {
       maxGuests: exp.max_guests,
       imageUrl: exp.image_url,
       location: currentLocale === 'es' ? exp.location_es : exp.location_en,
-      highlights: currentLocale === 'es' ? exp.highlights_es : exp.highlights_en,
-      isFeatured: exp.is_featured,
+      highlights: parseHighlights(currentLocale === 'es' ? exp.highlights_es : exp.highlights_en),
+      isFeatured: Number(exp.isFeatured) === 1,
       avgRating: Number(exp.avg_rating),
-      reviewCount: exp.review_count,
-      category: exp.tour_categories
+      reviewCount: Number(exp.review_count),
+      category: exp.cat_slug
         ? {
-            slug: exp.tour_categories.slug,
-            name:
-              currentLocale === 'es' ? exp.tour_categories.name_es : exp.tour_categories.name_en,
-            icon: exp.tour_categories.icon_name,
+            slug: exp.cat_slug,
+            name: currentLocale === 'es' ? exp.cat_name_es : exp.cat_name_en,
+            icon: exp.cat_icon,
           }
         : null,
     }))
