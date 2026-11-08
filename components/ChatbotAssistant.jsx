@@ -470,14 +470,14 @@ function QuoteCard({ action, isEs, onBooked }) {
           </div>
         )}
         <div className="flex justify-between gap-3">
-          <dt className="text-zinc-500 dark:text-zinc-400">{isEs ? 'Personas' : 'People'}</dt>
-          <dd className="font-medium">{action.guests}</dd>
-        </div>
-        <div className="flex justify-between gap-3">
           <dt className="text-zinc-500 dark:text-zinc-400">
             {isEs ? 'Precio por persona' : 'Per person'}
           </dt>
           <dd className="font-medium">{moneyFmt(action.unitPrice)}</dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="text-zinc-500 dark:text-zinc-400">{isEs ? 'Personas' : 'People'}</dt>
+          <dd className="font-medium">{action.guests}</dd>
         </div>
         <div className="flex justify-between gap-3 border-t border-orange-200/70 pt-1 dark:border-orange-500/20">
           <dt className="font-semibold">{isEs ? 'Total' : 'Total'}</dt>
@@ -978,10 +978,10 @@ export default function ChatbotAssistant() {
     if (!q || bookedRef.current || captureOfferedRef.current || !q.whatsappUrl) return false
     captureOfferedRef.current = true
     const content = isEs
-      ? `Antes de que te vayas: ¿te mando los detalles por WhatsApp? Tu cotización de **${q.title}** (${moneyFmt(
+      ? `Antes de que te vayas: ¿te mando los detalles por WhatsApp? Tu cotización de **${q.title}** (${moneyFmt(q.unitPrice)} por persona · total: ${moneyFmt(
           q.total
         )}) ya va escrita en el mensaje y te contesta una persona del equipo: [mandármelo por WhatsApp](${q.whatsappUrl})`
-      : `Before you go: shall I send you the details on WhatsApp? Your **${q.title}** quote (${moneyFmt(
+      : `Before you go: shall I send you the details on WhatsApp? Your **${q.title}** quote (${moneyFmt(q.unitPrice)} per person · total: ${moneyFmt(
           q.total
         )}) is already written into the message and a person from the team will reply: [send it to me on WhatsApp](${q.whatsappUrl})`
     setMessages((prev) => [
