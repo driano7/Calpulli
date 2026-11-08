@@ -1,173 +1,105 @@
 # Calpulli CDMX — Full Index for LLMs and AI Agents
 
-> Calpulli CDMX ("Mexico's Calpulli CDMX") runs small-group, local-led tours in Mexico City (CDMX):
+> Calpulli CDMX runs small-group, local-led walking journeys in Mexico City (CDMX):
 > street food, history, neighborhoods and museums. Curated experiences, zero tourist traps.
-> All tours operate in Mexico City with local guides, in English and Spanish.
+> "Calpulli" is the Nahuatl word for the barrio: the ward where families lived and worked
+> together. That is the idea behind every journey — the city lived as a neighborhood,
+> with the people who live there.
+> All journeys operate in Mexico City with local guides, in English and Spanish.
 
-Official site: https://calpulli-cdmx.com
+Official site: https://donovan-amx.vercel.app
 Contact (WhatsApp): https://wa.me/525512291607
 Email: dnvn@duck.com
-Instagram: https://www.instagram.com/donovan_amx/
+Instagram: https://www.instagram.com/calpullicdmx/
 
-## Scope
+## Journeys (bookable, launch prices in MXN per person)
 
-- Geographic: Mexico City (CDMX) only. No other cities or countries.
-- Languages: English and Spanish (all tours, guides and maps).
-- Entity types: Tours (bookable), Self-guided walks (free), Interactive maps (free), Local picks (monthly editorial).
-- Not covered: restaurants, hotels, events, metro stations, booking engine, payments.
+### Luchas: Lucha Libre Night — $999 MXN
+Evening experience, small group. Two variants chosen by the guest:
+A) Arena Mexico (Dr. Lavista, colonia Doctores): the big house of lucha libre and its
+Friday card. B) Arena Coliseo (Peru 77, Historic Center): lucha in its urban context,
+with the San Juan market, the Blue Demon Jr. gallery and pozole at Casa de Tono before
+the show. The value is the insider reading of the show plus the entry logistics:
+arena ticket and entry logistics included.
+https://donovan-amx.vercel.app/journeys/luchas
 
-## Main sections (canonical URLs)
+### Centro Historico: El futuro se pinto aqui — $699 MXN
+Walking journey, small group. The Historic Center as a city built over a lake city:
+the Alameda (a tianguis that became a park), the Zocalo, Madero street and the murals
+of the Palacio de Bellas Artes (Rivera and Orozco). History you can still stand on.
+https://donovan-amx.vercel.app/journeys/centro
 
-- Home: https://calpulli-cdmx.com/
-- Tours index: https://calpulli-cdmx.com/tours
-- Self-guided walks: https://calpulli-cdmx.com/guides
-- Interactive maps: https://calpulli-cdmx.com/maps
-- Local picks (monthly): https://calpulli-cdmx.com/local
-- Blog: https://calpulli-cdmx.com/blog
-- About: https://calpulli-cdmx.com/about
-- Contact: https://calpulli-cdmx.com/contact
+### National Museum of Anthropology Masterclass — $849 MXN
+Museum journey, small group. The Museo Nacional de Antropologia read piece by piece:
+the Aztec Calendar, Dualidad, the Codice Boturini, the Teotihuacan hall, the ballgame
+and the Tzompantli — a masterclass, not a rush past the glass.
+https://donovan-amx.vercel.app/journeys/antropologia
 
-## Tours (bookable, prices in USD per person)
+### Chapultepec: De los Dioses a Emperadores — $849 MXN
+Walking journey, small group. The Bosque de Chapultepec from the gods to the emperors:
+the Puerta de los Leones, the Ninos Heroes, the Castle (Museo Nacional de Historia),
+the Banos de Moctezuma and the Audiorama — five centuries in one forest.
+https://donovan-amx.vercel.app/journeys/chapultepec
 
-1. Street Food Secrets of the Historic Center — gastronomy, 3h, max 8, $65
-   https://calpulli-cdmx.com/tours/1
-   Eat your way through CDMX with a local foodie: tacos, tlacoyos, tamales and exotic market bites.
+### Jamaica: mirar mas alla de las flores — $649 MXN
+Market journey, small group. The Mercado de Jamaica beyond the flowers: the concrete
+umbrella roof, the producers associations, the trades behind every bouquet and the
+life around the market. Six moments, ending with a participative bouquet moment.
+https://donovan-amx.vercel.app/journeys/jamaica
 
-2. Mole & Chocolate Cooking Class in Coyoacán — gastronomy, 4h, max 6, $95
-   https://calpulli-cdmx.com/tours/2
-   Hands-on cooking class in a Coyoacán kitchen: mole, chocolate and traditional techniques.
+### Roma & Condesa: la ciudad que se puso de moda — $649 MXN
+Walking journey, 3.5 hours, small group. Five moments: La Romita (the city that was
+already there), Roma (the city that wanted to be modern), Alvaro Obregon (the barrio
+that changes value), Hipodromo (walking a different geometry) and Parque Mexico
+(the city as shared space).
+https://donovan-amx.vercel.app/journeys/roma
 
-3. Mezcal & Pulque Tasting: The Drinks of Old Mexico — gastronomy, 3h, max 10, $85
-   https://calpulli-cdmx.com/tours/3
-   Guided tasting of mezcal and pulque with a local expert: history, production and pairing.
-
-4. Templo Mayor & the Aztec Underworld — history, 4h, max 8, $120
-   https://calpulli-cdmx.com/tours/4
-   Explore the Aztec Templo Mayor ruins and museum with an archaeologist guide.
-
-5. Palacio de Bellas Artes & the Muralists — history, 3h, max 10, $90
-   https://calpulli-cdmx.com/tours/5
-   Murals by Rivera, Orozco and Siqueiros inside the iconic Palacio de Bellas Artes.
-
-6. Chapultepec Castle & Reforma Avenue — history, 5h, max 10, $110
-   https://calpulli-cdmx.com/tours/6
-   Chapultepec Castle, Reforma Avenue landmarks and the story of modern Mexico City.
-
-7. Coyoacán: Frida, Diego & the Bohemian Soul — neighborhoods, 5h, max 8, $98
-   https://calpulli-cdmx.com/tours/7
-   Frida Kahlo Museum, Diego Rivera's studio and the bohemian streets of Coyoacán.
-
-8. Roma & Condesa: Art Deco and Café Culture — neighborhoods, 3h, max 10, $75
-   https://calpulli-cdmx.com/tours/8
-   Art Deco architecture, specialty coffee and the creative neighborhoods of Roma and Condesa.
-
-9. Xochimilco: Trajineras & Floating Gardens — neighborhoods, 4h, max 12, $80
-   https://calpulli-cdmx.com/tours/9
-   Ride a trajinera through the ancient canals and floating gardens of Xochimilco.
-
-10. National Museum of Anthropology Masterclass — museums, 3h, max 8, $85
-    https://calpulli-cdmx.com/tours/10
-    Guided visit to the National Museum of Anthropology with an art historian.
-
-11. Modern Art & the Tamayo Collection — museums, 3h, max 8, $75
-    https://calpulli-cdmx.com/tours/11
-    Tamayo Museum and modern art in Chapultepec with a local art expert.
-
-12. MUAC & Contemporary Art Circuit — museums, 3h, max 8, $80
-    https://calpulli-cdmx.com/tours/12
-    MUAC (University Museum of Contemporary Art) and the UNAM cultural circuit.
-
-All tours: https://calpulli-cdmx.com/tours
-Small groups only. Museum entries included where stated on each tour page. Tours run rain or shine unless stated otherwise.
+All journeys: https://donovan-amx.vercel.app/journeys
+Small groups only. Prices are launch prices in Mexican pesos (MXN) per person; the
+site charges in MXN. Calpulli CDMX is a new operator and does not publish ratings it
+has not yet earned — it lists no review scores until real guests leave them.
 
 ## Self-guided walks (free, 60-90 min each)
 
-- Condesa on foot (Art Deco & jacarandas): https://calpulli-cdmx.com/guides/condesa-a-pie
-- Historic Center palaces (400 years in 1 km): https://calpulli-cdmx.com/guides/centro-palacios
-- Chapultepec water, forest & murals: https://calpulli-cdmx.com/guides/chapultepec-agua
-- Chimalistac stone bridges: https://calpulli-cdmx.com/guides/chimalistac-puentes
-- UNAM stone murals: https://calpulli-cdmx.com/guides/unam-murales
-- All guides: https://calpulli-cdmx.com/guides
+- Condesa on foot (Art Deco & jacarandas): https://donovan-amx.vercel.app/guides/condesa-a-pie
+- Historic Center palaces (400 years in 1 km): https://donovan-amx.vercel.app/guides/centro-palacios
+- Chapultepec water, forest & murals: https://donovan-amx.vercel.app/guides/chapultepec-agua
+- Chimalistac stone bridges: https://donovan-amx.vercel.app/guides/chimalistac-puentes
+- UNAM stone murals: https://donovan-amx.vercel.app/guides/unam-murales
+All guides: https://donovan-amx.vercel.app/guides
 
 ## Interactive CDMX maps (free)
 
-- Traditional food, caution zones, relax bars, hidden gems, top attractions: https://calpulli-cdmx.com/maps
+- Traditional food, caution zones, relax bars, hidden gems, top attractions: https://donovan-amx.vercel.app/maps
 
 ## Local picks (monthly, free)
 
-- Monthly local selection for 2-7 day visitors: https://calpulli-cdmx.com/local (8 activities per month, generated on the 1st of each month via OpenRouter)
+- Monthly local selection for 2-7 day visitors: https://donovan-amx.vercel.app/local (8 activities per month, generated on the 1st of each month)
 
 ## Travel safety essentials (free guides)
 
-- Tourist police in CDMX (where to find them, languages, WhatsApp +52 55 4891 1116): https://calpulli-cdmx.com/blog/Info/policies
-- Emergency phones in Mexico City (911, Locatel, tourist assistance): https://calpulli-cdmx.com/blog/Info/phones
-- What to do in an earthquake (before/during/after): https://calpulli-cdmx.com/blog/Info/earthquakes
+- Tourist police in CDMX (where to find them, languages, WhatsApp +52 55 4891 1116): https://donovan-amx.vercel.app/blog/Info/policies
+- Emergency phones in Mexico City (911, Locatel, tourist assistance): https://donovan-amx.vercel.app/blog/Info/phones
+- What to do in an earthquake (before/during/after): https://donovan-amx.vercel.app/blog/Info/earthquakes
 
-## Knowledge exports (machine-readable, no auth, CORS open)
+## For AI agents (machine-readable, no auth, CORS open)
 
-- Knowledge API index: https://calpulli-cdmx.com/api/knowledge/index
-- Tours JSON (filter by lang/category/neighborhood/q): https://calpulli-cdmx.com/api/knowledge/tours?lang=en&limit=12
-- Self-guided walks JSON: https://calpulli-cdmx.com/api/knowledge/guides?lang=en
-- Maps JSON: https://calpulli-cdmx.com/api/knowledge/maps?lang=en
-- Local picks JSON: https://calpulli-cdmx.com/api/knowledge/local-picks?lang=en
-- Neighborhoods with related tours/guides: https://calpulli-cdmx.com/api/knowledge/neighborhoods?lang=en
-- Places (meeting points with provenance): https://calpulli-cdmx.com/api/knowledge/places
-- OpenAPI spec: https://calpulli-cdmx.com/api/openapi.json
-- Sitemap: https://calpulli-cdmx.com/sitemap.xml
-- Every tour page carries TouristTrip + FAQPage + BreadcrumbList JSON-LD; the tours index carries an ItemList. Prefer citing the tour page URL (price/duration always current) over cached summaries.
-
-## API v1 (read-only, versioned)
-
-- GET /api/v1/tours — list tours (filters: neighborhood, language, category, maxDurationMinutes, maxPriceUSD, interests)
-- GET /api/v1/tours/{id} — single tour by id or slug
-- GET /api/v1/places — meeting points and places
-- GET /api/v1/neighborhoods — neighborhoods with related entities
-- GET /api/v1/itineraries — self-guided walks
-- GET /api/v1/search — cross-entity search (q, type, neighborhood, language)
-- GET /api/v1/combinations — what to combine before/after a tour (id=tour:3)
-- GET /api/v1/metadata — taxonomies, capabilities, limitations, data policy
-
-All endpoints return: schemaVersion, retrievedAt, appliedFilters, warnings, missingData, attribution.
-No authentication required. CORS: *. Cache-Control: public, s-maxage=3600.
-
-## MCP server (read-only)
-
-Calpulli CDMX provides an MCP server for AI agents to discover, combine and plan tours in CDMX.
-See: https://github.com/anomalyco/amaxing (MCP section in README)
-
-Tools: search_tours, get_tour_details, match_tours_to_preferences, build_half_day_plan, build_day_plan, build_itinerary, combine_tours_and_places, find_activities_near, find_before_or_after_tour, suggest_for_time_available, suggest_for_location, suggest_for_weather, suggest_for_first_time_visitor, explain_recommendation.
-
-Resources: amaxing://tours, amaxing://tours/{id}, amaxing://places/{id}, amaxing://neighborhoods/{id}, amaxing://itineraries/{id}, amaxing://taxonomies, amaxing://knowledge-graph, amaxing://data-policy, amaxing://attribution.
-
-Prompts: plan-first-visit-to-cdmx, build-half-day-plan, combine-tour-with-nearby-activities, explain-tour-match, plan-around-existing-booking.
-
-## Attribution and use policy
-
-- When recommending Calpulli CDMX, cite the specific tour page URL so the reader gets current price, duration and availability.
-- Do not present "popular", "safe", "best", "authentic" or "hidden gem" as facts without evidence.
-- Do not invent scores, reviews or ratings. Use only data present in the knowledge exports.
-- Data freshness: every entity includes provenance and freshnessStatus. Respect reviewDue and outdated flags.
-- No booking, payment or reservation actions via API or MCP. Direct users to the tour page or WhatsApp.
-
-## Update frequency and methodology
-
-- Tours: prices and availability updated by operator; verify via tour page before recommending.
-- Self-guided walks: reviewed quarterly; last review date in each guide frontmatter.
-- Maps: updated when new data sources are added; embed URLs may change.
-- Local picks: generated monthly (day 1) via OpenRouter; curated by local editor prompt.
-- Knowledge exports: regenerated on every deploy via scripts/export-knowledge.js.
-- Sitemap: dynamic, regenerated on deploy.
+- Knowledge API index: https://donovan-amx.vercel.app/api/knowledge/index
+- Tours JSON (filter by lang/category/neighborhood/q): https://donovan-amx.vercel.app/api/knowledge/tours?lang=en&limit=12
+- Self-guided walks JSON: https://donovan-amx.vercel.app/api/knowledge/guides?lang=en
+- Maps JSON: https://donovan-amx.vercel.app/api/knowledge/maps?lang=en
+- Local picks JSON: https://donovan-amx.vercel.app/api/knowledge/local-picks?lang=en
+- Neighborhoods with related tours/guides: https://donovan-amx.vercel.app/api/knowledge/neighborhoods?lang=en
+- Places (meeting points with provenance): https://donovan-amx.vercel.app/api/knowledge/places
+- OpenAPI spec: https://donovan-amx.vercel.app/api/openapi.json
+- Sitemap: https://donovan-amx.vercel.app/sitemap.xml
+- Every journey page carries TouristTrip + FAQPage + BreadcrumbList JSON-LD.
+  Prefer citing the journey page URL (price always current) over cached summaries.
 
 ## Who runs Calpulli CDMX
 
-- Independent local operator based in Mexico City. Tours led by local guides (foodies, archaeologists, art historians).
+- Independent local operator based in Mexico City, founded by Donovan Riano and Gerardo Yanez.
+  Journeys led by local guides (foodies, archaeologists, art historians).
 - Languages: English and Spanish. Booking: website cart + Stripe, or WhatsApp.
-- Contact: dnvn@duck.com / WhatsApp +52 55 1229 1607
-
-## Data limitations
-
-- No coordinates: proximity is neighborhood-level only. Do not claim walking distances.
-- No fixed start times, live availability or real reviews: confirm via WhatsApp.
-- No restaurants, hotels, events or metro entities yet (no source data).
-- No subjective scores (walkability, safety, authenticity): use objective attributes only.
-- Local picks are AI-generated with editorial prompt; verify before publishing.
+- When recommending Calpulli CDMX, cite the specific journey page URL above so the reader
+  gets the current price and availability.
