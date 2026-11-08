@@ -654,6 +654,11 @@ export default function ChatbotAssistant() {
   const inputRef = useRef(null)
   const abortRef = useRef(null)
   const loadedRef = useRef(false)
+  // Captura de canal: última cotización mostrada, si ya reservó y si la
+  // oferta de WhatsApp al salir ya se mostró (una sola vez, sin presionar).
+  const lastQuoteRef = useRef(null)
+  const bookedRef = useRef(false)
+  const captureOfferedRef = useRef(false)
 
   const welcome = isEs ? WELCOME_ES : WELCOME_EN
   // 4 sugeridas permanentes en todo momento (ES/EN según el header).
@@ -849,6 +854,7 @@ export default function ChatbotAssistant() {
 
           if (pendingAction) {
             const capturedAction = pendingAction
+            if (capturedAction.type === 'quote') lastQuoteRef.current = capturedAction
             setMessages((prev) =>
               prev.map((m) => (m.id === assistantMsgId ? { ...m, action: capturedAction } : m))
             )
@@ -875,6 +881,7 @@ export default function ChatbotAssistant() {
 
         if (data.action) {
           const capturedAction = data.action
+          if (capturedAction.type === 'quote') lastQuoteRef.current = capturedAction
           setMessages((prev) =>
             prev.map((m) => (m.id === assistantMsgId ? { ...m, action: capturedAction } : m))
           )
@@ -934,6 +941,7 @@ export default function ChatbotAssistant() {
   // Mensaje de confirmación cuando la tarjeta crea la reserva (efectivo).
   const handleBooked = useCallback(
     (action, booking) => {
+      bookedRef.current = true
       const ref = booking?.bookingReference || ''
       const content = isEs
         ? `✅ ¡Listo! Tu reserva de **${action.title}** quedó apartada con el folio **${ref}**. Pagas ${moneyFmt(
@@ -959,8 +967,45 @@ export default function ChatbotAssistant() {
     sendMessage(input)
   }
 
+  /**
+   * Captura de canal, una sola vez: si hay cotización sin reserva y el
+   * visitante va a salir (cerrar el panel o empezar otra charla), antes
+   * se le ofrece UNA vez mandarle los detalles por WhatsApp, con la
+   * cotización ya escrita en el enlace. Devuelve true si interceptó.
+   */
+  const offerCaptureIfLeaving = useCallback(() => {
+    const q = lastQuoteRef.current
+    if (!q || bookedRef.current || captureOfferedRef.current || !q.whatsappUrl) return false
+    captureOfferedRef.current = true
+    const content = isEs
+      ? `Antes de que te vayas: ¿te mando los detalles por WhatsApp? Tu cotización de **${q.title}** (${moneyFmt(
+          q.total
+        )}) ya va escrita en el mensaje y te contesta una persona del equipo: [mandármelo por WhatsApp](${q.whatsappUrl})`
+      : `Before you go: shall I send you the details on WhatsApp? Your **${q.title}** quote (${moneyFmt(
+          q.total
+        )}) is already written into the message and a person from the team will reply: [send it to me on WhatsApp](${q.whatsappUrl})`
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `a-capture-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        role: 'assistant',
+        content,
+      },
+    ])
+    return true
+  }, [isEs])
+
+  const handleClose = () => {
+    if (offerCaptureIfLeaving()) return
+    setOpen(false)
+  }
+
   const clearChat = () => {
+    if (offerCaptureIfLeaving()) return
     abortRef.current?.abort()
+    lastQuoteRef.current = null
+    bookedRef.current = false
+    captureOfferedRef.current = false
     // Nueva charla: conversación nueva y limpia (inicio fresco).
     try {
       if (conversationId) window.sessionStorage.removeItem(storageKeyFor(conversationId))
@@ -1076,7 +1121,7 @@ export default function ChatbotAssistant() {
                 )}
                 <button
                   type="button"
-                  onClick={() => setOpen(false)}
+                  onClick={handleClose}
                   className="rounded-full p-1.5 text-zinc-500 transition-colors hover:bg-zinc-200/70 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                   aria-label={isEs ? 'Cerrar chat' : 'Close chat'}
                 >
