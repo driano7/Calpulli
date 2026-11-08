@@ -169,3 +169,27 @@ descarga (ver `scripts/commons-fetch.mjs` y `scripts/commons-manifest.json`).
 - Fecha: 2019-01-01
 - Ficha en Commons: https://commons.wikimedia.org/wiki/File%3AA%C3%B1o_Nuevo_2019_Glorieta_Palma_en_CDMX.jpg
 - Descripcion en Commons: Celebran 70 mil personas la llegada del año nuevo en la Glorieta de la Palma en la Ciudad de México
+
+## Local Picks noviembre 2026 — curaduría manual (Bruno, 2026-11-08)
+
+Las fotos automáticas de noviembre 2026 salieron de un pool genérico de
+Unsplash sin relación con cada pick (Santorini en una librería de la Roma,
+un lago alpino en el Mercado de San Juan). Se reemplazaron en el
+frontmatter de cada pick por fotos de Wikimedia Commons del lugar exacto,
+servidas vía `thumb.wikimedia.org` (dominio autorizado en `next.config.js`).
+Los archivos descargados (1920 px) quedaron con los nombres originales
+`2026-11-01.jpg` … `recomendaciones-mes.jpg` para poder autoalojarlos
+después en esta misma carpeta sin tocar el frontmatter otra vez.
+
+| Pick | Foto (Commons) | Licencia | Autor |
+| --- | --- | --- | --- |
+| 2026-11-01 · Caminata nocturna en San Fernando (Jardín Centenario, Coyoacán) | File:Jardín Centenario - Mexico 2024.jpg | CC BY-SA 4.0 | Jbribeiro1 |
+| 2026-11-02 · Ruta de altares en el Centro (Plaza de Santo Domingo) | File:Plaza de Santo Domingo.jpg | CC BY-SA 4.0 | YoelResidente |
+| 2026-11-03 · Jazz y mezcal en la Juárez (jazz en vivo) | File:Sharel Cassity at Detroit Jazz Festival 2014.jpg | CC BY 2.0 | Jeff Dunn |
+| 2026-11-04 · Mañana de café en la Condesa (Parque México) | File:Vista aérea del Parque México 08.jpg | CC BY-SA 4.0 | ProtoplasmaKid |
+| 2026-11-05 · Diseño moderno en Polanco (Museo Jumex) | File:DJI 0040-HDR cropped.jpg | CC BY 4.0 | Fundación Jumex |
+| 2026-11-06 · Libros antiguos en la Roma (librería de viejo) | File:Paris - A bookshop with filled bookshelves and blurred light bulbs hanging from the ceiling.jpg | CC0 | Janko Ferlič |
+| 2026-11-07 · Sabores del Mercado de San Juan (interior, puestos de comida exótica) | File:Interior del Mercado de San Juan 03.jpg | CC BY-SA 4.0 | Luis Alvaz |
+| 2026-11-08 · Atardecer en Plaza Río de Janeiro (réplica del David, Roma) | File:Réplica del David en Plaza Río de Janeiro, Ciudad de México.jpg | CC BY-SA 4.0 | LEG95 |
+| 2026-11-guide · Portada de la guía mensual | File:Palacio de Bellas Artes, México D.F., México, 2013-10-13, DD 40.jpg | CC BY-SA 3.0 | Diego Delso |
+| recomendaciones-mes · Actividades del mes (paseo dominical en Reforma) | File:Muévete en bici, Paseo de la Reforma.jpg | CC BY-SA 4.0 | Tyrv |
