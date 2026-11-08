@@ -6,7 +6,6 @@ import siteMetadata from '@/data/siteMetadata'
 import Image from '@/components/Image'
 import projectsData from '@/data/projectsData'
 import { GdprBanner } from '@/components/GdprBanner'
-import { HeroPhoneWalletScroll } from '@/components/PhoneWalletShowcase'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 
 import ExperiencesCtaBanner from '@/components/ExperiencesCtaBanner'
@@ -20,6 +19,11 @@ export default function Home() {
       <HeroSection />
       <div className="bg-transparent text-gray-900 dark:text-gray-100">
         <div className="container mx-auto px-4 py-16">
+          {/* CTA Banner Experiences — los journeys van primero: es lo que se vende */}
+          <AnimatedSection className="mb-8" delay={0.05}>
+            <ExperiencesCtaBanner />
+          </AnimatedSection>
+
           {/* Guides Preview — similar UI */}
           <AnimatedSection
             className="mb-8 rounded-xl border border-teal-500/20 bg-teal-500/10 p-8 dark:border-teal-500/20 dark:bg-teal-500/5"
@@ -105,11 +109,6 @@ export default function Home() {
                 {isEn ? 'View Maps' : 'Ver Mapas'}
               </Link>
             </div>
-          </AnimatedSection>
-
-          {/* CTA Banner Experiences — entre mapas y selección local */}
-          <AnimatedSection className="mb-8" delay={0.35}>
-            <ExperiencesCtaBanner />
           </AnimatedSection>
 
           {/* Local Picks chip — recomendaciones de locales */}
@@ -204,9 +203,6 @@ export default function Home() {
             </Link>
           </div>
         </div>
-
-        {/* iPhone showcase (adaptado de Criptec) */}
-        <HeroPhoneWalletScroll />
 
         <GdprBanner className="mt-2" />
       </div>
