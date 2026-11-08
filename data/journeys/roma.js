@@ -248,7 +248,7 @@ export const ROMA_JOURNEY = {
     'La comparacion con otras capitales latinoamericanas es por dimensiones concretas, no una equivalencia entre barrios.',
   ],
   verified_on: '2026-10-21',
-  price: 100,
+  price: 649,
   moments: [
     {
       id: 'roma-1-romita',
