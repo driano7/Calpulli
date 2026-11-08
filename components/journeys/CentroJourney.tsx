@@ -14,7 +14,6 @@ import { JourneyDetailProvider } from './JourneyDetailContext'
 import { DetailToggle } from './DetailToggle'
 import { JourneyRating } from './JourneyRating'
 import { useLanguage } from '@/lib/hooks/useLanguage'
-import SupportBanner from '@/components/SupportBanner'
 import { EditorialMoment } from './EditorialMoment'
 import { DiscoveryCards } from './DiscoveryCards'
 import { CollapsibleSection } from './CollapsibleSection'
@@ -419,9 +418,6 @@ export function CentroJourney() {
         </section>
 
         {/* El support banner va completo: sin dropdown y sin preview. */}
-        <section className="mx-auto max-w-5xl px-6 pb-24">
-          <SupportBanner />
-        </section>
       </div>
       <DetailToggle
         accent={TALAVERA}
