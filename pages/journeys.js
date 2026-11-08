@@ -73,7 +73,7 @@ export default function JourneysIndex() {
       date: null,
       time: null,
       peopleCount: 1,
-      maxGuests: 10,
+      maxGuests: 20,
     })
     router.push('/checkout')
   }

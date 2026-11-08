@@ -145,7 +145,7 @@ export async function createBookingInTurso(input: CreateBookingInput): Promise<C
     ? await demographicsForUser(input.userId)
     : { country: null, ageBand: null, gender: null }
 
-  const guests = Math.max(1, Math.min(10, Number(input.peopleCount) || 1))
+  const guests = Math.max(1, Math.min(20, Number(input.peopleCount) || 1))
   const total =
     Number(input.totalAmount) ||
     (Array.isArray(input.items)

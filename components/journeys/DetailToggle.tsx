@@ -60,7 +60,7 @@ export function DetailToggle({
       price: journey.price,
       currency: 'MXN',
       location: 'Ciudad de México',
-      maxGuests: 10,
+      maxGuests: 20,
     })
     router.push('/cart')
   }
