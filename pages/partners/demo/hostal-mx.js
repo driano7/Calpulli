@@ -17,31 +17,31 @@ export default function HostalMxDemo() {
   const journeysUrl = buildReferralUrl({ ref: DEMO_SLUG, path: '/journeys', origin })
   const twoJourneys = JOURNEYS.slice(0, 2)
 
-  const gross = 11900
-  const discounts = 1190
-  const net = 10710
+  const gross = DEMO_OVERVIEW.gross
+  const discounts = DEMO_OVERVIEW.discounts
+  const net = DEMO_OVERVIEW.net
 
   return (
     <>
       <Head>
-        <title>Amaxing for Hostal MX — Partner Demo</title>
+        <title>Tu alianza con Calpulli CDMX — Hostal MX (demo para socios)</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
 
       <div className="mx-auto max-w-4xl px-5 py-12">
         {/* HERO */}
         <h1 className="text-4xl font-black leading-tight text-zinc-900 dark:text-white sm:text-5xl">
-          Amaxing for Hostal MX
+          Tu alianza con Calpulli CDMX
         </h1>
         <p className="mt-3 text-lg text-zinc-600 dark:text-zinc-300">
-          Give your guests a different way to experience Mexico City.
+          Dale a tus huéspedes otra forma de vivir la Ciudad de México.
         </p>
         <ul className="mt-4 space-y-1 text-sm text-zinc-700 dark:text-zinc-300">
           <li>
-            • Your guests receive <strong>10% off</strong> eligible Amaxing walking Journeys.
+            • Tus huéspedes reciben <strong>10% de descuento</strong> en los journeys de Calpulli CDMX.
           </li>
           <li>
-            • Your property receives <strong>10% commission</strong> on eligible completed bookings.
+            • Tu propiedad recibe <strong>10% de comisión</strong> sobre las reservas elegibles completadas.
           </li>
         </ul>
         <div className="mt-5 flex flex-wrap gap-3">
@@ -51,13 +51,13 @@ export default function HostalMxDemo() {
             rel="noreferrer"
             className="rounded-xl bg-orange-500 px-5 py-3 font-semibold text-white"
           >
-            View the guest experience
+            Ver la experiencia del huésped
           </a>
           <Link
             href="/partners/demo/hostal-mx/dashboard"
             className="rounded-xl border px-5 py-3 font-semibold"
           >
-            Preview partner dashboard
+            Ver el tablero del socio
           </Link>
           <a
             href={buildReferralUrl({
@@ -70,7 +70,7 @@ export default function HostalMxDemo() {
             rel="noreferrer"
             className="rounded-xl border px-5 py-3 font-semibold"
           >
-            View your QR
+            Ver tu QR
           </a>
         </div>
         <p className="mt-2 text-[11px] text-zinc-400">
@@ -79,13 +79,13 @@ export default function HostalMxDemo() {
 
         {/* HOW IT WORKS */}
         <section className="mt-12">
-          <h2 className="text-2xl font-black">How it works</h2>
+          <h2 className="text-2xl font-black">Cómo funciona</h2>
           <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              'Share your personalized link or QR.',
-              'Your guests discover eligible Amaxing Journeys.',
-              'Their 10% discount is applied automatically.',
-              'Eligible bookings and commissions appear in your Partner Dashboard.',
+              'Comparte tu enlace o QR personalizado.',
+              'Tus huéspedes descubren los journeys de Calpulli CDMX.',
+              'Su descuento del 10% se aplica automáticamente.',
+              'Las reservas y comisiones aparecen en tu tablero de socio.',
             ].map((step, i) => (
               <li key={step} className="rounded-2xl bg-zinc-100 p-4 text-sm dark:bg-zinc-800">
                 <p className="text-xl font-black text-orange-500">{i + 1}</p>
@@ -97,29 +97,29 @@ export default function HostalMxDemo() {
 
         {/* REAL GUEST EXPERIENCE */}
         <section className="mt-12">
-          <h2 className="text-2xl font-black">What your guest sees</h2>
+          <h2 className="text-2xl font-black">Lo que ve tu huésped</h2>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-            Real link:{' '}
+            Enlace real:{' '}
             <a className="font-mono underline" href={journeysUrl} target="_blank" rel="noreferrer">
               {journeysUrl}
             </a>
           </p>
           <div className="mt-3 rounded-2xl bg-emerald-50 p-4 text-sm dark:bg-emerald-500/10">
-            <p className="font-bold">Recommended for guests of Hostal MX Demo</p>
-            <p>Explore walking Journeys selected for your stay in Mexico City.</p>
+            <p className="font-bold">Recomendado para huéspedes de Hostal MX Demo</p>
+            <p>Explora los journeys seleccionados para tu estancia en la Ciudad de México.</p>
             <p className="mt-1 font-semibold">
-              Your 10% guest discount is already active. — Hostal MX Demo
+              Tu descuento de huésped del 10% ya está activo. — Hostal MX Demo
             </p>
           </div>
           <p className="mt-2 text-xs text-zinc-500">
-            Journey prices show original, strikethrough, discounted price and savings (100 → 90 MXN
-            per person in this catalog).
+            Los precios muestran el precio original tachado, el precio con descuento y el ahorro
+            (p. ej., Lucha Libre: $999 → $899 MXN por persona).
           </p>
         </section>
 
         {/* DIRECT JOURNEY EXAMPLES */}
         <section className="mt-12">
-          <h2 className="text-2xl font-black">Direct Journey examples</h2>
+          <h2 className="text-2xl font-black">Ejemplos directos de journeys</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             {twoJourneys.map((j) => {
               const url = buildReferralUrl({ ref: DEMO_SLUG, path: `/journeys/${j.slug}`, origin })
@@ -143,14 +143,14 @@ export default function HostalMxDemo() {
                       rel="noreferrer"
                       className="rounded bg-orange-500 px-3 py-1 text-xs font-semibold text-white"
                     >
-                      Preview guest experience
+                      Ver como huésped
                     </a>
                     <button
                       type="button"
                       onClick={() => navigator.clipboard?.writeText(url)}
                       className="rounded border px-3 py-1 text-xs font-semibold"
                     >
-                      Copy referral link
+                      Copiar enlace de referido
                     </button>
                   </div>
                   <div className="mt-3">
@@ -173,25 +173,25 @@ export default function HostalMxDemo() {
 
         {/* CHECKOUT DEMO (read-only) */}
         <section className="mt-12 rounded-2xl bg-zinc-100 p-5 dark:bg-zinc-800">
-          <h2 className="text-xl font-black">Checkout preview (demo)</h2>
+          <h2 className="text-xl font-black">Vista previa del checkout (demo)</h2>
           <p className="mt-1 text-xs text-zinc-500">
-            Read-only preview. No production payment is created from this page.
+            Vista de solo lectura. Desde esta página no se crea ningún pago real.
           </p>
           <dl className="mt-3 space-y-1 text-sm">
             <div className="flex justify-between">
-              <dt>Benefit</dt>
-              <dd>Hostal MX Demo — 10% guest benefit applied</dd>
+              <dt>Beneficio</dt>
+              <dd>Hostal MX Demo — beneficio de huésped del 10% aplicado</dd>
             </div>
             <div className="flex justify-between">
-              <dt>Regular amount</dt>
+              <dt>Importe regular</dt>
               <dd>{formatPriceMXN(gross, 'es')}</dd>
             </div>
             <div className="flex justify-between">
-              <dt>10% discount</dt>
+              <dt>Descuento del 10%</dt>
               <dd>−{formatPriceMXN(discounts, 'es')}</dd>
             </div>
             <div className="flex justify-between">
-              <dt>Final amount</dt>
+              <dt>Importe final</dt>
               <dd className="font-bold">{formatPriceMXN(net, 'es')}</dd>
             </div>
           </dl>
@@ -201,16 +201,16 @@ export default function HostalMxDemo() {
             rel="noreferrer"
             className="mt-3 inline-block rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white"
           >
-            Open real checkout with your referral (test mode)
+            Abrir el checkout real con tu referido (modo de prueba)
           </a>
         </section>
 
         {/* DEMO DASHBOARD */}
         <section className="mt-12">
-          <h2 className="text-2xl font-black">Your dashboard preview</h2>
+          <h2 className="text-2xl font-black">Vista previa de tu tablero</h2>
           <p className="mt-2 text-sm">
-            Visits {DEMO_OVERVIEW.visits} · Bookings {DEMO_OVERVIEW.confirmedBookings} · Revenue{' '}
-            {formatPriceMXN(DEMO_OVERVIEW.net, 'es')} · Commission{' '}
+            Visitas {DEMO_OVERVIEW.visits} · Reservas {DEMO_OVERVIEW.confirmedBookings} · Ingresos{' '}
+            {formatPriceMXN(DEMO_OVERVIEW.net, 'es')} · Comisión{' '}
             {formatPriceMXN(DEMO_OVERVIEW.paidCommission + DEMO_OVERVIEW.payableCommission, 'es')}
           </p>
           <p className="text-[11px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
@@ -220,7 +220,7 @@ export default function HostalMxDemo() {
             href="/partners/demo/hostal-mx/dashboard"
             className="mt-3 inline-block rounded-xl bg-orange-500 px-5 py-3 font-semibold text-white"
           >
-            Preview your Partner Dashboard
+            Ver tu tablero de socio
           </Link>
         </section>
 
@@ -368,7 +368,7 @@ export default function HostalMxDemo() {
             href="/partners/apply"
             className="mt-4 inline-block rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white"
           >
-            Start a 60-day partnership pilot
+            Iniciar un piloto de alianza de 60 días
           </Link>
         </section>
       </div>
