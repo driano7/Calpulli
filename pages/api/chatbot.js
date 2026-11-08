@@ -303,7 +303,24 @@ function fastReply(message, isEs) {
   return found ? found.reply : null
 }
 
+// El prompt se cachea por idioma a nivel de modulo: armarlo implica leer
+// de disco TODOS los MDX del blog (getAllFilesFrontMatter) y de local
+// picks (getAllLocalPicks) en cada request. Ese catalogo solo cambia con
+// un deploy o una edicion de contenido, asi que un TTL de 10 min es
+// seguro y quita ese trabajo del camino critico de cada mensaje.
+const SYSTEM_PROMPT_TTL_MS = 10 * 60 * 1000
+const systemPromptCache = new Map()
+
 function buildSystemPrompt(isEs) {
+  const key = isEs ? 'es' : 'en'
+  const cached = systemPromptCache.get(key)
+  if (cached && Date.now() - cached.builtAt < SYSTEM_PROMPT_TTL_MS) return cached.prompt
+  const prompt = buildSystemPromptFresh(isEs)
+  systemPromptCache.set(key, { prompt, builtAt: Date.now() })
+  return prompt
+}
+
+function buildSystemPromptFresh(isEs) {
   const { journeys, guides, maps, blog, localPicks } = getKnowledgeBlock(isEs)
 
   if (!isEs) {
