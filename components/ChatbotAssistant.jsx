@@ -404,10 +404,13 @@ function QuoteCard({ action, isEs, onBooked }) {
 
   const phoneDigits = phone.replace(/\D/g, '')
   const canConfirm =
-    stage === 'form' && name.trim().length >= 2 && phoneDigits.length >= 10 && /^\d{4}-\d{2}-\d{2}$/.test(date)
+    (stage === 'form' || stage === 'sending') &&
+    name.trim().length >= 2 &&
+    phoneDigits.length >= 10 &&
+    /^\d{4}-\d{2}-\d{2}$/.test(date)
 
   const confirmBooking = async () => {
-    if (!canConfirm) return
+    if (!canConfirm || stage === 'sending') return
     setStage('sending')
     setErrorMsg('')
     try {
@@ -433,7 +436,9 @@ function QuoteCard({ action, isEs, onBooked }) {
       if (!res.ok || !booking?.bookingReference) {
         setErrorMsg(
           data.error ||
-            (isEs ? 'No pudimos guardar la reserva. Intenta de nuevo.' : 'We could not save the booking. Please try again.')
+            (isEs
+              ? 'No pudimos guardar la reserva. Intenta de nuevo.'
+              : 'We could not save the booking. Please try again.')
         )
         setStage('form')
         return
@@ -442,7 +447,11 @@ function QuoteCard({ action, isEs, onBooked }) {
       setStage('done')
       if (typeof onBooked === 'function') onBooked(action, booking)
     } catch {
-      setErrorMsg(isEs ? 'Sin conexión. Revisa tu internet e intenta otra vez.' : 'No connection. Check your internet and try again.')
+      setErrorMsg(
+        isEs
+          ? 'Sin conexión. Revisa tu internet e intenta otra vez.'
+          : 'No connection. Check your internet and try again.'
+      )
       setStage('form')
     }
   }
@@ -487,73 +496,87 @@ function QuoteCard({ action, isEs, onBooked }) {
             ? `✅ Reserva confirmada · Folio ${bookingRef}. Te confirmamos por WhatsApp.`
             : `✅ Booking confirmed · Reference ${bookingRef}. We will confirm on WhatsApp.`}
         </p>
-      ) : stage === 'idle' ? (
-        <button
-          type="button"
-          onClick={() => setStage('form')}
-          className="mt-2.5 w-full rounded-full bg-gradient-to-br from-orange-500 to-pink-600 px-4 py-2 text-[13px] font-bold text-white shadow transition-opacity hover:opacity-90"
-        >
-          {isEs ? 'Reservar aquí mismo' : 'Book right here'}
-        </button>
       ) : (
-        <div className="mt-2.5 space-y-2">
-          <label className="block">
-            <span className="mb-1 block text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
-              {isEs ? 'Fecha del journey' : 'Journey date'}
-            </span>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
-              {isEs ? 'Nombre de quien reserva' : 'Name of the person booking'}
-            </span>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={isEs ? 'Tu nombre' : 'Your name'}
-              autoComplete="name"
-              className={inputCls}
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
-              {isEs ? 'Tu WhatsApp (para confirmarte)' : 'Your WhatsApp (to confirm with you)'}
-            </span>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+52 55 0000 0000"
-              autoComplete="tel"
-              className={inputCls}
-            />
-          </label>
-          {errorMsg && (
-            <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-300">
-              {errorMsg}
-            </p>
+        <>
+          {stage === 'idle' ? (
+            <button
+              type="button"
+              onClick={() => setStage('form')}
+              className="mt-2.5 w-full rounded-full bg-gradient-to-br from-orange-500 to-pink-600 px-4 py-2 text-[13px] font-bold text-white shadow transition-opacity hover:opacity-90"
+            >
+              {isEs ? 'Reservar aquí mismo' : 'Book right here'}
+            </button>
+          ) : (
+            <div className="mt-2.5 space-y-2">
+              <label className="block">
+                <span className="mb-1 block text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+                  {isEs ? 'Fecha del journey' : 'Journey date'}
+                </span>
+                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+                  {isEs ? 'Nombre de quien reserva' : 'Name of the person booking'}
+                </span>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={isEs ? 'Tu nombre' : 'Your name'}
+                  autoComplete="name"
+                  className={inputCls}
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+                  {isEs ? 'Tu WhatsApp (para confirmarte)' : 'Your WhatsApp (to confirm with you)'}
+                </span>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+52 55 0000 0000"
+                  autoComplete="tel"
+                  className={inputCls}
+                />
+              </label>
+              {errorMsg && (
+                <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-300">
+                  {errorMsg}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={confirmBooking}
+                disabled={!canConfirm || stage === 'sending'}
+                className="w-full rounded-full bg-gradient-to-br from-orange-500 to-pink-600 px-4 py-2 text-[13px] font-bold text-white shadow transition-opacity hover:opacity-90 disabled:opacity-40"
+              >
+                {stage === 'sending'
+                  ? isEs
+                    ? 'Reservando…'
+                    : 'Booking…'
+                  : isEs
+                  ? `Confirmar reserva · ${moneyFmt(action.total)} en efectivo`
+                  : `Confirm booking · ${moneyFmt(action.total)} in cash`}
+              </button>
+              <p className="text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                {isEs
+                  ? 'Sin pago en línea: apartas aquí y pagas en efectivo al llegar. La confirmación final llega por WhatsApp.'
+                  : 'No online payment: you hold your spot here and pay in cash when you arrive. Final confirmation comes on WhatsApp.'}
+              </p>
+            </div>
           )}
-          <button
-            type="button"
-            onClick={confirmBooking}
-            disabled={!canConfirm || stage === 'sending'}
-            className="w-full rounded-full bg-gradient-to-br from-orange-500 to-pink-600 px-4 py-2 text-[13px] font-bold text-white shadow transition-opacity hover:opacity-90 disabled:opacity-40"
-          >
-            {stage === 'sending'
-              ? isEs
-                ? 'Reservando…'
-                : 'Booking…'
-              : isEs
-              ? `Confirmar reserva · ${moneyFmt(action.total)} en efectivo`
-              : `Confirm booking · ${moneyFmt(action.total)} in cash`}
-          </button>
-          <p className="text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-            {isEs
-              ? 'Sin pago en línea: apartas aquí y pagas en efectivo al llegar. La confirmación final llega por WhatsApp.'
-              : 'No online payment: you hold your spot here and pay in cash when you arrive. Final confirmation comes on WhatsApp.'}
-          </p>
-        </div>
+          {action.whatsappUrl && (
+            <a
+              href={action.whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex w-full items-center justify-center rounded-full bg-[#25D366]/15 px-4 py-2 text-[13px] font-bold text-[#128C4B] transition-colors hover:bg-[#25D366]/25 dark:text-[#3dd68c]"
+            >
+              {isEs ? 'Continuar por WhatsApp con esta cotización' : 'Continue on WhatsApp with this quote'}
+            </a>
+          )}
+        </>
       )}
     </div>
   )
