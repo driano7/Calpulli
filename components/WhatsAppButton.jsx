@@ -1,9 +1,12 @@
 'use client'
 
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
-// Boton flotante de WhatsApp. En desktop vive arriba del boton de Calpulli AI
-// (esquina inferior derecha, dos iconos). En movil no se muestra: ya esta en
-// el MobileDock.
+// Boton flotante de WhatsApp. En desktop/tablet vive arriba del boton de
+// Calpulli AI (esquina inferior derecha, dos iconos). En movil (<640px) no se
+// muestra: ahi ya esta en el MobileDock. La visibilidad se decide por ANCHO de
+// viewport (breakpoint sm), nunca por user agent: un iPad reporta
+// maxTouchPoints > 1 y con deteccion tactil el boton desaparecia en tablet,
+// donde el MobileDock tampoco existe (es sm:hidden).
 
 import { useRouter } from 'next/router'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -15,14 +18,6 @@ export default function WhatsAppButton() {
   const router = useRouter()
   const { currentLanguage } = useLanguage()
   const reduced = useReducedMotion()
-
-  // Detectar movil para ocultar el boton flotante (ya esta en el dock)
-  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
-  const isMobile =
-    /android|iphone|ipad|ipod|windows phone/i.test(ua) ||
-    (typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1)
-
-  if (isMobile) return null
 
   // asPath trae la ruta real; pathname devuelve el patron en rutas dinamicas
   // (/journeys/[slug]) y el mensaje perderia el journey concreto.
@@ -51,7 +46,7 @@ export default function WhatsAppButton() {
       whileHover={reduced ? undefined : { scale: 1.08 }}
       whileTap={reduced ? undefined : { scale: 0.94 }}
       transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-      className="fixed right-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-[100] flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_32px_rgba(37,211,102,0.45)] transition-shadow hover:shadow-[0_10px_40px_rgba(37,211,102,0.65)] sm:right-6 sm:bottom-24"
+      className="fixed right-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-[100] hidden h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_32px_rgba(37,211,102,0.45)] transition-shadow hover:shadow-[0_10px_40px_rgba(37,211,102,0.65)] sm:flex sm:right-6 sm:bottom-24"
     >
       {!reduced && (
         <motion.span

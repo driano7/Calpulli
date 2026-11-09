@@ -79,6 +79,8 @@ module.exports = withBundleAnalyzer({
   images: {
     domains: [
       'images.unsplash.com',
+      'thumb.wikimedia.org',
+      'upload.wikimedia.org',
       'imageio.forbes.com',
       'mmx.prnewswire.com',
       'gcaptain.com',

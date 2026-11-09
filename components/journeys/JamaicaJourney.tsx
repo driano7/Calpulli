@@ -16,7 +16,6 @@ import { JourneyDetailProvider } from './JourneyDetailContext'
 import { DetailToggle } from './DetailToggle'
 import { Reveal } from './Reveal'
 import { MOMENT_TREATMENTS } from './motionConfig'
-import SupportBanner from '@/components/SupportBanner'
 
 const TALAVERA = '#0E8C7A'
 const TERRACOTA = '#C1440E'
@@ -257,9 +256,6 @@ export function JamaicaJourney() {
           </Reveal>
         </section>
 
-        <section className="mx-auto max-w-5xl px-6 pb-24">
-          <SupportBanner />
-        </section>
 
         <DetailToggle
           accent={TALAVERA}

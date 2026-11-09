@@ -1,4 +1,21 @@
-import { supabase } from '@/lib/supabase'
+// MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
+// /api/tours/experiences/[id] — Detalle de experiencia desde Turso (sin Supabase)
+// La distribución de ratings reemplaza al RPC get_experience_rating de
+// Supabase con un GROUP BY sobre la tabla reviews de Turso.
+import { turso } from '@/lib/turso'
+
+function parseHighlights(value) {
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed : [value]
+    } catch {
+      return [value]
+    }
+  }
+  return []
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -13,53 +30,43 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Experience ID required' })
     }
 
-    const { data, error } = await supabase
-      .from('experiences')
-      .select(
-        `
-        id,
-        title_en,
-        title_es,
-        description_en,
-        description_es,
-        price,
-        duration_hours,
-        max_guests,
-        image_url,
-        location_en,
-        location_es,
-        highlights_en,
-        highlights_es,
-        is_featured,
-        avg_rating,
-        review_count,
-        category_id,
-        created_at,
-        tour_categories!inner (
-          id,
-          slug,
-          name_en,
-          name_es,
-          icon_name
-        )
-      `
-      )
-      .eq('id', id)
-      .eq('is_active', true)
-      .single()
+    const { rows } = await turso.execute({
+      sql: `SELECT e.id, e.title_en, e.title_es, e.description_en, e.description_es,
+                   e.price, e.duration_hours, e.max_guests, e.image_url,
+                   e.location_en, e.location_es, e.highlights_en, e.highlights_es,
+                   e."isFeatured", e.category_id, e."createdAt",
+                   c.id AS cat_id, c.slug AS cat_slug, c.name_en AS cat_name_en,
+                   c.name_es AS cat_name_es, c.icon_name AS cat_icon
+            FROM experiences e
+            JOIN tour_categories c ON c.id = e.category_id
+            WHERE e.id = ? AND e."isActive" = 1`,
+      args: [String(id)],
+    })
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return res.status(404).json({ error: 'Experience not found' })
-      }
-      console.error('[API] experience detail error:', error)
-      return res.status(500).json({ error: error.message })
+    const data = rows[0]
+    if (!data) {
+      return res.status(404).json({ error: 'Experience not found' })
     }
 
-    // Get rating distribution using the RPC function
-    const { data: ratingData, error: ratingError } = await supabase.rpc('get_experience_rating', {
-      p_experience_id: id,
+    // Distribución de ratings + promedio + conteo desde reviews publicadas
+    const { rows: ratingRows } = await turso.execute({
+      sql: `SELECT rating, COUNT(*) AS n
+            FROM reviews
+            WHERE experience_id = ? AND "isPublished" = 1
+            GROUP BY rating`,
+      args: [String(id)],
     })
+
+    const ratingDistribution = {}
+    let reviewCount = 0
+    let ratingSum = 0
+    for (const row of ratingRows) {
+      const n = Number(row.n) || 0
+      ratingDistribution[String(row.rating)] = n
+      reviewCount += n
+      ratingSum += Number(row.rating) * n
+    }
+    const avgRating = reviewCount > 0 ? ratingSum / reviewCount : 0
 
     const experience = {
       id: data.id,
@@ -70,24 +77,20 @@ export default async function handler(req, res) {
       maxGuests: data.max_guests,
       imageUrl: data.image_url,
       location: locale === 'es' ? data.location_es : data.location_en,
-      highlights: locale === 'es' ? data.highlights_es : data.highlights_en,
-      isFeatured: data.is_featured,
-      avgRating: ratingData?.[0]?.avg_rating
-        ? Number(ratingData[0].avg_rating)
-        : Number(data.avg_rating),
-      reviewCount: ratingData?.[0]?.review_count
-        ? Number(ratingData[0].review_count)
-        : Number(data.review_count),
-      ratingDistribution: ratingData?.[0]?.rating_distribution || {},
-      category: data.tour_categories
+      highlights: parseHighlights(locale === 'es' ? data.highlights_es : data.highlights_en),
+      isFeatured: Number(data.isFeatured) === 1,
+      avgRating,
+      reviewCount,
+      ratingDistribution,
+      category: data.cat_slug
         ? {
-            id: data.tour_categories.id,
-            slug: data.tour_categories.slug,
-            name: locale === 'es' ? data.tour_categories.name_es : data.tour_categories.name_en,
-            icon: data.tour_categories.icon_name,
+            id: data.cat_id,
+            slug: data.cat_slug,
+            name: locale === 'es' ? data.cat_name_es : data.cat_name_en,
+            icon: data.cat_icon,
           }
         : null,
-      createdAt: data.created_at,
+      createdAt: data.createdAt,
     }
 
     res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')

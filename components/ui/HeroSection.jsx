@@ -191,6 +191,11 @@ export function HeroSection() {
             </EditorialCrossfade>
           </div>
 
+          {/* Trust row — qué se vende y cómo se reserva, en una línea */}
+          <p className="mt-6 text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-500 dark:text-zinc-300">
+            {t('hero.trust')}
+          </p>
+
           {/* CTA Button — Custom Pink-to-Purple Gradient from "¿Quieres tu propio Journey?" */}
           {cta && (
             <div className="mt-8 flex justify-center">

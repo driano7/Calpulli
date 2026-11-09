@@ -750,7 +750,7 @@ export const LUCHAS_JOURNEY = {
   photos: LUCHAS_PHOTOS,
   variants: LUCHAS_VARIANTS,
   verified_on: '2026-10-21',
-  price: 100,
+  price: 999,
   notes: [
     'La entrada al recinto va incluida en el Journey. El boleto de cada funcion se compra por separado en el canal oficial de CMLL y se entrega en el punto de encuentro.',
     'Dentro de las arenas hay bebidas, alimentos y barra de bebidas alcoholicas. No se permite entrar con comida o bebida de fuera, ni con camaras ni computadoras.',

@@ -17,7 +17,6 @@ import { DetailToggle } from './DetailToggle'
 import { JourneyDetailProvider } from './JourneyDetailContext'
 import { Reveal } from './Reveal'
 import { MOMENT_TREATMENTS } from './motionConfig'
-import SupportBanner from '@/components/SupportBanner'
 
 const TERRACOTA = '#C1440E'
 const CEMPASUCHIL = '#F2A03D'
@@ -315,9 +314,6 @@ export function RomaJourney() {
           </Reveal>
         </section>
 
-        <section className="mx-auto max-w-5xl px-6 pb-24">
-          <SupportBanner />
-        </section>
 
         <DetailToggle
           accent={TERRACOTA}

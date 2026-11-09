@@ -7,7 +7,10 @@
 // se convierten a pesos con la tasa de abajo. Los journeys ya estan en pesos.
 // Stripe cobra en MXN en los dos casos.
 
-export const MXN_PER_USD = 17.5
+// Tasa de respaldo sin conexion (18.65 MXN por USD, 8 nov 2026).
+// La tasa viva se sirve en /api/exchange-rate (open.er-api.com, cache de 1 h);
+// esta constante solo se usa como respaldo si esa fuente no responde.
+export const MXN_PER_USD = 18.65
 
 export type CurrencyCode = 'USD' | 'MXN'
 
@@ -60,7 +63,7 @@ export function currencyIntl(locale: string): Intl.NumberFormat {
  *
  * OJO: `formatPriceByLocale` supone que el numero viene en dolares y lo
  * multiplica por la tasa. Un journey (que ya esta en pesos) pasado por ahi
- * salia 17.5 veces mas caro: 100 pesos se veian como 1,750. Para los montos
+ * salia ~18.65 veces mas caro: 100 pesos se veian como 1,865. Para los montos
  * que ya estan en pesos se usa esta.
  */
 export function formatPriceMXN(

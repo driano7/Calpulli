@@ -21,6 +21,7 @@
  *  - Rechazo de intentos de prompt injection / extracción del system prompt.
  */
 import { calpulliChat, calpulliChatStream } from '@/lib/openrouter'
+import { handleSalesMessage } from '@/lib/chatbot/sales'
 import { JOURNEYS } from '@/data/journeysData'
 import { SELF_GUIDES_DATA } from '@/data/selfGuidesData'
 import { CDMX_MAPS_DATA } from '@/data/cdmxMapsData'
@@ -198,7 +199,7 @@ function getKnowledgeBlock(isEs) {
         j.subtitle_es,
         j.subtitle_en,
         isEs
-      )} → /journeys/${j.slug}`
+      )} ($${j.price} MXN ${isEs ? 'por persona' : 'per person'}) → /journeys/${j.slug}`
   ).join('\n')
 
   const guides = SELF_GUIDES_DATA.slice(0, 3)
@@ -303,7 +304,24 @@ function fastReply(message, isEs) {
   return found ? found.reply : null
 }
 
+// El prompt se cachea por idioma a nivel de modulo: armarlo implica leer
+// de disco TODOS los MDX del blog (getAllFilesFrontMatter) y de local
+// picks (getAllLocalPicks) en cada request. Ese catalogo solo cambia con
+// un deploy o una edicion de contenido, asi que un TTL de 10 min es
+// seguro y quita ese trabajo del camino critico de cada mensaje.
+const SYSTEM_PROMPT_TTL_MS = 10 * 60 * 1000
+const systemPromptCache = new Map()
+
 function buildSystemPrompt(isEs) {
+  const key = isEs ? 'es' : 'en'
+  const cached = systemPromptCache.get(key)
+  if (cached && Date.now() - cached.builtAt < SYSTEM_PROMPT_TTL_MS) return cached.prompt
+  const prompt = buildSystemPromptFresh(isEs)
+  systemPromptCache.set(key, { prompt, builtAt: Date.now() })
+  return prompt
+}
+
+function buildSystemPromptFresh(isEs) {
   const { journeys, guides, maps, blog, localPicks } = getKnowledgeBlock(isEs)
 
   if (!isEs) {
@@ -316,8 +334,12 @@ MANDATORY LANGUAGE: ALWAYS answer in English. Never answer in Spanish unless the
 2. TRUTH: never invent prices, schedules, availability, exact addresses or contact details. If unsure, say so and point to /journeys or WhatsApp +52 55 1229 1607.
 3. SAFE LINKS: only internal site links (starting with /) or official sources (gob.mx, inah.gob.mx, bellasartes.gob.mx, antropologia.inah.gob.mx, cmll.com, ticketmaster.com.mx). Never link to competitors, shorteners or dubious sites.
 4. ALWAYS SUGGEST: close with one concrete next step (a route, an internal link or WhatsApp).
-5. NEVER ASK FOR SENSITIVE DATA: no cards, passwords, ID numbers, addresses or medical data. For bookings, send people to /checkout.
+5. NEVER ASK FOR SENSITIVE DATA: no cards, passwords, ID numbers, addresses or medical data. Bookings happen in this chat's booking flow (cash, paid at the meeting point) or on the site; never ask for card data.
 6. NO MEDICAL, LEGAL OR FINANCIAL ADVICE.
+
+=== PRICES & OBJECTIONS ===
+The catalog above lists the REAL launch price per person for each Journey. You may state that per-person price. NEVER compute a total yourself: totals are calculated by the chat's quote flow — invite the visitor to name the journey, how many people and the day ("I will quote it right here").
+If they say they can do it on their own or that it sounds expensive, acknowledge it warmly (they are right that the city can be walked alone) and answer with the real value, only what is true: for Coyoacán, we secure the Casa Azul ticket (online-only timed entry; it sells out and the museum closes on Mondays); for Luchas, arena entry is included and the show ticket is bought through CMLL's official channel and handed over at the meeting point; groups are capped at 20 people; routes, timing and logistics are handled; the guides are the locals who created the journeys. Never invent availability, discounts, ratings or reviews.
 
 === SUGGESTED FLOWS ===
 1. MUSEUMS / RESTAURANTS / BARS / ATTRACTIONS: ask the questions you need (neighborhood, budget, day/time, vibe, what they are into) with no 4-question cap. You make the questions and the visitor answers; those Q/A pairs are logged in Turso to measure what people are looking for. Use the answers to match the closest Journey or Guide from the catalog; if none fits, offer WhatsApp +52 55 1229 1607 to build it.
@@ -326,7 +348,7 @@ MANDATORY LANGUAGE: ALWAYS answer in English. Never answer in Spanish unless the
 4. CUSTOM JOURNEY: give WhatsApp +52 55 1229 1607, ask what they were looking for, and say it will be a pleasure to make it.
 
 === REAL CATALOG (use it, do not invent) ===
-JOURNEYS (6 editorial experiences; price and availability are confirmed on each page):
+JOURNEYS (editorial experiences with a real per-person price; availability is confirmed when booking):
 ${journeys}
 
 SELF-GUIDED WALKS (60–90 min, no guide):
@@ -375,8 +397,12 @@ IDIOMA OBLIGATORIO: responde SIEMPRE en español de México, aunque el usuario e
 2. VERDAD: nunca inventes precios, horarios, disponibilidad, direcciones exactas ni datos de contacto. Si no estás seguro, dilo y manda a /journeys o a WhatsApp +52 55 1229 1607.
 3. ENLACES SEGUROS: solo enlaces internos del sitio (empiezan con /) o fuentes oficiales (gob.mx, inah.gob.mx, bellasartes.gob.mx, antropologia.inah.gob.mx, cmll.com, ticketmaster.com.mx). Nunca enlaces a competidores, acortadores ni sitios dudosos.
 4. SUGERENCIA SIEMPRE: cierra con un siguiente paso concreto (una ruta, un enlace interno o WhatsApp).
-5. NO PIDAS DATOS SENSIBLES: nunca pidas tarjeta, contraseña, INE, dirección ni datos médicos. Para reservar, manda a /checkout.
+5. NO PIDAS DATOS SENSIBLES: nunca pidas tarjeta, contraseña, INE, dirección ni datos médicos. La reserva se hace en el flujo de este chat (efectivo, se paga en el punto de encuentro) o en el sitio; jamás pidas datos de tarjeta.
 6. NO DES CONSEJO MÉDICO, LEGAL NI FINANCIERO.
+
+=== PRECIOS Y OBJECIONES ===
+El catálogo de arriba trae el precio REAL de lanzamiento por persona de cada Journey. Puedes decir ese precio por persona. NUNCA calcules un total tú: los totales los calcula el flujo de cotización del chat — invita al visitante a decir el journey, cuántas personas y qué día ("te lo cotizo aquí mismo").
+Si dice que puede hacerlo solo o que le suena caro, reconócelo con calidez (tiene razón en que la ciudad se puede caminar solo) y responde con el valor real, solo lo que es verdad: en Coyoacán, nosotros aseguramos el boleto de la Casa Azul (venta solo en línea con horario; se agota y el museo cierra los lunes); en Luchas, la entrada al recinto va incluida y el boleto de la función se compra por el canal oficial de CMLL y se entrega en el punto de encuentro; los grupos son de máximo 20 personas; la ruta, los tiempos y la logística van resueltos; guían los locales que crearon los journeys. Nunca inventes disponibilidad, descuentos, calificaciones ni reseñas.
 
 === FLUJOS SUGERIDOS ===
 1. MUSEOS / RESTAURANTES / BARES / ATRACCIONES: haz las preguntas que necesites (colonia, presupuesto, día/horario, ambiente, qué les late) sin límite de 4; tú haces las preguntas y el visitante responde. Esas preguntas/respuestas se alojan en Turso para medir qué busca la gente. Úsalas para llevar al Journey o Guía del catálogo que más se adapte; si no hay, ofrece WhatsApp +52 55 1229 1607 para armarlo.
@@ -385,7 +411,7 @@ IDIOMA OBLIGATORIO: responde SIEMPRE en español de México, aunque el usuario e
 4. JOURNEY A LA MEDIDA: pásale WhatsApp +52 55 1229 1607, pregúntale qué deseaba encontrar y dile que será un placer hacerlo.
 
 === CATÁLOGO REAL (úsalo, no inventes) ===
-JOURNEYS (6 experiencias editoriales; precio y disponibilidad se confirman en la ficha):
+JOURNEYS (experiencias editoriales con precio real por persona; la disponibilidad se confirma al reservar):
 ${journeys}
 
 GUÍAS AUTOGUIADAS (60–90 min, sin guía):
@@ -534,6 +560,65 @@ const CHAT_TOPIC_LABELS = {
 }
 
 /**
+ * Esquema de chat_questions, asegurado UNA sola vez por proceso.
+ * Antes esto corría en cada mensaje (1 CREATE TABLE + 4 ALTER + 4 CREATE
+ * INDEX = 9 viajes extra a Turso antes del INSERT) y el handler esperaba
+ * toda la cadena antes de responder: era la mayor latencia fija por mensaje,
+ * peor bajo volumen. Ahora solo el primer mensaje del proceso paga el DDL;
+ * el resto va directo al INSERT. Si el DDL falla, se limpia la promesa para
+ * reintentar en el siguiente mensaje.
+ */
+let chatLogSchemaPromise = null
+function ensureChatLogSchema() {
+  if (!chatLogSchemaPromise) {
+    chatLogSchemaPromise = (async () => {
+      await turso.execute({
+        sql: `CREATE TABLE IF NOT EXISTS chat_questions (
+          id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+          user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+          conversation_id TEXT,
+          question TEXT NOT NULL,
+          answer TEXT,
+          locale TEXT NOT NULL DEFAULT 'es',
+          path TEXT,
+          filtered TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )`,
+      })
+      // Migración best-effort para BDs creadas antes de user_id/conversation_id/topic.
+      for (const sql of [
+        `ALTER TABLE chat_questions ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE SET NULL`,
+        `ALTER TABLE chat_questions ADD COLUMN conversation_id TEXT`,
+        `ALTER TABLE chat_questions ADD COLUMN topic TEXT`,
+        `ALTER TABLE chat_questions ADD COLUMN suggestion_key TEXT`,
+      ]) {
+          try {
+            await turso.execute({ sql })
+          } catch {
+            // duplicate column: ya existe
+          }
+      }
+      await turso.execute({
+        sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_created_at ON chat_questions(created_at)`,
+      })
+      await turso.execute({
+        sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_user_created ON chat_questions(user_id, created_at DESC)`,
+      })
+      await turso.execute({
+        sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_conv ON chat_questions(conversation_id, created_at)`,
+      })
+      await turso.execute({
+        sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_topic_created ON chat_questions(topic, created_at DESC)`,
+      })
+    })().catch((err) => {
+      chatLogSchemaPromise = null
+      throw err
+    })
+  }
+  return chatLogSchemaPromise
+}
+
+/**
  * Totem de preguntas del chatbot en Turso para análisis + historial por usuario.
  * Sin IP, user-agent ni cookies. user_id se resuelve server-side desde el
  * token Bearer; conversation_id agrupa una conversación (NULL = invitado
@@ -553,44 +638,7 @@ async function logChatQuestion({
 }) {
   try {
     if (!question || !process.env.TURSO_URL) return
-    await turso.execute({
-      sql: `CREATE TABLE IF NOT EXISTS chat_questions (
-        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-        user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
-        conversation_id TEXT,
-        question TEXT NOT NULL,
-        answer TEXT,
-        locale TEXT NOT NULL DEFAULT 'es',
-        path TEXT,
-        filtered TEXT,
-        created_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )`,
-    })
-    // Migración best-effort para BDs creadas antes de user_id/conversation_id/topic.
-    for (const sql of [
-      `ALTER TABLE chat_questions ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE SET NULL`,
-      `ALTER TABLE chat_questions ADD COLUMN conversation_id TEXT`,
-      `ALTER TABLE chat_questions ADD COLUMN topic TEXT`,
-      `ALTER TABLE chat_questions ADD COLUMN suggestion_key TEXT`,
-    ]) {
-      try {
-        await turso.execute({ sql })
-      } catch {
-        // duplicate column: ya existe
-      }
-    }
-    await turso.execute({
-      sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_created_at ON chat_questions(created_at)`,
-    })
-    await turso.execute({
-      sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_user_created ON chat_questions(user_id, created_at DESC)`,
-    })
-    await turso.execute({
-      sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_conv ON chat_questions(conversation_id, created_at)`,
-    })
-    await turso.execute({
-      sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_topic_created ON chat_questions(topic, created_at DESC)`,
-    })
+    await ensureChatLogSchema()
     const cleanConv = typeof conversationId === 'string' ? conversationId.slice(0, 80) : null
     // Si el handler ya clasificó en "general" pero el filtro (custom/fast)
     // da más señal, se re-clasifica con filtered para el reporte.
@@ -719,7 +767,9 @@ export default async function handler(req, res) {
     suggestionKey,
   }
   const filteredReply = async (reply, filtered) => {
-    await logChatQuestion({ question: message, answer: reply, ...logCtx, filtered })
+    // Log best-effort sin bloquear: estas respuestas son instantáneas por
+    // diseño (filtros/fast-paths) y no deben pagar la latencia de Turso.
+    logChatQuestion({ question: message, answer: reply, ...logCtx, filtered })
     if (wantsStream) {
       res.setHeader('Content-Type', 'text/event-stream')
       res.setHeader('Cache-Control', 'no-cache, no-transform')
@@ -786,6 +836,27 @@ export default async function handler(req, res) {
         .map((m) => ({ role: m.role, content: m.content.slice(0, MAX_HISTORY_CHARS) }))
     : []
 
+  // ── Ventas deterministas: cotización con precios reales ─────────
+  // Sin LLM y sin inventar cifras: si hay intención de precio/reserva,
+  // responde lib/chatbot/sales con los datos del registro de journeys.
+  // El payload `action` viaja al cliente para pintar la tarjeta de
+  // cotización (el front lo adjunta a esta burbuja al cerrar el stream).
+  const sales = handleSalesMessage({ message, history, isEs })
+  if (sales) {
+    logChatQuestion({ question: message, answer: sales.reply, ...logCtx, filtered: sales.filtered })
+    if (wantsStream) {
+      res.setHeader('Content-Type', 'text/event-stream')
+      res.setHeader('Cache-Control', 'no-cache, no-transform')
+      res.setHeader('Connection', 'keep-alive')
+      res.setHeader('X-Accel-Buffering', 'no')
+      if (sales.action) res.write(`data: ${JSON.stringify({ action: sales.action })}\n\n`)
+      res.write(`data: ${JSON.stringify({ text: sales.reply })}\n\n`)
+      res.write(`data: [DONE]\n\n`)
+      return res.end()
+    }
+    return res.status(200).json({ reply: sales.reply, filtered: sales.filtered, action: sales.action || null })
+  }
+
   const messages = [
     { role: 'system', content: buildSystemPrompt(isEs) },
     ...history,
@@ -818,7 +889,7 @@ export default async function handler(req, res) {
 
       // Si recibimos un string (fallback no-streaming), enviarlo completo
       if (typeof streamResult === 'string') {
-        await logChatQuestion({
+        logChatQuestion({
           question: message,
           answer: streamResult,
           ...logCtx,
@@ -870,12 +941,12 @@ export default async function handler(req, res) {
         }
       }
 
-      await logChatQuestion({ question: message, answer: fullAnswer, ...logCtx, filtered: null })
+      logChatQuestion({ question: message, answer: fullAnswer, ...logCtx, filtered: null })
       res.write(`data: [DONE]\n\n`)
       return res.end()
     } catch (err) {
       console.error('Chatbot stream error:', err)
-      await logChatQuestion({ question: message, answer: t.error, ...logCtx, filtered: 'error' })
+      logChatQuestion({ question: message, answer: t.error, ...logCtx, filtered: 'error' })
       res.write(`data: ${JSON.stringify({ text: t.error, error: true })}\n\n`)
       res.write(`data: [DONE]\n\n`)
       return res.end()
@@ -896,7 +967,7 @@ export default async function handler(req, res) {
         : isEs
         ? 'No alcancé a formular una respuesta. ¿Me lo preguntas de otra forma o te paso con el equipo por WhatsApp?'
         : 'I could not put an answer together. Could you rephrase, or shall I connect you with the team on WhatsApp?'
-    await logChatQuestion({ question: message, answer: finalReply, ...logCtx, filtered: null })
+    logChatQuestion({ question: message, answer: finalReply, ...logCtx, filtered: null })
     return res.status(200).json({
       reply: finalReply,
       timestamp: new Date().toISOString(),

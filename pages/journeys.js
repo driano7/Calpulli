@@ -73,17 +73,17 @@ export default function JourneysIndex() {
       date: null,
       time: null,
       peopleCount: 1,
-      maxGuests: 10,
+      maxGuests: 20,
     })
     router.push('/checkout')
   }
 
   const seoTitle = isEs
-    ? 'Journeys editoriales CDMX — Calpulli CDMX'
-    : 'Editorial Journeys in Mexico City — Calpulli CDMX'
+    ? 'Journeys guiados CDMX — Calpulli CDMX'
+    : 'Guided Journeys in Mexico City — Calpulli CDMX'
   const seoDescription = isEs
-    ? 'Seis journeys editoriales por la Ciudad de México: Luchas, Chapultepec, Jamaica, Centro, Roma-Condesa y Antropología. Cultura fácil para caminar solo.'
-    : 'Six editorial journeys through Mexico City: Luchas, Chapultepec, Jamaica, Centro, Roma-Condesa and Antropología. Easy culture for walking alone.'
+    ? 'Siete journeys guiados en grupo pequeño por la Ciudad de México: Luchas, Coyoacán, Chapultepec, Jamaica, Centro, Roma-Condesa y Antropología, con guías locales.'
+    : 'Seven small-group guided journeys through Mexico City: Lucha Libre, Coyoacán, Chapultepec, Jamaica, Centro, Roma-Condesa and Anthropology, led by locals.'
 
   return (
     <>
@@ -117,12 +117,12 @@ export default function JourneysIndex() {
             Journeys
           </p>
           <h1 className="max-w-3xl text-4xl font-black leading-[1.05] tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-5xl lg:text-6xl">
-            {isEs ? 'Seis formas de caminar la Ciudad de México' : 'Six ways to walk Mexico City'}
+            {isEs ? 'Siete formas de caminar la Ciudad de México' : 'Seven ways to walk Mexico City'}
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-zinc-600 dark:text-zinc-300">
             {isEs
-              ? 'Un archivo editorial y cultural: cada Journey se lee, se observa y se recorre despacio.'
-              : 'An editorial and cultural archive: each Journey is read, observed and walked slowly.'}
+              ? 'Journeys guiados en grupo pequeño, creados y guiados por locales: eliges uno, reservas y la ciudad se camina acompañada.'
+              : 'Small-group guided journeys, created and led by locals: pick one, book it, and the city is walked in good company.'}
           </p>
           <div className="mt-6 max-w-2xl">
             <PartnerBanner />
@@ -152,8 +152,8 @@ export default function JourneysIndex() {
               </h2>
               <p className="max-w-2xl text-sm font-medium leading-relaxed text-white/90 sm:text-base">
                 {isEs
-                  ? 'Estos seis journeys son el archivo editorial. Si buscas algo distinto, te armamos un recorrido a la medida: barrio, ritmo, duración y a qué hora quieres que la ciudad te cuente lo que sabe.'
-                  : 'These six journeys are the editorial archive. If you are looking for something else, we build a route to measure: neighborhood, pace, duration and the hour you want the city to tell you what it knows.'}
+                  ? 'Estos siete journeys son el catálogo. Si buscas algo distinto, te armamos un recorrido a la medida: barrio, ritmo, duración y a qué hora quieres que la ciudad te cuente lo que sabe.'
+                  : 'These seven journeys are the catalogue. If you are looking for something else, we build a route to measure: neighborhood, pace, duration and the hour you want the city to tell you what it knows.'}
               </p>
               <a
                 href="https://wa.me/525512291607?text=Hola%20Calpulli%20CDMX%2C%20quiero%20un%20Journey%20a%20la%20medida"
@@ -244,8 +244,8 @@ export default function JourneysIndex() {
         <Reveal delay={0.1} className="mt-14" once={false}>
           <p className="text-sm italic text-zinc-500 dark:text-zinc-400">
             {isEs
-              ? 'Cada Journey abre con su propia entrada editorial. El contenido narrativo, las fotografías y la paleta de cada uno se publican progresivamente. El precio es de referencia.'
-              : 'Each Journey opens with its own editorial entry. Narrative content, photography and each palette are published progressively. The price is for reference only.'}
+              ? 'Así funciona: eliges un journey, reservas en línea o por WhatsApp y caminas en grupo pequeño con guías locales. El precio es por persona e incluye lo indicado en la ficha de cada journey.'
+              : 'How it works: pick a journey, book online or by WhatsApp, and walk in a small group with local guides. The price is per person and includes what each journey page specifies.'}
           </p>
         </Reveal>
       </section>

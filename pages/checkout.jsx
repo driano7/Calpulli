@@ -161,7 +161,7 @@ export default function CheckoutPage() {
         date: null,
         time: null,
         peopleCount: people,
-        maxGuests: 10,
+        maxGuests: 20,
       })
       added++
     }

@@ -106,7 +106,7 @@ export const JAMAICA_JOURNEY = {
   accents: ['talavera', 'cempasuchil'],
   photos: JAMAICA_PHOTOS,
   verified_on: '2026-10-21',
-  price: 100,
+  price: 649,
   notes: [
     'El mercado está en Guillermo Prieto 45, colonia Jamaica, alcaldía Venustiano Carranza, en el cruce de la Calzada de la Viga con Morelos. La estación del Metro Jamaica de la línea 9 queda debajo del mercado; la de la línea 4 es elevada y lleva el mismo nombre.',
     'Este recorrido no es una visita guiada con horario. Es una forma de mirar: qué observar, qué preguntar y con qué cuidado.',

@@ -69,10 +69,12 @@ import { ANTROPOLOGIA_JOURNEY } from './journeys/antropologia'
 import { LUCHAS_JOURNEY } from './journeys/luchas'
 import { ROMA_JOURNEY } from './journeys/roma'
 import { JAMAICA_JOURNEY } from './journeys/jamaica'
+import { COYOACAN_JOURNEY } from './journeys/coyoacan'
 
 /**
- * Precio de referencia, en pesos mexicanos, de todos los journeys.
- * Es un valor provisional, mientras el modelo de reserva se define.
+ * Precio de respaldo, en pesos mexicanos, para un journey cuyo módulo
+ * de datos aún no declare precio propio. Cada journey manda el suyo
+ * (campo `price` de su módulo en data/journeys/).
  */
 export const JOURNEY_PRICE_MXN = 100
 
@@ -93,7 +95,7 @@ export const JOURNEYS = [
     intro_en: LUCHAS_JOURNEY.intro_en,
     heroImage: LUCHAS_JOURNEY.heroImage,
     accents: LUCHAS_JOURNEY.accents,
-    price: JOURNEY_PRICE_MXN,
+    price: LUCHAS_JOURNEY.price ?? JOURNEY_PRICE_MXN,
     moments: [],
   },
   {
@@ -112,7 +114,7 @@ export const JOURNEYS = [
     intro_en: CHAPULTEPEC_JOURNEY.intro_en,
     heroImage: CHAPULTEPEC_JOURNEY.heroImage,
     accents: CHAPULTEPEC_JOURNEY.accents,
-    price: JOURNEY_PRICE_MXN,
+    price: CHAPULTEPEC_JOURNEY.price ?? JOURNEY_PRICE_MXN,
     moments: [],
   },
   {
@@ -130,7 +132,7 @@ export const JOURNEYS = [
     intro_en: JAMAICA_JOURNEY.intro_en,
     heroImage: JAMAICA_JOURNEY.heroImage,
     accents: JAMAICA_JOURNEY.accents,
-    price: JOURNEY_PRICE_MXN,
+    price: JAMAICA_JOURNEY.price ?? JOURNEY_PRICE_MXN,
     moments: [],
   },
   {
@@ -148,7 +150,7 @@ export const JOURNEYS = [
     intro_en: CENTRO_JOURNEY.intro_en,
     heroImage: CENTRO_JOURNEY.heroImage,
     accents: CENTRO_JOURNEY.accents,
-    price: JOURNEY_PRICE_MXN,
+    price: CENTRO_JOURNEY.price ?? JOURNEY_PRICE_MXN,
     moments: [],
   },
   {
@@ -166,7 +168,7 @@ export const JOURNEYS = [
     intro_en: ROMA_JOURNEY.intro_en,
     heroImage: ROMA_JOURNEY.heroImage,
     accents: ROMA_JOURNEY.accents,
-    price: JOURNEY_PRICE_MXN,
+    price: ROMA_JOURNEY.price ?? JOURNEY_PRICE_MXN,
     moments: [],
   },
   {
@@ -185,8 +187,28 @@ export const JOURNEYS = [
     intro_en: ANTROPOLOGIA_JOURNEY.intro_en,
     heroImage: ANTROPOLOGIA_JOURNEY.heroImage,
     accents: ANTROPOLOGIA_JOURNEY.accents,
-    price: JOURNEY_PRICE_MXN,
+    price: ANTROPOLOGIA_JOURNEY.price ?? JOURNEY_PRICE_MXN,
     moments: [],
+  },
+  {
+    // Séptimo journey (2026-11-07): sin componente dedicado; se
+    // renderiza con la presentación editorial genérica de
+    // pages/journeys/[slug].js. Por eso, a diferencia de los capítulos
+    // con experiencia propia, el registro SÍ toma sus `moments` del
+    // módulo: la presentación genérica los lee de aquí.
+    id: COYOACAN_JOURNEY.id,
+    slug: COYOACAN_JOURNEY.slug,
+    experience: COYOACAN_JOURNEY.experience,
+    title_es: COYOACAN_JOURNEY.title_es,
+    title_en: COYOACAN_JOURNEY.title_en,
+    subtitle_es: COYOACAN_JOURNEY.subtitle_es,
+    subtitle_en: COYOACAN_JOURNEY.subtitle_en,
+    intro_es: COYOACAN_JOURNEY.intro_es,
+    intro_en: COYOACAN_JOURNEY.intro_en,
+    heroImage: COYOACAN_JOURNEY.heroImage,
+    accents: COYOACAN_JOURNEY.accents,
+    price: COYOACAN_JOURNEY.price ?? JOURNEY_PRICE_MXN,
+    moments: COYOACAN_JOURNEY.moments,
   },
 ]
 

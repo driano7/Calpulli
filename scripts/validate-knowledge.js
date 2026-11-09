@@ -92,7 +92,7 @@ for (const [f, d] of Object.entries(docs)) {
   for (const re of SECRET_PATTERNS) {
     if (re.test(raw)) fail(`${f}: possible secret pattern ${re}`)
   }
-  if (/ADMIN_EMAILS|SUPABASE_|STRIPE_SECRET|OPENROUTER_API_KEY/.test(raw))
+  if (/ADMIN_EMAILS|TURSO_|STRIPE_SECRET|OPENROUTER_API_KEY/.test(raw))
     fail(`${f}: admin/secret key leaked`)
 }
 

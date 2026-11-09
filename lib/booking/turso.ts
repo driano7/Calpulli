@@ -5,6 +5,7 @@ import { randomBytes } from 'crypto'
 import { turso } from '../turso'
 import { COUNTRY_CODES, isValidAgeBand } from '../demographics'
 import { normalizeGender as normalizeGenderValue } from '../demographics-shared'
+import { fireBrunoEvent } from '../bruno-events'
 
 /** Alfabeto sin caracteres ambiguos: O/0, I/1, S/5. */
 const ALPHABET = 'ABCDEFGHJKLMNPQRTUVWXYZ23456789'
@@ -144,7 +145,7 @@ export async function createBookingInTurso(input: CreateBookingInput): Promise<C
     ? await demographicsForUser(input.userId)
     : { country: null, ageBand: null, gender: null }
 
-  const guests = Math.max(1, Math.min(10, Number(input.peopleCount) || 1))
+  const guests = Math.max(1, Math.min(20, Number(input.peopleCount) || 1))
   const total =
     Number(input.totalAmount) ||
     (Array.isArray(input.items)
@@ -246,6 +247,29 @@ export async function createBookingInTurso(input: CreateBookingInput): Promise<C
     })
     tickets.push({ position, participantName: name, ticketCode, isResponsible })
   }
+
+  // Piso 2: avisar a Bruno que nació una reserva. Este es el embudo por
+  // el que pasan efectivo, cripto y tarjeta, así que una sola llamada
+  // cubre todos los canales. Es fire-and-forget y silencioso si faltan
+  // las variables BRUNO_WEBHOOK_*: nunca bloquea ni tumba la venta.
+  // Sin datos personales: solo la referencia y los datos del journey.
+  // (La atribución de socio se crea después, en los endpoints, así que
+  // partner_ref no existe todavía en esta capa.)
+  fireBrunoEvent('booking.created', {
+    booking_ref: reference,
+    journey: String(input.experienceId),
+    date: iso.slice(0, 10),
+    guests,
+    amount: total,
+    currency: input.currency || 'USD',
+    // amount_mxn solo cuando la moneda de la reserva sí es MXN: nada de
+    // etiquetar dólares como pesos.
+    ...(String(input.currency || '').toUpperCase() === 'MXN'
+      ? { amount_mxn: total }
+      : {}),
+    payment_method: input.paymentMethod || undefined,
+    status,
+  })
 
   return {
     id,
