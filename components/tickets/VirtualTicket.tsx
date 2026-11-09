@@ -77,22 +77,16 @@ export function VirtualTicket({
     ? ticket.paymentMethod !== 'cash'
     : Number(ticket.totalPrice) > 0
 
-  // Detectar si es móvil (Android o iOS) para habilitar share nativo
-  const [isMobileDevice, setIsMobileDevice] = useState(false)
-  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
-  const isAndroid = /android/i.test(ua)
-  const isIOS =
-    /iphone|ipod|ipad/i.test(ua) ||
-    (/macintosh/i.test(ua) &&
-      typeof navigator.maxTouchPoints === 'number' &&
-      navigator.maxTouchPoints > 1)
-  const canShareNative =
-    typeof navigator !== 'undefined' &&
-    typeof navigator.share === 'function' &&
-    (isAndroid || isIOS)
+  // Compartir por CAPACIDAD, nunca por user-agent (regla de Donovan,
+  // 2026-11-09): el botón aparece en cualquier dispositivo cuyo navegador
+  // sepa compartir — celular, tableta o compu, de cualquier marca — y qué
+  // se comparte (la imagen o el enlace) se decide al clic con canShare.
+  const [canShareTicket, setCanShareTicket] = useState(false)
 
   useEffect(() => {
-    setIsMobileDevice(isAndroid || isIOS)
+    setCanShareTicket(
+      typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+    )
   }, [])
 
   const [qrValue, setQrValue] = useState<string>(() => {
@@ -236,8 +230,20 @@ export function VirtualTicket({
       }
 
       if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        // Por capacidad: si el navegador acepta archivos, va la imagen del
+        // ticket; si solo acepta texto/enlace, va el enlace público /t/<código>.
+        const filesOk =
+          typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })
         try {
-          await navigator.share(shareData)
+          if (filesOk) {
+            await navigator.share(shareData)
+          } else {
+            await navigator.share({
+              title: shareData.title,
+              text: shareData.text,
+              url: `${window.location.origin}/t/${cleanTicketCode}`,
+            })
+          }
           return
         } catch (shareError) {
           if (
@@ -665,7 +671,7 @@ export function VirtualTicket({
               : 'Download PDF'}
           </button>
 
-          {isMobileDevice && (
+          {canShareTicket && (
             <button
               onClick={shareTicket}
               disabled={isSharing}

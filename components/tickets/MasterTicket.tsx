@@ -42,22 +42,16 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
   const [isGenerating, setIsGenerating] = useState<'png' | 'pdf' | null>(null)
   const [isSharing, setIsSharing] = useState(false)
 
-  // Detectar móvil para share nativo
-  const [isMobileDevice, setIsMobileDevice] = useState(false)
-  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
-  const isAndroid = /android/i.test(ua)
-  const isIOS =
-    /iphone|ipod|ipad/i.test(ua) ||
-    (/macintosh/i.test(ua) &&
-      typeof navigator.maxTouchPoints === 'number' &&
-      navigator.maxTouchPoints > 1)
-  const canShareNative =
-    typeof navigator !== 'undefined' &&
-    typeof navigator.share === 'function' &&
-    (isAndroid || isIOS)
+  // Compartir por CAPACIDAD, nunca por user-agent (regla de Donovan,
+  // 2026-11-09): el botón aparece en cualquier dispositivo cuyo navegador
+  // sepa compartir — celular, tableta o compu, de cualquier marca — y la
+  // compatibilidad con archivos se verifica al clic con canShare.
+  const [canShareTicket, setCanShareTicket] = useState(false)
 
   useEffect(() => {
-    setIsMobileDevice(isAndroid || isIOS)
+    setCanShareTicket(
+      typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+    )
   }, [])
 
   // El responsable es el primer booking (posición 1) o el que tiene isResponsible
@@ -178,7 +172,11 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
           : `My Calpulli CDMX bookings — ${responsibleName}. Code: ${parentCode}`,
       }
 
-      if (canShareNative) {
+      const filesOk =
+        typeof navigator !== 'undefined' &&
+        typeof navigator.share === 'function' &&
+        (typeof navigator.canShare !== 'function' || navigator.canShare(shareData))
+      if (filesOk) {
         try {
           await navigator.share(shareData)
           return
@@ -200,7 +198,7 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
     } finally {
       setIsSharing(false)
     }
-  }, [parentCode, responsibleName, isEs, canShareNative])
+  }, [parentCode, responsibleName, isEs])
 
   return (
     <motion.div
@@ -448,7 +446,7 @@ export function MasterTicket({ bookings, onClose }: MasterTicketProps) {
               : 'Download PDF'}
           </button>
 
-          {isMobileDevice && (
+          {canShareTicket && (
             <button
               onClick={shareTicket}
               disabled={isSharing}
