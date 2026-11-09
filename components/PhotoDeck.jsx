@@ -10,9 +10,10 @@
 // - Las dos fotos de cada tarjeta se cruzan al cambiar el tema del sitio
 //   (clase .dark de Tailwind en <html>): entra la segunda foto con un barrido
 //   diagonal de luz. Nada de esto se anuncia en los textos visibles.
-// - Barra de puertas bajo el deck (sticky en pantallas ≥sm, en flujo en móvil
-//   para no pelear con el MobileDock): solo "Nuestros journeys" lleva el
-//   degradado de marca — el degradado marca lo que Calpulli vende.
+// - Barra de puertas bajo el deck: bloque estático en su sección, sin
+//   flotar ni seguir al usuario (Donovan lo pidió así). Solo
+//   "Nuestros journeys" lleva el degradado de marca — el degradado marca
+//   lo que Calpulli vende.
 //
 // ── PARES DE FOTOS ──────────────────────────────────────────────────────────
 // Para cambiar una foto basta editar su URL aquí. Fotos de Wikimedia Commons
@@ -49,7 +50,8 @@ const PAIRS = [
     // PENDIENTE: día era foto de Donovan; suplente aérea de Commons.
     day: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ae/Im%C3%A1genes_a%C3%A9reas_de_la_Biblioteca_Central_de_la_UNAM_1.jpg/960px-Im%C3%A1genes_a%C3%A9reas_de_la_Biblioteca_Central_de_la_UNAM_1.jpg',
     // Commons — como en la demo.
-    night: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/Biblioteca_Central_UNAM_de_noche.jpg',
+    night:
+      'https://upload.wikimedia.org/wikipedia/commons/e/eb/Biblioteca_Central_UNAM_de_noche.jpg',
     dur: '1.3s',
     del: '50ms',
   },
@@ -181,39 +183,6 @@ export default function PhotoDeck() {
     return () => mq.removeEventListener('change', update)
   }, [])
 
-  // Barra de puertas flotante: cuando el usuario baja más allá del carrusel,
-  // la barra se despega y lo sigue (fixed); al scrollear hacia abajo se
-  // esconde deslizándose hacia abajo y al subir reaparece hacia arriba.
-  const sectionRef = useRef(null)
-  const doorbarRef = useRef(null)
-  const [barFixed, setBarFixed] = useState(false)
-  const [barHidden, setBarHidden] = useState(false)
-  const [barH, setBarH] = useState(0)
-
-  useEffect(() => {
-    let lastY = window.scrollY
-    let wasPast = false
-    const onScroll = () => {
-      const y = window.scrollY
-      const el = sectionRef.current
-      if (!el) return
-      const past = el.getBoundingClientRect().bottom < window.innerHeight - 120
-      if (past) {
-        if (!wasPast && doorbarRef.current) setBarH(doorbarRef.current.offsetHeight)
-        setBarFixed(true)
-        if (y > lastY + 4) setBarHidden(true)
-        else if (y < lastY - 4) setBarHidden(false)
-      } else {
-        setBarFixed(false)
-        setBarHidden(false)
-      }
-      wasPast = past
-      lastY = y
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
   // Auto-avance solo con el deck en pantalla (igual que la demo).
   useEffect(() => {
     const el = stageRef.current
@@ -248,7 +217,10 @@ export default function PhotoDeck() {
   }
 
   return (
-    <section ref={sectionRef} className="pd-section" aria-label={isEn ? 'Mexico City photos' : 'Fotos de la Ciudad de México'}>
+    <section
+      className="pd-section"
+      aria-label={isEn ? 'Mexico City photos' : 'Fotos de la Ciudad de México'}
+    >
       <h2 className="text-center text-3xl font-bold text-gray-900 dark:text-white">
         {isEn ? 'The city, in cards' : 'La ciudad, en tarjetas'}
       </h2>
@@ -309,15 +281,12 @@ export default function PhotoDeck() {
       </div>
 
       <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-        {isEn ? 'Tap a side card to bring it to the front' : 'Toca una tarjeta lateral para traerla al frente'}
+        {isEn
+          ? 'Tap a side card to bring it to the front'
+          : 'Toca una tarjeta lateral para traerla al frente'}
       </p>
 
-      {barFixed && <div aria-hidden="true" style={{ height: barH || undefined }} />}
-      <nav
-        ref={doorbarRef}
-        className={`pd-doorbar${barFixed ? ' pd-fixed' : ''}${barHidden ? ' pd-hide' : ''}`}
-        aria-label={isEn ? 'Explore Calpulli' : 'Explora Calpulli'}
-      >
+      <nav className="pd-doorbar" aria-label={isEn ? 'Explore Calpulli' : 'Explora Calpulli'}>
         {DOORS.map((door) => {
           const [title, sub] = isEn ? door.en : door.es
           return (
@@ -364,7 +333,7 @@ export default function PhotoDeck() {
           margin: 0;
         }
         .pd-card:focus-visible {
-          outline: 2px solid #9F0E7F;
+          outline: 2px solid #9f0e7f;
           outline-offset: 3px;
         }
         :global(.pd-card .pd-ph) {
@@ -427,37 +396,9 @@ export default function PhotoDeck() {
           background: rgba(250, 246, 239, 0.55);
           -webkit-backdrop-filter: blur(16px) saturate(1.4);
           backdrop-filter: blur(16px) saturate(1.4);
-          transition: transform 0.45s cubic-bezier(0.3, 1, 0.3, 1), opacity 0.35s ease;
-        }
-        .pd-fixed {
-          position: fixed;
-          left: 50%;
-          bottom: calc(84px + env(safe-area-inset-bottom));
-          transform: translateX(-50%);
-          width: min(1020px, calc(100% - 24px));
-          margin-top: 0;
-          border: 1px solid rgba(120, 80, 160, 0.25);
-          border-radius: 22px;
-          box-shadow: 0 18px 40px rgba(20, 5, 35, 0.25);
-          z-index: 30;
-        }
-        .pd-hide {
-          transform: translateX(-50%) translateY(160%);
-          opacity: 0;
-          pointer-events: none;
         }
         :global(.dark) .pd-doorbar {
           background: rgba(18, 7, 31, 0.5);
-        }
-        @media (min-width: 640px) {
-          .pd-doorbar:not(.pd-fixed) {
-            position: sticky;
-            bottom: 0;
-            z-index: 30;
-          }
-          .pd-fixed {
-            bottom: 16px;
-          }
         }
         :global(.pd-door) {
           flex: 1 1 150px;
@@ -481,11 +422,11 @@ export default function PhotoDeck() {
           color: #fff;
           background: linear-gradient(
             135deg,
-            #DE1D8D 0%,
-            #BE1588 25%,
-            #9F0E7F 50%,
-            #7B2BD9 75%,
-            #6A0568 100%
+            #de1d8d 0%,
+            #be1588 25%,
+            #9f0e7f 50%,
+            #7b2bd9 75%,
+            #6a0568 100%
           );
           box-shadow: 0 10px 24px rgba(159, 14, 127, 0.35);
         }
@@ -495,7 +436,7 @@ export default function PhotoDeck() {
           height: 30px;
           border-radius: 50%;
           background: rgba(159, 14, 127, 0.1);
-          color: #9F0E7F;
+          color: #9f0e7f;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -523,16 +464,13 @@ export default function PhotoDeck() {
           flex: 0 0 auto;
           font-size: 15px;
           font-weight: 700;
-          color: #9F0E7F;
+          color: #9f0e7f;
         }
         :global(.pd-door-main .pd-ar) {
           color: #fff;
         }
         @media (prefers-reduced-motion: reduce) {
           .pd-card {
-            transition: none;
-          }
-          .pd-doorbar {
             transition: none;
           }
           :global(.dark) .pd-sweep {

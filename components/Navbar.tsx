@@ -208,8 +208,8 @@ export function Navbar() {
       >
         <header
           className={classNames(
-            'pointer-events-auto flex w-[min(1100px,100%)] items-center rounded-3xl border text-sm font-semibold shadow-2xl backdrop-blur-md transition-all duration-500',
-            atTop ? 'gap-4 px-5 py-3' : 'gap-2 px-4 py-1.5',
+            'pointer-events-auto flex w-full items-center rounded-3xl border text-sm font-semibold shadow-2xl backdrop-blur-md transition-all duration-500',
+            atTop ? 'max-w-[1100px] gap-4 px-5 py-3' : 'max-w-md gap-1.5 px-3 py-1.5',
             // Xoco style: more transparent, less gray, blur in both themes
             'border-black/5 bg-white/80 text-zinc-900 dark:border-white/10 dark:bg-black/60 dark:text-white',
             isVisible
@@ -245,14 +245,19 @@ export function Navbar() {
             </Link>
             <Link
               href="/"
-              className="hidden font-serif text-lg font-bold tracking-wide text-zinc-900 transition-colors hover:text-orange-500 dark:text-white sm:block"
+              className={classNames(
+                'font-serif text-lg font-bold tracking-wide text-zinc-900 transition-colors hover:text-orange-500 dark:text-white',
+                atTop ? 'hidden sm:block' : 'hidden'
+              )}
             >
               Calpulli CDMX
             </Link>
           </div>
 
           <div className="flex flex-1 items-center justify-end gap-4">
-            <nav className="hidden items-center gap-1 sm:flex lg:gap-2">
+            <nav
+              className={classNames('items-center gap-1 lg:gap-2', atTop ? 'hidden sm:flex' : 'hidden')}
+            >
               {navItems.map((item, index) => (
                 <Link
                   key={item.href}
@@ -377,7 +382,11 @@ export function Navbar() {
               >
                 <div className="flex flex-col items-center gap-0.5">
                   <span className="text-lg">{currentLanguage === 'es' ? '🇲🇽' : '🇺🇸'}</span>
-                  <span className="text-[0.85rem] font-black uppercase tracking-[0.35em]">
+                  <span
+                    className={
+                      atTop ? 'text-[0.85rem] font-black uppercase tracking-[0.35em]' : 'hidden'
+                    }
+                  >
                     {currentLanguage === 'es' ? 'ES' : 'EN'}
                   </span>
                   </div>
@@ -391,7 +400,7 @@ export function Navbar() {
                 animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
                 transition={{ duration: 0.5, delay: 0.18, ease: 'easeOut' }}
               >
-                <AuthNav />
+                <AuthNav compact={!atTop} />
               </motion.div>
 
               {/* Reservation icon — animado en hover/clic y marcado cuando ya estas en /bookings */}

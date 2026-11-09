@@ -3,8 +3,9 @@
 import { useAuth } from '@/lib/hooks/useAuth'
 import Link from '@/components/Link'
 import { useLanguage } from '@/lib/hooks/useLanguage'
+import { CircleUserRound } from 'lucide-react'
 
-export default function AuthNav() {
+export default function AuthNav({ compact = false }) {
   const { user, logout, isLoading } = useAuth()
   const { t } = useLanguage()
 
@@ -13,6 +14,17 @@ export default function AuthNav() {
   }
 
   if (user) {
+    if (compact) {
+      return (
+        <Link
+          href="/profile"
+          aria-label="Mi Cuenta"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-orange-500/10 hover:text-orange-500 dark:text-zinc-300"
+        >
+          <CircleUserRound className="h-6 w-6" />
+        </Link>
+      )
+    }
     const displayName = user.firstName?.trim() || user.email
     return (
       <div className="flex items-center gap-3">
@@ -39,6 +51,18 @@ export default function AuthNav() {
           Cerrar sesión
         </button>
       </div>
+    )
+  }
+
+  if (compact) {
+    return (
+      <Link
+        href="/register"
+        aria-label="Iniciar sesión"
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-orange-500 text-orange-500 transition-colors hover:bg-orange-50"
+      >
+        <CircleUserRound className="h-5 w-5" />
+      </Link>
     )
   }
 

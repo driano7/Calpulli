@@ -560,31 +560,55 @@ const CHAT_TOPIC_LABELS = {
 }
 
 /**
- * Esquema de chat_questions, asegurado UNA sola vez por proceso.
- * Antes esto corría en cada mensaje (1 CREATE TABLE + 4 ALTER + 4 CREATE
- * INDEX = 9 viajes extra a Turso antes del INSERT) y el handler esperaba
- * toda la cadena antes de responder: era la mayor latencia fija por mensaje,
- * peor bajo volumen. Ahora solo el primer mensaje del proceso paga el DDL;
- * el resto va directo al INSERT. Si el DDL falla, se limpia la promesa para
- * reintentar en el siguiente mensaje.
+ * Esquema de chat_questions, asegurado SOLO como reparación perezosa.
+ * Historia: primero el DDL corría en cada mensaje y el handler lo esperaba
+ * (9 viajes a Turso antes de responder); después pasó a una vez por proceso,
+ * pero seguía corriendo dentro del ciclo de vida del primer mensaje — como
+ * el log es fire-and-forget, esa cadena dejaba la instancia ocupada y la
+ * SIGUIENTE petición esperaba a que terminara (medido en producción: un
+ * "hola" enlatado tardó 24 s justo después de otro, 2026-11-09).
+ * Ahora el camino normal es INSERT directo (1 viaje). Solo si el INSERT
+ * falla (BD nueva/recreada) se corre esta reparación y se reintenta una vez.
+ * El DDL idempotente va en UN batch (1 viaje en vez de 5); los ALTER de
+ * migración quedan secuenciales con catch individual. Si la reparación
+ * falla, se limpia la promesa para reintentar en el siguiente mensaje.
  */
 let chatLogSchemaPromise = null
 function ensureChatLogSchema() {
   if (!chatLogSchemaPromise) {
     chatLogSchemaPromise = (async () => {
-      await turso.execute({
-        sql: `CREATE TABLE IF NOT EXISTS chat_questions (
-          id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-          user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
-          conversation_id TEXT,
-          question TEXT NOT NULL,
-          answer TEXT,
-          locale TEXT NOT NULL DEFAULT 'es',
-          path TEXT,
-          filtered TEXT,
-          created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        )`,
-      })
+      await turso.batch(
+        [
+          {
+            sql: `CREATE TABLE IF NOT EXISTS chat_questions (
+              id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+              user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+              conversation_id TEXT,
+              question TEXT NOT NULL,
+              answer TEXT,
+              locale TEXT NOT NULL DEFAULT 'es',
+              path TEXT,
+              filtered TEXT,
+              topic TEXT,
+              suggestion_key TEXT,
+              created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )`,
+          },
+          {
+            sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_created_at ON chat_questions(created_at)`,
+          },
+          {
+            sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_user_created ON chat_questions(user_id, created_at DESC)`,
+          },
+          {
+            sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_conv ON chat_questions(conversation_id, created_at)`,
+          },
+          {
+            sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_topic_created ON chat_questions(topic, created_at DESC)`,
+          },
+        ],
+        'write'
+      )
       // Migración best-effort para BDs creadas antes de user_id/conversation_id/topic.
       for (const sql of [
         `ALTER TABLE chat_questions ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE SET NULL`,
@@ -592,24 +616,12 @@ function ensureChatLogSchema() {
         `ALTER TABLE chat_questions ADD COLUMN topic TEXT`,
         `ALTER TABLE chat_questions ADD COLUMN suggestion_key TEXT`,
       ]) {
-          try {
-            await turso.execute({ sql })
-          } catch {
-            // duplicate column: ya existe
-          }
+        try {
+          await turso.execute({ sql })
+        } catch {
+          // duplicate column: ya existe
+        }
       }
-      await turso.execute({
-        sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_created_at ON chat_questions(created_at)`,
-      })
-      await turso.execute({
-        sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_user_created ON chat_questions(user_id, created_at DESC)`,
-      })
-      await turso.execute({
-        sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_conv ON chat_questions(conversation_id, created_at)`,
-      })
-      await turso.execute({
-        sql: `CREATE INDEX IF NOT EXISTS idx_chat_questions_topic_created ON chat_questions(topic, created_at DESC)`,
-      })
     })().catch((err) => {
       chatLogSchemaPromise = null
       throw err
@@ -632,13 +644,16 @@ async function logChatQuestion({
   path,
   filtered,
   userId,
+  userIdPromise,
   conversationId,
   topic,
   suggestionKey,
 }) {
   try {
     if (!question || !process.env.TURSO_URL) return
-    await ensureChatLogSchema()
+    // La sesión se resuelve en paralelo desde el inicio del request y solo
+    // la espera este log (fire-and-forget): ya no bloquea ninguna respuesta.
+    const resolvedUserId = userId || (userIdPromise ? await userIdPromise : null)
     const cleanConv = typeof conversationId === 'string' ? conversationId.slice(0, 80) : null
     // Si el handler ya clasificó en "general" pero el filtro (custom/fast)
     // da más señal, se re-clasifica con filtered para el reporte.
@@ -646,11 +661,11 @@ async function logChatQuestion({
       topic && topic !== 'general'
         ? topic
         : classifyChatTopic(question, path, suggestionKey, filtered) || topic
-    await turso.execute({
+    const insert = {
       sql: `INSERT INTO chat_questions (user_id, conversation_id, question, answer, locale, path, filtered, topic, suggestion_key)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
-        userId || null,
+        resolvedUserId || null,
         cleanConv || null,
         String(question).slice(0, MAX_MESSAGE_CHARS),
         String(answer || '').slice(0, MAX_ANSWER_CHARS) || null,
@@ -660,7 +675,14 @@ async function logChatQuestion({
         finalTopic || null,
         suggestionKey ? String(suggestionKey).slice(0, 50) : null,
       ],
-    })
+    }
+    try {
+      await turso.execute(insert)
+    } catch {
+      // Esquema ausente o desactualizado: reparación perezosa y UN reintento.
+      await ensureChatLogSchema()
+      await turso.execute(insert)
+    }
   } catch (err) {
     if (process.env.NODE_ENV !== 'production') {
       console.warn('[chatbot log]', err?.message?.slice?.(0, 200) || err)
@@ -745,13 +767,15 @@ export default async function handler(req, res) {
   }
 
   // Usuario logueado (si trae Bearer) + conversación (nueva charla = nuevo id).
-  let actorUserId = null
-  try {
-    const actor = await getSessionUser(bearerToken(req))
-    actorUserId = actor ? actor.id : null
-  } catch {
-    actorUserId = null
-  }
+  // La sesión arranca en paralelo y NO se espera aquí: getSessionUser hace
+  // SELECT + UPDATE + SELECT de rol en Turso (lib/auth.ts) y antes ese await
+  // quedaba antes de los filtros y del fast-path, así que un usuario logueado
+  // pagaba 2-3 viajes a la BD hasta para un "hola" enlatado. El único
+  // consumidor del userId es el log (fire-and-forget), que sí la espera.
+  // Sin token, getSessionUser regresa null sin tocar la BD.
+  const actorUserIdPromise = getSessionUser(bearerToken(req))
+    .then((actor) => (actor ? actor.id : null))
+    .catch(() => null)
   const conversationId = cleanConversationId(body.conversationId)
 
   // ── Filtros previos: no gastan tokens ──────────────────────────────
@@ -761,7 +785,7 @@ export default async function handler(req, res) {
   const logCtx = {
     locale: isEs ? 'es' : 'en',
     path: body.path || '/',
-    userId: actorUserId,
+    userIdPromise: actorUserIdPromise,
     conversationId,
     topic,
     suggestionKey,
@@ -854,7 +878,9 @@ export default async function handler(req, res) {
       res.write(`data: [DONE]\n\n`)
       return res.end()
     }
-    return res.status(200).json({ reply: sales.reply, filtered: sales.filtered, action: sales.action || null })
+    return res
+      .status(200)
+      .json({ reply: sales.reply, filtered: sales.filtered, action: sales.action || null })
   }
 
   const messages = [
