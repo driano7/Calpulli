@@ -1,14 +1,11 @@
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
 // Reservas reales en Turso. El booking_reference es el mismo que viaja en el QR,
 // así que el escáner del empleado resuelve contra la misma fila.
-import { randomBytes } from 'crypto'
+import { generateBookingReference } from './reference'
 import { turso } from '../turso'
 import { COUNTRY_CODES, isValidAgeBand } from '../demographics'
 import { normalizeGender as normalizeGenderValue } from '../demographics-shared'
 import { fireBrunoEvent } from '../bruno-events'
-
-/** Alfabeto sin caracteres ambiguos: O/0, I/1, S/5. */
-const ALPHABET = 'ABCDEFGHJKLMNPQRTUVWXYZ23456789'
 
 export interface CreateBookingInput {
   experienceId: string
@@ -44,13 +41,8 @@ export interface CreateBookingInput {
   responsiblePosition?: number
 }
 
-/** Referencia legible y corta: CDMX-7K3QF9 */
-export function generateBookingReference(): string {
-  const bytes = randomBytes(6)
-  let out = ''
-  for (let i = 0; i < 6; i++) out += ALPHABET[bytes[i] % ALPHABET.length]
-  return `CDMX-${out}`
-}
+/** Referencia legible y corta: CDMX-7K3QF9 (vive en ./reference, función pura). */
+export { generateBookingReference } from './reference'
 
 /** Código completo que se imprime en el QR (sin prefijo, solo la referencia). */
 export function ticketCodeFor(reference: string): string {
@@ -264,9 +256,7 @@ export async function createBookingInTurso(input: CreateBookingInput): Promise<C
     currency: input.currency || 'USD',
     // amount_mxn solo cuando la moneda de la reserva sí es MXN: nada de
     // etiquetar dólares como pesos.
-    ...(String(input.currency || '').toUpperCase() === 'MXN'
-      ? { amount_mxn: total }
-      : {}),
+    ...(String(input.currency || '').toUpperCase() === 'MXN' ? { amount_mxn: total } : {}),
     payment_method: input.paymentMethod || undefined,
     status,
   })
