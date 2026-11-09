@@ -181,6 +181,39 @@ export default function PhotoDeck() {
     return () => mq.removeEventListener('change', update)
   }, [])
 
+  // Barra de puertas flotante: cuando el usuario baja más allá del carrusel,
+  // la barra se despega y lo sigue (fixed); al scrollear hacia abajo se
+  // esconde deslizándose hacia abajo y al subir reaparece hacia arriba.
+  const sectionRef = useRef(null)
+  const doorbarRef = useRef(null)
+  const [barFixed, setBarFixed] = useState(false)
+  const [barHidden, setBarHidden] = useState(false)
+  const [barH, setBarH] = useState(0)
+
+  useEffect(() => {
+    let lastY = window.scrollY
+    let wasPast = false
+    const onScroll = () => {
+      const y = window.scrollY
+      const el = sectionRef.current
+      if (!el) return
+      const past = el.getBoundingClientRect().bottom < window.innerHeight - 120
+      if (past) {
+        if (!wasPast && doorbarRef.current) setBarH(doorbarRef.current.offsetHeight)
+        setBarFixed(true)
+        if (y > lastY + 4) setBarHidden(true)
+        else if (y < lastY - 4) setBarHidden(false)
+      } else {
+        setBarFixed(false)
+        setBarHidden(false)
+      }
+      wasPast = past
+      lastY = y
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   // Auto-avance solo con el deck en pantalla (igual que la demo).
   useEffect(() => {
     const el = stageRef.current
@@ -215,7 +248,7 @@ export default function PhotoDeck() {
   }
 
   return (
-    <section className="pd-section" aria-label={isEn ? 'Mexico City photos' : 'Fotos de la Ciudad de México'}>
+    <section ref={sectionRef} className="pd-section" aria-label={isEn ? 'Mexico City photos' : 'Fotos de la Ciudad de México'}>
       <h2 className="text-center text-3xl font-bold text-gray-900 dark:text-white">
         {isEn ? 'The city, in cards' : 'La ciudad, en tarjetas'}
       </h2>
@@ -279,7 +312,12 @@ export default function PhotoDeck() {
         {isEn ? 'Tap a side card to bring it to the front' : 'Toca una tarjeta lateral para traerla al frente'}
       </p>
 
-      <nav className="pd-doorbar" aria-label={isEn ? 'Explore Calpulli' : 'Explora Calpulli'}>
+      {barFixed && <div aria-hidden="true" style={{ height: barH || undefined }} />}
+      <nav
+        ref={doorbarRef}
+        className={`pd-doorbar${barFixed ? ' pd-fixed' : ''}${barHidden ? ' pd-hide' : ''}`}
+        aria-label={isEn ? 'Explore Calpulli' : 'Explora Calpulli'}
+      >
         {DOORS.map((door) => {
           const [title, sub] = isEn ? door.en : door.es
           return (
@@ -389,15 +427,36 @@ export default function PhotoDeck() {
           background: rgba(250, 246, 239, 0.55);
           -webkit-backdrop-filter: blur(16px) saturate(1.4);
           backdrop-filter: blur(16px) saturate(1.4);
+          transition: transform 0.45s cubic-bezier(0.3, 1, 0.3, 1), opacity 0.35s ease;
+        }
+        .pd-fixed {
+          position: fixed;
+          left: 50%;
+          bottom: calc(84px + env(safe-area-inset-bottom));
+          transform: translateX(-50%);
+          width: min(1020px, calc(100% - 24px));
+          margin-top: 0;
+          border: 1px solid rgba(120, 80, 160, 0.25);
+          border-radius: 22px;
+          box-shadow: 0 18px 40px rgba(20, 5, 35, 0.25);
+          z-index: 30;
+        }
+        .pd-hide {
+          transform: translateX(-50%) translateY(160%);
+          opacity: 0;
+          pointer-events: none;
         }
         :global(.dark) .pd-doorbar {
           background: rgba(18, 7, 31, 0.5);
         }
         @media (min-width: 640px) {
-          .pd-doorbar {
+          .pd-doorbar:not(.pd-fixed) {
             position: sticky;
             bottom: 0;
             z-index: 30;
+          }
+          .pd-fixed {
+            bottom: 16px;
           }
         }
         :global(.pd-door) {
@@ -471,6 +530,9 @@ export default function PhotoDeck() {
         }
         @media (prefers-reduced-motion: reduce) {
           .pd-card {
+            transition: none;
+          }
+          .pd-doorbar {
             transition: none;
           }
           :global(.dark) .pd-sweep {
