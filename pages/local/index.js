@@ -26,8 +26,6 @@ const pageTranslations = {
     pinnedBadge: 'Festival',
     pinnedTitle: 'Pinned: this festival stays all year',
     pinnedHeading: 'Always here',
-    galleryHeading: 'CDMX photo wall',
-    galleryNote: 'Allusive photos of the month. Credits: Unsplash (free to use).',
     pinnedNote:
       'Three Mexican festivals that never leave the calendar. They are pinned, and they are in pink.',
   },
@@ -43,44 +41,11 @@ const pageTranslations = {
     pinnedBadge: 'Festival',
     pinnedTitle: 'Fijado: esta fiesta se queda todo el año',
     pinnedHeading: 'Siempre aquí',
-    galleryHeading: 'Muro de fotos CDMX',
-    galleryNote: 'Fotos alusivas del mes. Créditos: Unsplash (uso libre).',
     pinnedNote:
       'Tres festividades mexicanas que no se van del calendario. Van fijadas, y van en rosa.',
   },
 }
 
-// Fotos alusivas libres de derechos (Unsplash). Sin Getty: tiene
-// copyright y no se usa. Cada foto va con su tema para que se entienda.
-const MONTH_PHOTOS = [
-  {
-    src: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80',
-    alt: { es: 'Tacos y comida callejera de la CDMX', en: 'CDMX street food and tacos' },
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&q=80',
-    alt: { es: 'Arquitectura del Centro Histórico', en: 'Historic Centre architecture' },
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=800&q=80',
-    alt: {
-      es: 'Cafés y vida de barrio en Roma–Condesa',
-      en: 'Coffee and neighborhood life in Roma–Condesa',
-    },
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1526772661822-98a872d3e7a6?w=800&q=80',
-    alt: { es: 'Paseo en Chapultepec', en: 'Stroll in Chapultepec' },
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800&q=80',
-    alt: { es: 'Mercados y artesanía local', en: 'Markets and local crafts' },
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1476514525535-07fb6b4ae8dd?w=800&q=80',
-    alt: { es: 'Trajineras en Xochimilco', en: 'Trajineras in Xochimilco' },
-  },
-]
 
 export async function getStaticProps() {
   // Los fijados (3 festividades) + los que rotan (6). El orden lo decide
@@ -305,35 +270,6 @@ export default function LocalPicksPage({ picksEs, picksEn }) {
             </section>
           )}
 
-          <section className="mb-16">
-            <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
-              {t.galleryHeading}
-            </h2>
-            <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">{t.galleryNote}</p>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-              {MONTH_PHOTOS.map((photo, index) => (
-                <AnimatedSection
-                  key={photo.src}
-                  delay={index * 0.06}
-                  direction="up"
-                  className="w-full"
-                >
-                  <figure className="group relative h-48 overflow-hidden rounded-2xl border border-zinc-200/50 dark:border-white/10">
-                    <Image
-                      src={photo.src}
-                      alt={photo.alt[lang] || photo.alt.es}
-                      fill
-                      sizes="(max-width: 768px) 50vw, 33vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-[1.05]"
-                    />
-                    <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-xs font-medium text-white">
-                      {photo.alt[lang] || photo.alt.es}
-                    </figcaption>
-                  </figure>
-                </AnimatedSection>
-              ))}
-            </div>
-          </section>
 
           {guides.length > 0 && (
             <section className="mb-16">
