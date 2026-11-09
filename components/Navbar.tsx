@@ -8,7 +8,7 @@ import { CartIcon } from './cart/CartIcon'
 import { ReservationIcon } from './reservation/ReservationIcon'
 import { ThemeToggle } from './theme-toggle'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { motion, AnimatePresence, useTransform, useScroll } from 'framer-motion'
+import { motion, AnimatePresence, useTransform, useScroll, useReducedMotion } from 'framer-motion'
 import { useEffect, useState, useCallback } from 'react'
 import classNames from 'classnames'
 import { useTheme } from 'next-themes'
@@ -78,8 +78,9 @@ export function Navbar() {
   const [forceVisible, setForceVisible] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [mobileDelayElapsed, setMobileDelayElapsed] = useState(true)
-  const [showLabels, setShowLabels] = useState(true)
+  const [atTop, setAtTop] = useState(true)
   const { scrollY } = useScroll()
+  const shouldReduceMotion = useReducedMotion()
   const { currentLanguage, setLanguage, isChanging, t } = useLanguage()
   const { resolvedTheme } = useTheme()
   const isDarkTheme = resolvedTheme === 'dark'
@@ -129,28 +130,24 @@ export function Navbar() {
     const checkMobile = () => {
       const isMobileView = window.matchMedia('(max-width: 640px)').matches
       setIsMobile(isMobileView)
-      setShowLabels(!isMobileView)
     }
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Hide labels on scroll down, show on scroll up
+  // Regla tipo Instagram (pedida por Donovan): header completo hasta arriba
+  // y compacto en cuanto bajas. Depende de la posición, no de la dirección.
   useEffect(() => {
-    let lastScrollY = window.scrollY
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setShowLabels(false)
-      } else if (currentScrollY < lastScrollY) {
-        setShowLabels(true)
-      }
-      lastScrollY = currentScrollY
-    }
+    const handleScroll = () => setAtTop(window.scrollY <= 24)
+    handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  // En desktop los textos de navegación nunca se esconden (la navegación ES
+  // texto; ocultarla se vería roto). atTop solo adelgaza la barra.
+  const showLabels = !isMobile
 
   useEffect(() => {
     if (!isMobile) {
@@ -161,7 +158,7 @@ export function Navbar() {
     setIsVisible(true)
     const timer = window.setTimeout(() => {
       setMobileDelayElapsed(true)
-      setIsVisible(forceVisible || window.scrollY > 16)
+      setIsVisible(true)
     }, 5000)
     return () => window.clearTimeout(timer)
   }, [isMobile, forceVisible])
@@ -172,7 +169,7 @@ export function Navbar() {
         setIsVisible(true)
         return
       }
-      setIsVisible(forceVisible || window.scrollY > 16)
+      setIsVisible(true)
     }
     handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })
@@ -198,7 +195,8 @@ export function Navbar() {
           backdropFilter: backdropBlur,
         }}
         className={classNames(
-          'pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4 sm:px-6 lg:px-8',
+          'pointer-events-none fixed inset-x-0 z-50 flex justify-center px-4 sm:px-6 lg:px-8',
+          atTop ? 'top-4' : 'top-2',
           'transition-all duration-500',
           isVisible
             ? 'pointer-events-auto translate-y-0 opacity-100'
@@ -210,7 +208,8 @@ export function Navbar() {
       >
         <header
           className={classNames(
-            'pointer-events-auto flex w-[min(1100px,100%)] items-center gap-4 rounded-3xl border px-5 py-3 text-sm font-semibold shadow-2xl backdrop-blur-md transition-all duration-500',
+            'pointer-events-auto flex w-[min(1100px,100%)] items-center rounded-3xl border text-sm font-semibold shadow-2xl backdrop-blur-md transition-all duration-500',
+            atTop ? 'gap-4 px-5 py-3' : 'gap-2 px-4 py-1.5',
             // Xoco style: more transparent, less gray, blur in both themes
             'border-black/5 bg-white/80 text-zinc-900 dark:border-white/10 dark:bg-black/60 dark:text-white',
             isVisible
@@ -220,21 +219,29 @@ export function Navbar() {
         >
           <div className="flex shrink-0 items-center gap-2.5">
             <Link href="/" className="group flex items-center" aria-label="Calpulli CDMX">
-              <div
-                className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full transition-transform group-hover:rotate-6"
+              <motion.div
+                initial={
+                  shouldReduceMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }
+                }
+                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 0.5, delay: 0, ease: 'easeOut' }}
+              >
+                <div
+                  className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full transition-transform group-hover:rotate-6"
                 style={{
                   background:
                     'linear-gradient(135deg, #DE1D8D 0%, #BE1588 25%, #9F0E7F 50%, #7B2BD9 75%, #6A0568 100%)',
                 }}
               >
-                <Image
-                  src="/static/images/jaguarBaja.png"
-                  alt="Calpulli CDMX"
-                  width={36}
-                  height={36}
-                  className="h-full w-full object-cover"
-                />
-              </div>
+                  <Image
+                    src="/static/images/jaguarBaja.png"
+                    alt="Calpulli CDMX"
+                    width={36}
+                    height={36}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </motion.div>
             </Link>
             <Link
               href="/"
@@ -346,7 +353,14 @@ export function Navbar() {
 
             <div className="flex items-center gap-2 sm:gap-3">
               {/* Language Toggle */}
-              <button
+              <motion.div
+                initial={
+                  shouldReduceMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }
+                }
+                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 0.5, delay: 0.09, ease: 'easeOut' }}
+              >
+                <button
                 type="button"
                 onClick={() => setLanguage(currentLanguage === 'es' ? 'en' : 'es')}
                 disabled={isChanging}
@@ -366,13 +380,30 @@ export function Navbar() {
                   <span className="text-[0.85rem] font-black uppercase tracking-[0.35em]">
                     {currentLanguage === 'es' ? 'ES' : 'EN'}
                   </span>
-                </div>
-              </button>
+                  </div>
+                </button>
+              </motion.div>
 
-              <AuthNav />
+              <motion.div
+                initial={
+                  shouldReduceMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }
+                }
+                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 0.5, delay: 0.18, ease: 'easeOut' }}
+              >
+                <AuthNav />
+              </motion.div>
 
               {/* Reservation icon — animado en hover/clic y marcado cuando ya estas en /bookings */}
-              <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
+              <motion.div
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
+                initial={
+                  shouldReduceMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }
+                }
+                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 0.5, delay: 0.27, ease: 'easeOut' }}
+              >
                 <Link
                   href="/bookings"
                   aria-label={currentLanguage === 'es' ? 'Mis reservaciones' : 'My bookings'}
@@ -406,10 +437,28 @@ export function Navbar() {
                 </Link>
               </motion.div>
 
-              {user && !authLoading && <CartIcon />}
+              {user && !authLoading && (
+                <motion.div
+                  initial={
+                    shouldReduceMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }
+                  }
+                  animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                  transition={{ duration: 0.5, delay: 0.36, ease: 'easeOut' }}
+                >
+                  <CartIcon />
+                </motion.div>
+              )}
 
               {/* Theme Toggle — rightmost icon */}
-              <ThemeToggle />
+              <motion.div
+                initial={
+                  shouldReduceMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }
+                }
+                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 0.5, delay: 0.45, ease: 'easeOut' }}
+              >
+                <ThemeToggle />
+              </motion.div>
             </div>
           </div>
         </header>
