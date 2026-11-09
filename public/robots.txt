@@ -29,4 +29,4 @@ Allow: /
 User-agent: CCBot
 Allow: /
 
-Sitemap: https://calpulli-cdmx.com/sitemap.xml
+Sitemap: https://donovan-amx.vercel.app/sitemap.xml

@@ -6,6 +6,7 @@ import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
 import siteMetadata from '@/data/siteMetadata'
+import { JOURNEY_SLUGS } from '@/data/journeysData'
 import { getAllLocalPickSlugs } from '@/lib/localPicks'
 
 const SITE = (siteMetadata.siteUrl || 'https://donovan-amx.vercel.app').replace(/\/+$/, '')
@@ -64,6 +65,14 @@ export async function getServerSideProps({ res }) {
   }
 
   // La seccion /tours se retiro: sus URLs redirigen a /journeys.
+
+  // Journeys (detalle /journeys/<slug> desde el registro de journeysData).
+  // Coyoacán queda fuera a propósito: es un borrador sin decidir y no se
+  // promueve en el sitemap mientras no sea un producto confirmado.
+  for (const slug of JOURNEY_SLUGS) {
+    if (slug === 'coyoacan') continue
+    urls.push({ loc: `${SITE}/journeys/${slug}`, lastmod: today })
+  }
 
   // Guides (data/guides/*.mdx, sin drafts)
   const guidesDir = path.join(root, 'data', 'guides')
