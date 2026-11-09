@@ -16,6 +16,7 @@ import {
   buildCanonicalUrl,
 } from '@/lib/seo'
 import PartnerBadge from '@/components/partners/PartnerBadge'
+import ShareJourneyButton from '@/components/ShareJourneyButton'
 
 // Fotos alusivas libres de derechos (Unsplash). Sin Getty: tiene
 // copyright y no se usa.
@@ -244,6 +245,11 @@ export default function LocalPickPage({
           <MDXLayoutRenderer layout="PostLayout" mdxSource={mdxSource} frontMatter={frontMatter} />
         </Reveal>
         <MonthPhotoGallery isEs={isEs} />
+        <ShareJourneyButton
+          lang={isEs ? 'es' : 'en'}
+          title={monthTitle}
+          path="/local/recomendaciones-mes"
+        />
       </>
     )
   }
@@ -288,6 +294,7 @@ export default function LocalPickPage({
         <MDXLayoutRenderer layout="PostLayout" mdxSource={mdxSource} frontMatter={frontMatter} />
       </Reveal>
       <MonthPhotoGallery isEs={isEs} />
+      <ShareJourneyButton lang={isEs ? 'es' : 'en'} title={frontMatter.title} path={pickPath} />
     </>
   )
 }

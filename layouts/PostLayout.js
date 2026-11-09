@@ -8,13 +8,14 @@ import TOCInline from '@/components/TOCInline'
 import Comments from '@/components/comments'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 import SupportBanner from '@/components/SupportBanner'
+import ShareJourneyBlock from '@/components/ShareJourneyBlock'
 import ProseReveal from '@/components/ProseReveal'
 import siteMetadata from '@/data/siteMetadata'
 
 const postDateTemplate = { year: 'numeric', month: 'long', day: 'numeric' }
 
 export default function PostLayout({ frontMatter, authorDetails, next, prev, toc, children }) {
-  const { slug, date, title, summary, tags, images, readingTime } = frontMatter
+  const { slug, date, title, summary, tags, images, readingTime, lang } = frontMatter
   const cover = Array.isArray(images) ? images[0] : images
   const author = authorDetails?.[0] || {}
 
@@ -131,6 +132,13 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, toc
           <ProseReveal className="prose prose-zinc max-w-none pb-8 dark:prose-dark">
             {children}
           </ProseReveal>
+
+          {/* Cierre del artículo: compartir (spec cierre-venta-secciones.md).
+              Va tras el contenido y ANTES de comentarios y del SupportBanner
+              de donaciones: el post ya no cierra solo pidiendo una donación. */}
+          <div className="pb-8">
+            <ShareJourneyBlock lang={lang} title={title} />
+          </div>
 
           {(next || prev) && (
             <div className="grid grid-cols-1 gap-4 border-t border-zinc-200 pt-8 dark:border-white/10 sm:grid-cols-2">

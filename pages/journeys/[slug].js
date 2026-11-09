@@ -21,8 +21,9 @@ import { JamaicaJourney } from '@/components/journeys/JamaicaJourney'
 import { Reveal } from '@/components/journeys/Reveal'
 import PartnerBanner from '@/components/partners/PartnerBanner'
 import PartnerPrice from '@/components/partners/PartnerPrice'
+import ShareJourneyButton from '@/components/ShareJourneyButton'
 
-export default function JourneyDetail({ journey }) {
+function JourneyDetail({ journey }) {
   const { currentLanguage } = useLanguage()
   const isEs = currentLanguage === 'es'
   const price = journey.price || 0
@@ -198,6 +199,26 @@ export default function JourneyDetail({ journey }) {
           </Reveal>
         </article>
       </div>
+    </>
+  )
+}
+
+// Montaje único del botón flotante de compartir: vive aquí, en la plantilla
+// de detalle que comparten TODOS los journeys (con experiencia propia o
+// genéricos), no dentro de cada componente artesanal.
+export default function JourneyDetailPage({ journey }) {
+  const { currentLanguage } = useLanguage()
+  const isEs = currentLanguage === 'es'
+  const journeyTitle = pickLocalized(journey.title_es, journey.title_en, isEs)
+  return (
+    <>
+      <JourneyDetail journey={journey} />
+      <ShareJourneyButton
+        lang={isEs ? 'es' : 'en'}
+        title={journeyTitle}
+        path={`/journeys/${journey.slug}`}
+        aboveChapters={Boolean(journey.experience)}
+      />
     </>
   )
 }
