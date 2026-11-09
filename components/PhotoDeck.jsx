@@ -102,25 +102,40 @@ const POS = [
   { x: -63, s: 0.86, o: 0.94, z: 5 },
 ]
 
+// Abanico comprimido para pantallas chicas (≤640px): los laterales extremos
+// del abanico normal se salen del viewport y descuadran la página en móvil.
+const POS_COMPACT = [
+  { x: 0, s: 1, o: 1, z: 6 },
+  { x: 50, s: 0.88, o: 0.94, z: 5 },
+  { x: 92, s: 0.74, o: 0.72, z: 4 },
+  { x: 0, s: 0.6, o: 0, z: 1 },
+  { x: -92, s: 0.74, o: 0.72, z: 4 },
+  { x: -50, s: 0.88, o: 0.94, z: 5 },
+]
+
 const DOORS = [
   {
     href: '/journeys',
     main: true,
+    icon: 'journeys',
     es: ['Nuestros journeys', 'los que te harán volver a la ciudad'],
     en: ['Our journeys', 'the ones that will bring you back to this city'],
   },
   {
     href: '/guides',
+    icon: 'guides',
     es: ['Recorre por tu cuenta', 'guías gratis, paso a paso'],
     en: ['Explore on your own', 'free guides, step by step'],
   },
   {
     href: '/maps',
+    icon: 'maps',
     es: ['Mapas de la ciudad', 'el Centro en tu bolsillo'],
     en: ['City maps', 'the Centro in your pocket'],
   },
   {
     href: '/local',
+    icon: 'local',
     es: ['¿Qué hay hoy?', 'planes cerca de ti'],
     en: ["What's on today?", 'plans near you'],
   },
@@ -130,11 +145,20 @@ import { useEffect, useRef, useState } from 'react'
 import Image from '@/components/Image'
 import Link from '@/components/Link'
 import { useLanguage } from '@/lib/hooks/useLanguage'
+import { BookOpen, Compass, Map as MapIcon, CalendarDays } from 'lucide-react'
+
+const ICONS = {
+  journeys: <BookOpen size={17} strokeWidth={2} />,
+  guides: <Compass size={17} strokeWidth={2} />,
+  maps: <MapIcon size={17} strokeWidth={2} />,
+  local: <CalendarDays size={17} strokeWidth={2} />,
+}
 
 export default function PhotoDeck() {
   const { currentLanguage } = useLanguage()
   const isEn = currentLanguage === 'en'
   const [order, setOrder] = useState(() => PAIRS.map((_, i) => i))
+  const [compact, setCompact] = useState(false)
   const stageRef = useRef(null)
   const timerRef = useRef(null)
 
@@ -147,6 +171,15 @@ export default function PhotoDeck() {
       return [...o.slice(pos), ...o.slice(0, pos)]
     })
   }
+
+  // Abanico comprimido en pantallas chicas.
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)')
+    const update = () => setCompact(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
 
   // Auto-avance solo con el deck en pantalla (igual que la demo).
   useEffect(() => {
@@ -182,7 +215,7 @@ export default function PhotoDeck() {
   }
 
   return (
-    <section aria-label={isEn ? 'Mexico City photos' : 'Fotos de la Ciudad de México'}>
+    <section className="pd-section" aria-label={isEn ? 'Mexico City photos' : 'Fotos de la Ciudad de México'}>
       <h2 className="text-center text-3xl font-bold text-gray-900 dark:text-white">
         {isEn ? 'The city, in cards' : 'La ciudad, en tarjetas'}
       </h2>
@@ -195,7 +228,7 @@ export default function PhotoDeck() {
       >
         {PAIRS.map((pair, pairIdx) => {
           const pos = order.indexOf(pairIdx)
-          const p = POS[pos]
+          const p = (compact ? POS_COMPACT : POS)[pos]
           const name = isEn && pair.nameEn ? pair.nameEn : pair.name
           return (
             <figure
@@ -255,14 +288,21 @@ export default function PhotoDeck() {
               href={door.href}
               className={door.main ? 'pd-door pd-door-main' : 'pd-door'}
             >
-              <b>{title}</b>
-              <span>{sub}</span>
+              <span className="pd-ic">{ICONS[door.icon]}</span>
+              <span className="pd-tx">
+                <b>{title}</b>
+                <span>{sub}</span>
+              </span>
+              <span className="pd-ar">→</span>
             </Link>
           )
         })}
       </nav>
 
       <style jsx>{`
+        .pd-section {
+          overflow-x: clip;
+        }
         .pd-stage {
           position: relative;
           height: min(560px, 132vw);
@@ -274,7 +314,7 @@ export default function PhotoDeck() {
           position: absolute;
           left: 50%;
           top: 8px;
-          width: min(300px, 64vw);
+          width: min(300px, 60vw);
           aspect-ratio: 4 / 5;
           border-radius: 26px;
           overflow: hidden;
@@ -363,11 +403,14 @@ export default function PhotoDeck() {
         :global(.pd-door) {
           flex: 1 1 150px;
           max-width: 230px;
-          border: 1px solid rgba(120, 80, 160, 0.35);
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          border: 1.5px solid rgba(120, 80, 160, 0.45);
           border-radius: 999px;
-          padding: 12px 10px;
-          text-align: center;
-          background: rgba(255, 255, 255, 0.35);
+          padding: 11px 13px;
+          background: rgba(255, 255, 255, 0.55);
+          box-shadow: 0 6px 16px rgba(60, 20, 90, 0.1);
           color: inherit;
           text-decoration: none;
         }
@@ -387,15 +430,44 @@ export default function PhotoDeck() {
           );
           box-shadow: 0 10px 24px rgba(159, 14, 127, 0.35);
         }
+        :global(.pd-ic) {
+          flex: 0 0 auto;
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          background: rgba(159, 14, 127, 0.1);
+          color: #9F0E7F;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        :global(.pd-door-main .pd-ic) {
+          background: rgba(255, 255, 255, 0.22);
+          color: #fff;
+        }
+        :global(.pd-tx) {
+          flex: 1;
+          min-width: 0;
+          text-align: left;
+        }
         :global(.pd-door b) {
           display: block;
           font-size: 14.5px;
         }
-        :global(.pd-door span) {
+        :global(.pd-door .pd-tx span) {
           display: block;
           font-size: 11.5px;
           opacity: 0.88;
           margin-top: 2px;
+        }
+        :global(.pd-ar) {
+          flex: 0 0 auto;
+          font-size: 15px;
+          font-weight: 700;
+          color: #9F0E7F;
+        }
+        :global(.pd-door-main .pd-ar) {
+          color: #fff;
         }
         @media (prefers-reduced-motion: reduce) {
           .pd-card {
