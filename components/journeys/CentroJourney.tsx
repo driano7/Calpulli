@@ -358,7 +358,7 @@ export function CentroJourney() {
                 </h2>
                 <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-300">
                   Lo que está documentado, contrastado en estas fuentes. Las leyendas y las lecturas
-                  de Amaxing van señaladas como tales en el texto.
+                  de Calpulli CDMX van señaladas como tales en el texto.
                 </p>
                 <ul className="space-y-2">
                   {journey.sources.map((source) => (

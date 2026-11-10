@@ -36,7 +36,7 @@ export default function CardStack() {
       title:
         t('aboutPage.cardStack.amxTitle') !== 'aboutPage.cardStack.amxTitle'
           ? t('aboutPage.cardStack.amxTitle')
-          : 'Amaxing',
+          : 'Calpulli CDMX',
       imagePlaceholder: '✨',
       content:
         t('aboutPage.cardStack.amxContent') !== 'aboutPage.cardStack.amxContent'

@@ -131,7 +131,7 @@ export default function LinkGenerator({ partner }) {
         </div>
         <p className="text-[11px] text-zinc-400">
           Referral code: <span className="font-mono font-bold">{partner?.referralCode}</span> —
-          controlled by Amaxing.
+          controlled by Calpulli CDMX.
         </p>
       </div>
 

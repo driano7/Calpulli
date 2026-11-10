@@ -20,7 +20,7 @@ export default function ExperiencesCtaBanner() {
       ctaHref: '/journeys',
       whatsapp: 'Preguntas, acércate a nosotros',
       whatsappHref:
-        'https://wa.me/525512291607?text=Hola%20Amaxing%2C%20tengo%20preguntas%20sobre%20sus%20tours',
+        'https://wa.me/525512291607?text=Hola%20Calpulli%20CDMX%2C%20tengo%20preguntas%20sobre%20sus%20tours',
     },
     en: {
       badge: 'Tours & Experiences',
@@ -31,7 +31,7 @@ export default function ExperiencesCtaBanner() {
       ctaHref: '/journeys',
       whatsapp: 'Questions, get in touch with us',
       whatsappHref:
-        'https://wa.me/525512291607?text=Hello%20Amaxing%2C%20I%20have%20questions%20about%20your%20tours',
+        'https://wa.me/525512291607?text=Hello%20Calpulli%20CDMX%2C%20I%20have%20questions%20about%20your%20tours',
     },
   }[lang]
 

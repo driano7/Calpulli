@@ -164,8 +164,8 @@ export function GuestPeopleField({
       {emailRegistered && (
         <p className="mt-2 text-xs text-amber-600 dark:text-amber-300">
           {isEs
-            ? 'Este correo ya tiene una cuenta en Amaxing. Puedes entrar o seguir como invitado.'
-            : 'This email already has an Amaxing account. You can log in or continue as a guest.'}
+            ? 'Este correo ya tiene una cuenta en Calpulli CDMX. Puedes entrar o seguir como invitado.'
+            : 'This email already has a Calpulli CDMX account. You can log in or continue as a guest.'}
         </p>
       )}
 

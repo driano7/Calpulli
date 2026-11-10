@@ -218,8 +218,8 @@ export function JamaicaJourney() {
                 </h2>
                 <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-300">
                   {L(
-                    'Las diez imágenes de este Journey provienen de Wikimedia Commons, con licencia libre verificada. Tres son fotografías de archivo: el mercado en construcción en 1957 y una ceremonia de abanderamiento en 1962. Son imágenes del mercado, no imágenes de una visita de Amaxing.',
-                    'The ten images in this Journey come from Wikimedia Commons, with a verified free licence. Three are archive photographs: the market under construction in 1957 and a flag-raising ceremony in 1962. They are images of the market, not images of an Amaxing visit.'
+                    'Las diez imágenes de este Journey provienen de Wikimedia Commons, con licencia libre verificada. Tres son fotografías de archivo: el mercado en construcción en 1957 y una ceremonia de abanderamiento en 1962. Son imágenes del mercado, no imágenes de una visita de Calpulli CDMX.',
+                    'The ten images in this Journey come from Wikimedia Commons, with a verified free licence. Three are archive photographs: the market under construction in 1957 and a flag-raising ceremony in 1962. They are images of the market, not images of a Calpulli CDMX visit.'
                   )}
                 </p>
                 <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
