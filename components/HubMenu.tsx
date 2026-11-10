@@ -18,6 +18,7 @@ import {
   Mail,
   Tag,
   LayoutGrid,
+  Newspaper,
 } from 'lucide-react'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { drawerItemsConfig } from '@/data/hubMenuLinks'
@@ -38,6 +39,7 @@ const iconComponents = {
   Mail,
   Tag,
   LayoutGrid,
+  Newspaper,
 }
 
 const getLabel = (item, t) => {

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ComponentType } from 're
 import { useRouter } from 'next/router'
 import classNames from 'classnames'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Footprints, BookOpen, Star, Users, MapPinned, Bot } from 'lucide-react'
+import { Footprints, Newspaper, Star, Users, Compass, Bot } from 'lucide-react'
 import Link from '@/components/Link'
 import WhatsAppIcon from '@/components/social-icons/whatsapp.svg'
 import { useLanguage } from '@/lib/hooks/useLanguage'
@@ -17,8 +17,8 @@ const DOCK_ITEMS = [
     labelKey: 'header.nav.journeys',
     fallback: 'Journeys',
   },
-  { href: '/maps', icon: MapPinned, labelKey: 'header.nav.maps', fallback: 'Maps' },
-  { href: '/guides', icon: BookOpen, labelKey: 'header.nav.guides', fallback: 'Guides' },
+  { href: '/maps', icon: Compass, labelKey: 'header.nav.maps', fallback: 'Maps' },
+  { href: '/guides', icon: Newspaper, labelKey: 'header.nav.guides', fallback: 'Guides' },
   { href: '/local', icon: Star, labelKey: 'header.nav.localPicks', fallback: 'Selección Local' },
   { href: '/about', icon: Users, labelKey: 'header.nav.about', fallback: 'About Us' },
 ]

@@ -20,8 +20,8 @@ const navItemsConfig = [
     href: '/journeys',
     icon: 'Footprints',
   },
-  { labelKey: 'nav.header.maps', fallback: 'Maps', href: '/maps', icon: 'MapPinned' },
-  { labelKey: 'nav.header.guides', fallback: 'Guides', href: '/guides', icon: 'BookOpen' },
+  { labelKey: 'nav.header.maps', fallback: 'Maps', href: '/maps', icon: 'Compass' },
+  { labelKey: 'nav.header.guides', fallback: 'Guides', href: '/guides', icon: 'Newspaper' },
   {
     labelKey: 'nav.header.localPicks',
     fallback: 'Selección Local',
@@ -43,8 +43,8 @@ const drawerItemsConfig = [
     href: '/journeys',
     icon: 'Footprints',
   },
-  { labelKey: 'header.nav.maps', fallback: 'Maps', href: '/maps', icon: 'MapPinned' },
-  { labelKey: 'header.nav.guides', fallback: 'Guides', href: '/guides', icon: 'BookOpen' },
+  { labelKey: 'header.nav.maps', fallback: 'Maps', href: '/maps', icon: 'Compass' },
+  { labelKey: 'header.nav.guides', fallback: 'Guides', href: '/guides', icon: 'Newspaper' },
   {
     labelKey: 'header.nav.localPicks',
     fallback: 'Selección Local',
