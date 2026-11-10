@@ -137,6 +137,17 @@ function chatPathRows(chat: AdminReportData['chat'] | undefined): string[][] {
   return chat.byPath.map((row) => [row.path, formatNumber(row.questions)])
 }
 
+function partnerFunnelRows(data: AdminReportData): string[][] {
+  if (!data.partnerFunnels?.length) return []
+  return data.partnerFunnels.map((row) => [
+    row.name,
+    formatNumber(row.visits),
+    formatNumber(row.confirmedBookings),
+    `${(row.conversionRate * 100).toFixed(1)}%`,
+    formatMoney(row.commission, 'MXN'),
+  ])
+}
+
 function buildAdminReport(period: ReportPeriod, data: AdminReportData): PartnerReport {
   const { created, tours, chat } = data
   const revenueHint =
@@ -221,6 +232,12 @@ function buildAdminReport(period: ReportPeriod, data: AdminReportData): PartnerR
       headers: ['Código', 'Conversiones', 'Monto'],
       rows: referralRows(data.referrals),
       empty: 'No hubo conversiones de referidos en este periodo.',
+    },
+    {
+      title: 'Embudo por socio',
+      headers: ['Socio', 'Visitas', 'Reservas', 'Conversión', 'Comisión'],
+      rows: partnerFunnelRows(data),
+      empty: 'Sin socios activos o sin actividad de socios en este periodo.',
     },
     {
       title: 'Próximos 7 días',

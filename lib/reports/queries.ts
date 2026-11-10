@@ -8,6 +8,7 @@
 //   - Las fechas se comparan en UTC contra los límites del periodo, que ya
 //     vienen calculados en America/Mexico_City.
 import { turso } from '@/lib/turso'
+import { getOverview } from '@/lib/partners/analytics'
 import type { ReportPeriod } from './period'
 
 const num = (value: unknown) => Number(value) || 0
@@ -62,12 +63,24 @@ export interface DayTours {
   checkedIn: number
 }
 
+export interface PartnerFunnelRow {
+  partnerId: string
+  name: string
+  visits: number
+  uniqueSessions: number
+  checkoutStarts: number
+  confirmedBookings: number
+  conversionRate: number
+  commission: number
+}
+
 export interface AdminReportData {
   created: CreatedBookingsSummary
   revenue: CurrencyRevenue[]
   tours: ToursSummary
   byExperience: ExperienceDemand[]
   referrals: ReferralConversion[]
+  partnerFunnels: PartnerFunnelRow[]
   upcoming: UpcomingTour[]
   newUsers: number
   chat: ChatSummary
@@ -353,6 +366,44 @@ export async function loadEmployeeReportData(period: ReportPeriod): Promise<Empl
   return { tours, byDay, byExperience, upcoming, chat }
 }
 
+/**
+ * Embudo por socio (hostales): visitas → reservas → conversión → comisión
+ * del periodo, reutilizando la misma agregación del dashboard del socio.
+ * Si algo falla, la sección simplemente no sale (nunca tumba el reporte).
+ */
+export async function loadPartnerFunnels(period: ReportPeriod): Promise<PartnerFunnelRow[]> {
+  try {
+    const partnersResult = await query(
+      `SELECT id, name FROM partners WHERE status = 'ACTIVE' ORDER BY name LIMIT 20`,
+      []
+    )
+    const range = {
+      from: period.startUtc.slice(0, 10),
+      to: period.endUtc.slice(0, 10),
+      preset: 'custom',
+    }
+    const rows: PartnerFunnelRow[] = []
+    for (const raw of partnersResult.rows as any[]) {
+      const partnerId = String(raw.id || '')
+      if (!partnerId) continue
+      const o = await getOverview(partnerId, range)
+      rows.push({
+        partnerId,
+        name: String(raw.name || partnerId),
+        visits: o.visits,
+        uniqueSessions: o.uniqueSessions,
+        checkoutStarts: o.checkoutStarts,
+        confirmedBookings: o.confirmedBookings,
+        conversionRate: o.conversionRate,
+        commission: o.pendingCommission + o.payableCommission + o.paidCommission,
+      })
+    }
+    return rows.sort((a, b) => b.visits - a.visits)
+  } catch {
+    return []
+  }
+}
+
 export async function loadAdminReportData(period: ReportPeriod): Promise<AdminReportData> {
   const [
     createdResult,
@@ -363,6 +414,7 @@ export async function loadAdminReportData(period: ReportPeriod): Promise<AdminRe
     upcoming,
     newUsersResult,
     chat,
+    partnerFunnels,
   ] = await Promise.all([
     query(
       `SELECT COUNT(*) AS bookings,
@@ -412,6 +464,7 @@ export async function loadAdminReportData(period: ReportPeriod): Promise<AdminRe
       [period.startUtc, period.endUtc]
     ),
     loadChatSummary(period),
+    loadPartnerFunnels(period),
   ])
 
   const createdRow: any = createdResult.rows[0]
@@ -442,5 +495,6 @@ export async function loadAdminReportData(period: ReportPeriod): Promise<AdminRe
     upcoming,
     newUsers: num(newUsersRow?.total),
     chat,
+    partnerFunnels,
   }
 }
