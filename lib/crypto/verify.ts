@@ -140,6 +140,32 @@ export async function verifyPaymentOnce(config: VerifyConfig): Promise<{
   }
 }
 
+/**
+ * Polling con caché corto — SOLO para uso en el servidor (endpoint
+ * /api/bookings/crypto/status). Si el mismo hash se consulta muchas
+ * veces seguidas (el checkout vigila cada 5 s, reintentos, o un abuso
+ * deliberado), el explorador solo se toca una vez por ventana: así la
+ * cuota gratis de la API no se quema. Un resultado CONFIRMED es
+ * inmutable y se cachea 5 minutos; el resto, 20 segundos.
+ */
+const statusCache = new Map<
+  string,
+  { at: number; result: { status: PaymentStatus; message: string } }
+>()
+
+export async function pollPaymentStatus(
+  config: VerifyConfig
+): Promise<{ status: PaymentStatus; message: string }> {
+  const key = `${config.network}|${config.txHash || ''}|${config.address || ''}|${config.invoice || ''}`
+  const hit = statusCache.get(key)
+  const ttl = hit?.result.status === 'CONFIRMED' ? 300_000 : 20_000
+  if (hit && Date.now() - hit.at < ttl) return hit.result
+  const result = await verifyPaymentOnce(config)
+  if (statusCache.size > 500) statusCache.clear()
+  statusCache.set(key, { at: Date.now(), result })
+  return result
+}
+
 async function verifyEvm(
   config: VerifyConfig
 ): Promise<{ status: PaymentStatus; message: string }> {

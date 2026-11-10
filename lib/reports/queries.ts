@@ -74,6 +74,14 @@ export interface PartnerFunnelRow {
   commission: number
 }
 
+export interface PaymentMethodRow {
+  method: string
+  currency: string
+  bookings: number
+  paid: number
+  revenue: number
+}
+
 export interface AdminReportData {
   created: CreatedBookingsSummary
   revenue: CurrencyRevenue[]
@@ -81,6 +89,7 @@ export interface AdminReportData {
   byExperience: ExperienceDemand[]
   referrals: ReferralConversion[]
   partnerFunnels: PartnerFunnelRow[]
+  paymentMethods: PaymentMethodRow[]
   upcoming: UpcomingTour[]
   newUsers: number
   chat: ChatSummary
@@ -415,6 +424,7 @@ export async function loadAdminReportData(period: ReportPeriod): Promise<AdminRe
     newUsersResult,
     chat,
     partnerFunnels,
+    paymentMethodsResult,
   ] = await Promise.all([
     query(
       `SELECT COUNT(*) AS bookings,
@@ -465,6 +475,18 @@ export async function loadAdminReportData(period: ReportPeriod): Promise<AdminRe
     ),
     loadChatSummary(period),
     loadPartnerFunnels(period),
+    query(
+      `SELECT COALESCE(NULLIF(b.payment_method, ''), 'sin método') AS method,
+              b.currency AS currency,
+              COUNT(*) AS bookings,
+              COALESCE(SUM(CASE WHEN b.payment_status = 'paid' AND ${activeBookingStatus} THEN 1 ELSE 0 END), 0) AS paid,
+              COALESCE(SUM(CASE WHEN b.payment_status = 'paid' AND ${activeBookingStatus} THEN b.total_amount ELSE 0 END), 0) AS revenue
+       FROM bookings b
+       WHERE ${createdAtRange}
+       GROUP BY method, b.currency
+       ORDER BY revenue DESC`,
+      [period.startUtc, period.endUtc]
+    ),
   ])
 
   const createdRow: any = createdResult.rows[0]
@@ -496,5 +518,12 @@ export async function loadAdminReportData(period: ReportPeriod): Promise<AdminRe
     newUsers: num(newUsersRow?.total),
     chat,
     partnerFunnels,
+    paymentMethods: (paymentMethodsResult.rows as any[]).map((raw) => ({
+      method: String(raw.method || 'sin método'),
+      currency: String(raw.currency || 'MXN'),
+      bookings: num(raw.bookings),
+      paid: num(raw.paid),
+      revenue: num(raw.revenue),
+    })),
   }
 }

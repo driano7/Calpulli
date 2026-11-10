@@ -148,6 +148,21 @@ function partnerFunnelRows(data: AdminReportData): string[][] {
   ])
 }
 
+function paymentMethodRows(data: AdminReportData): string[][] {
+  if (!data.paymentMethods?.length) return []
+  const labels: Record<string, string> = {
+    card: 'Tarjeta (Stripe)',
+    cash: 'Efectivo',
+    crypto: 'Cripto',
+  }
+  return data.paymentMethods.map((row) => [
+    labels[row.method] || row.method,
+    formatNumber(row.bookings),
+    formatNumber(row.paid),
+    formatMoney(row.revenue, row.currency),
+  ])
+}
+
 function buildAdminReport(period: ReportPeriod, data: AdminReportData): PartnerReport {
   const { created, tours, chat } = data
   const revenueHint =
@@ -238,6 +253,12 @@ function buildAdminReport(period: ReportPeriod, data: AdminReportData): PartnerR
       headers: ['Socio', 'Visitas', 'Reservas', 'Conversión', 'Comisión'],
       rows: partnerFunnelRows(data),
       empty: 'Sin socios activos o sin actividad de socios en este periodo.',
+    },
+    {
+      title: 'Ingresos por método de pago',
+      headers: ['Método', 'Reservas', 'Pagadas', 'Ingresos'],
+      rows: paymentMethodRows(data),
+      empty: 'Sin reservas en este periodo.',
     },
     {
       title: 'Próximos 7 días',

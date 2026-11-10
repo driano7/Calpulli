@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Copy, Check, Wallet, ScanLine, Upload, FlaskConical } from 'lucide-react'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { WALLETS, MOCK_WALLETS, type NetworkKey } from '@/lib/crypto/addresses'
-import { verifyPaymentOnce, type PaymentStatus } from '@/lib/crypto/verify'
+import type { PaymentStatus } from '@/lib/crypto/verify'
 
 export interface CryptoQuoteInfo {
   quoteId: string
@@ -291,18 +291,30 @@ export function CryptoPayment({
   const startPolling = useCallback(
     (wallet: (typeof WALLETS)[0], reference: string) => {
       stopPolling()
+      const startedAt = Date.now()
       const check = async () => {
-        const result = await verifyPaymentOnce({
-          network: wallet.network,
-          address: wallet.network === 'LIGHTNING' ? undefined : wallet.address,
-          txHash:
-            reference.trim().toLowerCase().startsWith('0x') ||
-            reference.toLowerCase().includes('mock') ||
-            /^[a-fA-F0-9]{64}$/.test(reference.trim())
-              ? reference
-              : undefined,
-          invoice: wallet.network === 'LIGHTNING' ? reference : undefined,
-        })
+        // La vigilancia pasa por el servidor (/api/bookings/crypto/status):
+        // la llave del explorador nunca llega al navegador y el servidor
+        // cachea por hash. A los 15 min se deja de vigilar en automático.
+        if (Date.now() - startedAt > 15 * 60 * 1000) {
+          stopPolling()
+          setStatusMessage(
+            isEs
+              ? 'Dejé de vigilar en automático. Si ya pagaste, pulsa Verificar.'
+              : 'Stopped auto-checking. If you already paid, tap Verify.'
+          )
+          return
+        }
+        let result: { status: PaymentStatus; message: string }
+        try {
+          const qs = new URLSearchParams({ network: wallet.network, reference })
+          const res = await fetch(`/api/bookings/crypto/status?${qs}`)
+          if (!res.ok) return
+          result = await res.json()
+          if (!result?.status) return
+        } catch {
+          return
+        }
         setStatus(result.status)
         setStatusMessage(result.message)
         if (result.status === 'CONFIRMED' && !confirmedRef.current) {

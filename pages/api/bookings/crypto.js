@@ -17,6 +17,7 @@ import {
   countBookingsByExperienceAndIdentity,
 } from '@/lib/booking/turso'
 import { checkRateLimit, rateLimitHeaders } from '@/lib/booking/rateLimit'
+import { fireBrunoEvent } from '@/lib/bruno-events'
 import { verifyPaymentForServer } from '@/lib/crypto/verify'
 import { WALLETS } from '@/lib/crypto/addresses'
 import {
@@ -319,6 +320,19 @@ export default async function handler(req, res) {
         console.error('[crypto.confirm] no se pudo consumir la cotización:', err)
       )
     }
+
+    // Piso 2: Bruno re-verifica el pago por su cuenta (red, activo, monto
+    // y hash contra la cotización) como segundo par de ojos. Sin datos
+    // personales: solo referencias y montos del pago.
+    fireBrunoEvent('payment.crypto_verified', {
+      booking_refs: created.map((b) => b.reference || b.id),
+      network,
+      asset: appliedQuote?.asset || null,
+      tx_ref: cleanReference,
+      crypto_amount: appliedQuote?.cryptoAmount || null,
+      fiat_total: appliedQuote?.fiatTotal ?? null,
+      wallet: appliedQuote?.wallet || null,
+    })
 
     console.log(`[crypto.confirm] ${created.length} reserva(s) pagadas vía ${network}`)
     return res.status(200).json({ ok: true, bookings: created, isGuest })
