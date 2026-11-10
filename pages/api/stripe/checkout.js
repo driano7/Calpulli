@@ -1,7 +1,5 @@
 import { getStripeClient } from '@/lib/stripe'
-import { tours } from '@/data/toursData'
 import { JOURNEYS } from '@/data/journeysData'
-import { MXN_PER_USD } from '@/lib/currency'
 import { resolvePartnerForRequest, recordPartnerEvent } from '@/lib/partners'
 import { applyDiscount } from '@/lib/partners/pricing'
 import { isLuchaDateValid } from '@/lib/db/schema'
@@ -14,24 +12,20 @@ const getBaseUrl = (req) => {
   return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 }
 
-// Precios servidor-side a partir de data/toursData.js (USD). El cliente puede
-// mandar su propio price, pero el cobro se calcula contra esta fuente de verdad.
-/**
- * Precio en pesos, siempre. El de los tours viene de data/toursData.js (que
- * los guarda en dolares) y se convierte con la tasa del sitio; el de los
- * journeys ya esta en pesos. El precio de verdad se calcula aqui, en el
- * servidor: el cliente no puede mandarlo.
- */
+// Precios servidor-side a partir de data/journeysData.js (MXN). El cliente
+// puede mandar su propio price, pero el cobro se calcula contra esta fuente
+// de verdad: el precio se calcula aqui, en el servidor; el cliente no puede
+// mandarlo.
+// SELLADO (auditoría 2026-11-09): este endpoint ya NO resuelve precios del
+// catálogo mock data/toursData.js (tours ficticios con precios USD y ratings
+// inventados). Un id de ese catálogo cae en la validación de "precio no
+// encontrado" (400). Solo se cobran journeys reales.
 const priceFor = (experienceId) => {
-  const tour = tours.find((t) => t.id === String(experienceId))
-  if (tour) return Math.round(tour.price * MXN_PER_USD)
   const journey = JOURNEYS.find((j) => j.experience === String(experienceId))
   return journey?.price ?? 0
 }
 
 const tourTitleFor = (experienceId, fallback) => {
-  const tour = tours.find((t) => t.id === String(experienceId))
-  if (tour) return tour.title
   const journey = JOURNEYS.find((j) => j.experience === String(experienceId))
   if (journey) return journey.title_es || journey.title_en || fallback
   return fallback || `Experience ${experienceId}`

@@ -26,7 +26,10 @@ const siteMetadata = {
   donations: {
     bitcoin: 'bc1q4yud5g357y2ysxn7ekx0ncqnwpatypcwh4qc3f',
     ethereum: '0xfc10B4f288Dfcc996EB819021934536095a7Ce90',
-    bank: '0121 800 000 0000 0001', // CLABE de ejemplo (mockeado, reemplazar)
+    // Sin cuenta bancaria publicada: la CLABE anterior era de ejemplo
+    // (mock) y se mostraba como real en el bloque de donaciones de cada
+    // post. Cuando exista una CLABE real verificada, agregarla aquí como
+    // `bank:` y SupportBanner la muestra automáticamente. (2026-11-09)
   },
   locale: 'en-US',
   analytics: {
