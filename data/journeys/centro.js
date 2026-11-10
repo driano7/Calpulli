@@ -152,7 +152,7 @@ export const CENTRO_PHOTOS = {
 export const CENTRO_DISCOVERY_KINDS = {
   documentado: { label: 'Historia documentada', tone: 'documentado' },
   curiosidad: { label: 'Dato curioso', tone: 'curiosidad' },
-  interpretacion: { label: 'Interpretación de Amaxing', tone: 'interpretacion' },
+  interpretacion: { label: 'Interpretación de Calpulli CDMX', tone: 'interpretacion' },
 }
 
 export const CENTRO_DISCOVERIES = [
@@ -198,7 +198,7 @@ export const CENTRO_DISCOVERIES = [
     body: 'Katharsis habla, en 1934, de la guerra, el maquinismo y las políticas de masas. Leerlo hoy, a la luz de las máquinas que escriben y deciden, es una tentación legítima. Pero es nuestra lectura, no la intención de Orozco. Por eso va marcada como tal en toda la página.',
     body_en:
       "There is a difference between what a piece documents and what we make of it. This block is the second kind, and it is marked as such: it is our reading, not the museum's voice.",
-    source: 'Interpretación de Amaxing',
+    source: 'Interpretación de Calpulli CDMX',
   },
 ]
 
