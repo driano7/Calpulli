@@ -19,6 +19,12 @@ import {
 import { checkRateLimit, rateLimitHeaders } from '@/lib/booking/rateLimit'
 import { verifyPaymentForServer } from '@/lib/crypto/verify'
 import { WALLETS } from '@/lib/crypto/addresses'
+import {
+  getQuote,
+  consumeQuote,
+  computeFiatTotal,
+  fingerprintItems,
+} from '@/lib/crypto/quotes'
 import { notifyBooking } from '@/lib/mail/bookingNotice'
 import { recordConversion } from '@/lib/referrals'
 import { getSessionOptional } from '@/lib/auth/session'
@@ -131,6 +137,52 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, bookings: alreadyBooked, idempotent: true, isGuest })
   }
 
+  // Cotización (EVM, pagos reales): el monto y el activo ya no los decide el
+  // cliente. Sin cotización vigente que coincida con el carrito, no se
+  // verifica nada. El modo mock conserva su propia puerta en verify.
+  const partner = await resolvePartnerForRequest(req, req.body || {})
+  const referenceIsMock = cleanReference.toLowerCase().includes('mock')
+  let appliedQuote = null
+  let expected
+  if (network !== 'LIGHTNING' && !referenceIsMock) {
+    const quoteId = typeof req.body?.quoteId === 'string' ? req.body.quoteId : null
+    if (!quoteId) {
+      return res.status(400).json({
+        error:
+          locale === 'en'
+            ? 'Missing payment quote. Reopen the crypto payment to get a fresh quote.'
+            : 'Falta la cotización del pago. Vuelve a abrir el pago con cripto para generar una nueva.',
+      })
+    }
+    appliedQuote = await getQuote(quoteId).catch(() => null)
+    if (!appliedQuote) {
+      return res.status(400).json({ error: 'La cotización no existe. Genera una nueva.' })
+    }
+    if (appliedQuote.consumedAt) {
+      return res.status(409).json({ error: 'Esta cotización ya se usó para otro pago.' })
+    }
+    if (Date.parse(appliedQuote.expiresAt) < Date.now()) {
+      return res.status(410).json({ error: 'La cotización venció. Genera una nueva.' })
+    }
+    if (appliedQuote.network !== network) {
+      return res.status(400).json({ error: 'La cotización es de otra red.' })
+    }
+    if (appliedQuote.fingerprint !== fingerprintItems(items)) {
+      return res.status(400).json({ error: 'El carrito cambió desde la cotización.' })
+    }
+    const expectedTotal = computeFiatTotal(items, partner)
+    if (Math.abs(expectedTotal - appliedQuote.fiatTotal) > 0.01) {
+      return res.status(400).json({ error: 'El total no coincide con la cotización.' })
+    }
+    expected = {
+      asset: appliedQuote.asset,
+      // 3% de tolerancia: comisiones de retiro de exchanges y redondeos no
+      // deben tumbar un pago legítimo; el 97% restante sigue siendo el pago.
+      minBaseUnits: ((BigInt(appliedQuote.baseUnits) * 97n) / 100n).toString(),
+      notBeforeUnix: Math.floor(Date.parse(appliedQuote.createdAt) / 1000) - 120,
+    }
+  }
+
   let verification
   try {
     verification = await verifyPaymentForServer({
@@ -138,6 +190,7 @@ export default async function handler(req, res) {
       address: network === 'LIGHTNING' ? undefined : wallet.address,
       txHash: network === 'LIGHTNING' ? undefined : cleanReference,
       invoice: network === 'LIGHTNING' ? cleanReference : undefined,
+      expected,
     })
   } catch (error) {
     console.error('[crypto.confirm] verificación falló:', error)
@@ -157,7 +210,6 @@ export default async function handler(req, res) {
 
   try {
     const created = []
-    const partner = await resolvePartnerForRequest(req, req.body || {})
     const partnerSource = req.body?.referralCode ? 'REFERRAL_CODE' : 'PARTNER_LINK'
     for (const item of items) {
       const peopleCount = Math.max(1, Number(item.peopleCount) || 1)
@@ -243,6 +295,12 @@ export default async function handler(req, res) {
           console.error('[crypto.confirm] conversión de referido no registrada:', error)
         }
       }
+    }
+
+    if (appliedQuote) {
+      await consumeQuote(appliedQuote.id, cleanReference).catch((err) =>
+        console.error('[crypto.confirm] no se pudo consumir la cotización:', err)
+      )
     }
 
     console.log(`[crypto.confirm] ${created.length} reserva(s) pagadas vía ${network}`)

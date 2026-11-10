@@ -6,7 +6,17 @@
  * Status flow: WAITING → DETECTED → CONFIRMED (or ERROR)
  */
 
+import { TOKEN_CONTRACTS, type CryptoAsset } from './tokens'
+
 export type PaymentStatus = 'WAITING' | 'DETECTED' | 'CONFIRMED' | 'ERROR'
+
+export interface ExpectedPayment {
+  asset: CryptoAsset
+  /** Monto mínimo aceptable en unidades base (wei / 6 decimales), ya con tolerancia. */
+  minBaseUnits: string
+  /** La transacción debe ser de este momento en adelante (unix, segundos). */
+  notBeforeUnix: number
+}
 
 export interface VerifyConfig {
   network: 'ETHEREUM' | 'BASE' | 'ARBITRUM' | 'OPTIMISM' | 'LIGHTNING'
@@ -14,6 +24,7 @@ export interface VerifyConfig {
   expectedWei?: string // expected amount in wei
   txHash?: string // customer tx hash
   invoice?: string // lightning invoice
+  expected?: ExpectedPayment // cotización del servidor: activo + monto + frescura
 }
 
 const NETWORK_MODE = process.env.NEXT_PUBLIC_CHAIN_MODE === 'MAINNET' ? 'MAINNET' : 'TESTNET'
@@ -238,6 +249,117 @@ async function hashBelongsToWallet(
   return false
 }
 
+interface HashTransfers {
+  native: { to: string; value: string; timeStamp: number } | null
+  tokens: { to: string; contract: string; value: string; timeStamp: number }[]
+}
+
+/** Trae las transferencias (nativa y ERC-20) de UN hash hacia la wallet. */
+async function fetchTransfersForHash(
+  baseUrl: string,
+  apiKey: string | null,
+  address: string,
+  txHash: string
+): Promise<HashTransfers> {
+  const hash = txHash.toLowerCase()
+  const out: HashTransfers = { native: null, tokens: [] }
+
+  for (const action of ['txlist', 'tokentx'] as const) {
+    const params = new URLSearchParams({
+      module: 'account',
+      action,
+      address,
+      startblock: '0',
+      endblock: '99999999',
+      sort: 'desc',
+      page: '1',
+      offset: '100',
+    })
+    if (apiKey) params.set('apikey', apiKey)
+
+    try {
+      const data = await (await fetch(`${baseUrl}?${params}`)).json()
+      if (data?.status !== '1' || !Array.isArray(data.result)) continue
+      for (const tx of data.result) {
+        if (String(tx.hash || '').toLowerCase() !== hash) continue
+        if (action === 'txlist') {
+          out.native = {
+            to: String(tx.to || ''),
+            value: String(tx.value || '0'),
+            timeStamp: Number(tx.timeStamp) || 0,
+          }
+        } else {
+          out.tokens.push({
+            to: String(tx.to || ''),
+            contract: String(tx.contractAddress || '').toLowerCase(),
+            value: String(tx.value || '0'),
+            timeStamp: Number(tx.timeStamp) || 0,
+          })
+        }
+      }
+    } catch {
+      // Si un endpoint falla, se intenta el siguiente.
+    }
+  }
+
+  return out
+}
+
+/**
+ * Con cotización, no basta que el hash haya llegado a la wallet: debe ser
+ * del activo cotizado, por al menos el monto cotizado (con tolerancia) y
+ * posterior a la cotización. Devuelve null si todo cuadra.
+ */
+function expectedMismatch(
+  config: VerifyConfig,
+  transfers: HashTransfers
+): { status: PaymentStatus; message: string } | null {
+  const expected = config.expected!
+  const wallet = String(config.address || '').toLowerCase()
+  let received: bigint | null = null
+  let timeStamp = 0
+
+  if (expected.asset === 'ETH') {
+    if (transfers.native && transfers.native.to.toLowerCase() === wallet) {
+      received = BigInt(transfers.native.value || '0')
+      timeStamp = transfers.native.timeStamp
+    }
+  } else {
+    const contract =
+      TOKEN_CONTRACTS[config.network as keyof typeof TOKEN_CONTRACTS]?.[expected.asset]
+    if (contract) {
+      let sum = 0n
+      for (const t of transfers.tokens) {
+        if (t.to.toLowerCase() === wallet && t.contract === contract) {
+          sum += BigInt(t.value || '0')
+          timeStamp = Math.max(timeStamp, t.timeStamp)
+        }
+      }
+      if (sum > 0n) received = sum
+    }
+  }
+
+  if (received === null) {
+    return {
+      status: 'DETECTED',
+      message: 'La transacción no llegó a la wallet del negocio en el activo de la cotización.',
+    }
+  }
+  if (timeStamp > 0 && timeStamp < expected.notBeforeUnix) {
+    return {
+      status: 'DETECTED',
+      message: 'La transacción es anterior a la cotización; haz un pago nuevo.',
+    }
+  }
+  if (received < BigInt(expected.minBaseUnits)) {
+    return {
+      status: 'DETECTED',
+      message: 'El monto recibido es menor al de la cotización.',
+    }
+  }
+  return null
+}
+
 /**
  * Verificación autoritativa para el endpoint de confirmación. Devuelve
  * `confirmed: true` solo si el pago existe y llegó a la wallet del negocio.
@@ -298,6 +420,24 @@ export async function verifyPaymentForServer(config: VerifyConfig): Promise<{
         confirmed: false,
         status: 'DETECTED',
         message: 'La transacción todavía no está confirmada.',
+      }
+    }
+
+    if (config.expected) {
+      const transfers = await fetchTransfersForHash(
+        baseUrl,
+        apiKey,
+        config.address,
+        config.txHash
+      )
+      const mismatch = expectedMismatch(config, transfers)
+      if (mismatch) {
+        return { confirmed: false, ...mismatch }
+      }
+      return {
+        confirmed: true,
+        status: 'CONFIRMED',
+        message: 'Pago confirmado en la blockchain por el monto cotizado',
       }
     }
 

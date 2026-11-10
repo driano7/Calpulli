@@ -7,12 +7,25 @@ import { useLanguage } from '@/lib/hooks/useLanguage'
 import { WALLETS, MOCK_WALLETS, type NetworkKey } from '@/lib/crypto/addresses'
 import { verifyPaymentOnce, type PaymentStatus } from '@/lib/crypto/verify'
 
+export interface CryptoQuoteInfo {
+  quoteId: string
+  cryptoAmount: string
+  asset: string
+  fiatTotal: number
+}
+
 interface CryptoPaymentProps {
   open: boolean
   amount: number
   currency?: string
   onClose: () => void
-  onConfirmed: (reference: string, network: NetworkKey) => void | Promise<void>
+  onConfirmed: (
+    reference: string,
+    network: NetworkKey,
+    quoteId?: string
+  ) => void | Promise<void>
+  /** Cotización del servidor: fija activo y monto por 30 min (EVM, modo real). */
+  requestQuote?: (network: NetworkKey) => Promise<CryptoQuoteInfo | null>
 }
 
 const STATUS_STYLES: Record<PaymentStatus, { color: string; labelEs: string; labelEn: string }> = {
@@ -115,6 +128,7 @@ export function CryptoPayment({
   currency = 'USD',
   onClose,
   onConfirmed,
+  requestQuote,
 }: CryptoPaymentProps) {
   const { currentLanguage } = useLanguage()
   const isEs = currentLanguage === 'es'
@@ -176,6 +190,8 @@ export function CryptoPayment({
   const [status, setStatus] = useState<PaymentStatus>('WAITING')
   const [statusMessage, setStatusMessage] = useState('')
   const [showQrScanner, setShowQrScanner] = useState(false)
+  const [quote, setQuote] = useState<CryptoQuoteInfo | null>(null)
+  const [quoteLoading, setQuoteLoading] = useState(false)
   const [cryptoRate, setCryptoRate] = useState<{
     usdPerCrypto: number
     mxnPerUsd: number
@@ -184,6 +200,32 @@ export function CryptoPayment({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const confirmedRef = useRef(false)
+  const quoteIdRef = useRef<string | undefined>(undefined)
+
+  // Cotización del servidor al elegir red (EVM, modo real): el monto a pagar
+  // deja de ser un estimado del navegador y queda fijo por 30 minutos.
+  const loadQuote = useCallback(
+    async (wallet: (typeof WALLETS)[0]) => {
+      if (!requestQuote || wallet.network === 'LIGHTNING' || isTestMode) return
+      setQuoteLoading(true)
+      try {
+        const q = await requestQuote(wallet.network)
+        if (q) {
+          setQuote(q)
+          quoteIdRef.current = q.quoteId
+        }
+      } catch {
+        setStatusMessage(
+          isEs
+            ? 'No se pudo generar la cotización; sin ella el pago no podrá confirmarse.'
+            : 'Could not create the quote; without it the payment cannot be confirmed.'
+        )
+      } finally {
+        setQuoteLoading(false)
+      }
+    },
+    [requestQuote, isTestMode, isEs]
+  )
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
@@ -239,6 +281,8 @@ export function CryptoPayment({
       setStatusMessage('')
       confirmedRef.current = false
       setShowQrScanner(false)
+      setQuote(null)
+      quoteIdRef.current = undefined
       stopPolling()
     }
   }, [open, stopPolling])
@@ -267,7 +311,7 @@ export function CryptoPayment({
           // aquí mismo para que el usuario no crea que ya tiene ticket.
           setTimeout(async () => {
             try {
-              await onConfirmed(reference, wallet.network)
+              await onConfirmed(reference, wallet.network, quoteIdRef.current)
             } catch (error: any) {
               confirmedRef.current = false
               setStatus('ERROR')
@@ -391,14 +435,27 @@ export function CryptoPayment({
                 <h3 className="text-lg font-bold text-zinc-900 dark:text-white">
                   ${amount.toLocaleString()} MXN
                 </h3>
-                {selectedWallet && cryptoRate && !rateLoading && (
+                {selectedWallet && quote && (
+                  <p className="mt-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    {isEs ? 'Paga' : 'Pay'} {quote.cryptoAmount} {quote.asset} —{' '}
+                    {isEs
+                      ? 'cotización del servidor, fija por 30 min'
+                      : 'server quote, locked for 30 min'}
+                  </p>
+                )}
+                {selectedWallet && !quote && quoteLoading && (
+                  <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+                    {isEs ? 'Generando cotización…' : 'Creating quote…'}
+                  </p>
+                )}
+                {selectedWallet && !quote && !quoteLoading && cryptoRate && !rateLoading && (
                   <p className="mt-1 text-xs text-zinc-500 dark:text-gray-400">
                     ≈ {(amount / cryptoRate.usdPerCrypto).toFixed(6)}{' '}
                     {selectedWallet.network === 'LIGHTNING' ? 'BTC' : 'ETH'}·
                     {'tipo de cambio últimos 3 min'}
                   </p>
                 )}
-                {rateLoading && (
+                {rateLoading && !quote && (
                   <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
                     Obteniendo tipo de cambio…
                   </p>
@@ -442,7 +499,10 @@ export function CryptoPayment({
                         type="button"
                         onClick={() => {
                           setSelectedWallet(wallet)
+                          setQuote(null)
+                          quoteIdRef.current = undefined
                           void fetchCryptoRate(wallet.network === 'LIGHTNING' ? 'BTC' : 'ETH')
+                          void loadQuote(wallet)
                         }}
                         className="flex items-center gap-4 rounded-xl border border-zinc-200 p-4 text-left transition-all hover:border-orange-500/50 hover:bg-orange-500/5 dark:border-white/10 dark:hover:border-orange-500/40"
                       >
@@ -629,6 +689,8 @@ export function CryptoPayment({
                       setStatus('WAITING')
                       setStatusMessage('')
                       setShowQrScanner(false)
+                      setQuote(null)
+                      quoteIdRef.current = undefined
                     }}
                     className="text-xs font-medium text-zinc-400 hover:text-zinc-600 hover:underline dark:hover:text-gray-300"
                   >
