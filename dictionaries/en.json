@@ -78,7 +78,7 @@
     }
   },
   "experiences": {
-    "title": "Curated Experiences",
+    "title": "Journeys",
     "subtitle": "Handpicked journeys that transcend the ordinary",
     "bookNow": "Book Now",
     "viewDetails": "View Details",
@@ -180,7 +180,7 @@
     "contactSupport": "Contact Support"
   },
   "footer": {
-    "description": "Premium luxury travel experiences in Mexico, curated for the world''s most discerning travelers.",
+    "description": "Small-group walking journeys in Mexico City, led by locals. We don't tell you about the city. We take you there.",
     "quickLinks": "Quick Links",
     "contactUs": "Contact Us",
     "copyright": "All rights reserved.",
@@ -295,9 +295,9 @@
     "trending": "Trending"
   },
   "tours": {
-    "title": "Curated Experiences",
+    "title": "Journeys",
     "description": "Discover handpicked journeys that transcend the ordinary and reveal the authentic heart of Mexico.",
-    "heroTitle": "Curated Experiences. Zero Tourist Traps.",
+    "heroTitle": "We don't tell you about the city. We take you there.",
     "heroSubtitle": "Handpicked journeys that transcend the ordinary and reveal the authentic heart of Mexico.",
     "noResults": "No tours found in this category",
     "tryAnotherCategory": "Try selecting another category"

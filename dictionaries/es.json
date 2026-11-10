@@ -78,7 +78,7 @@
     }
   },
   "experiences": {
-    "title": "Experiencias Curadas",
+    "title": "Journeys",
     "subtitle": "Viajes cuidadosamente seleccionados que trascienden lo ordinario",
     "bookNow": "Reservar Ahora",
     "viewDetails": "Ver Detalles",
@@ -180,7 +180,7 @@
     "contactSupport": "Contactar Soporte"
   },
   "footer": {
-    "description": "Experiencias de viaje premium en México, curadas para los viajeros más exigentes del mundo.",
+    "description": "Journeys a pie en grupos pequeños por la Ciudad de México, guiados por locales. No te contamos la ciudad: te llevamos.",
     "quickLinks": "Enlaces Rápidos",
     "contactUs": "Contáctanos",
     "copyright": "Todos los derechos reservados.",
@@ -295,9 +295,9 @@
     "trending": "Tendencias"
   },
   "tours": {
-    "title": "Experiencias Curadas",
+    "title": "Journeys",
     "description": "Descubre viajes seleccionados a mano que trascienden lo ordinario y revelan el corazón auténtico de México.",
-    "heroTitle": "Experiencias Curadas. Zero Tourist Traps.",
+    "heroTitle": "No te contamos la ciudad. Te llevamos.",
     "heroSubtitle": "Viajes cuidadosamente seleccionados que trascienden lo ordinario y revelan el corazón auténtico de México.",
     "noResults": "No se encontraron tours en esta categoría",
     "tryAnotherCategory": "Intenta seleccionar otra categoría"
