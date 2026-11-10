@@ -48,8 +48,8 @@ export function ThemeToggle() {
         <SunIcon className="h-5 w-5" />
       </motion.div>
       <motion.div
-        initial={{ opacity: isDark ? 1 : 0, rotate: isDark ? 0 : 90 }}
-        animate={{ opacity: isDark ? 1 : 0, rotate: isDark ? 90 : 0 }}
+        initial={{ opacity: isDark ? 1 : 0, rotate: isDark ? 0 : -90 }}
+        animate={{ opacity: isDark ? 1 : 0, rotate: isDark ? -90 : 0 }}
         transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
         className="absolute"
       >

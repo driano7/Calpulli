@@ -11,7 +11,6 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { motion, AnimatePresence, useTransform, useScroll, useReducedMotion } from 'framer-motion'
 import { useEffect, useState, useCallback } from 'react'
 import classNames from 'classnames'
-import { useTheme } from 'next-themes'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import {
   Utensils,
@@ -82,9 +81,6 @@ export function Navbar() {
   const { scrollY } = useScroll()
   const shouldReduceMotion = useReducedMotion()
   const { currentLanguage, setLanguage, isChanging, t } = useLanguage()
-  const { resolvedTheme } = useTheme()
-  const isDarkTheme = resolvedTheme === 'dark'
-
   // Ensure currentLanguage is always a valid string
   const locale =
     typeof currentLanguage === 'string' && currentLanguage.length > 0 ? currentLanguage : 'en'
@@ -176,25 +172,16 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [forceVisible, isMobile, mobileDelayElapsed])
 
-  const backgroundColor = useTransform(
-    scrollY,
-    [0, 50],
-    isDarkTheme
-      ? ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.6)']
-      : ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.8)']
-  )
-
-  const backdropBlur = useTransform(scrollY, [0, 50], ['blur(0px)', 'blur(12px)'])
+  // Sin fondo pintado en el contenedor: la superficie vive en el <header>
+  // (bg-white/80 / dark:bg-black/60 hasta arriba, transparente al bajar).
+  // Antes el fondo salía de un useTransform atado al tema del primer
+  // render y en modo oscuro la barra se quedaba BLANCA (bug reportado
+  // por Donovan, 2026-11-09).
 
   return (
     <>
       {/* Desktop Header */}
       <motion.div
-        style={
-          atTop
-            ? { backgroundColor, backdropFilter: backdropBlur }
-            : { backgroundColor: 'rgba(0, 0, 0, 0)', backdropFilter: 'blur(0px)' }
-        }
         className={classNames(
           'pointer-events-none fixed inset-x-0 z-50 flex justify-center px-4 sm:px-6 lg:px-8',
           atTop ? 'top-4' : 'top-2',
