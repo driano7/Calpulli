@@ -41,15 +41,15 @@ export function ThemeToggle() {
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       <motion.div
-        initial={{ opacity: isDark ? 0 : 1, rotate: isDark ? -90 : 0 }}
-        animate={{ opacity: isDark ? 0 : 1, rotate: isDark ? 0 : -90 }}
+        initial={{ opacity: isDark ? 0 : 1, rotate: isDark ? -22.5 : 0 }}
+        animate={{ opacity: isDark ? 0 : 1, rotate: isDark ? 0 : -22.5 }}
         transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
       >
         <SunIcon className="h-5 w-5" />
       </motion.div>
       <motion.div
-        initial={{ opacity: isDark ? 1 : 0, rotate: isDark ? 0 : -45 }}
-        animate={{ opacity: isDark ? 1 : 0, rotate: isDark ? -45 : 0 }}
+        initial={{ opacity: isDark ? 1 : 0, rotate: isDark ? 0 : -22.5 }}
+        animate={{ opacity: isDark ? 1 : 0, rotate: isDark ? -22.5 : 0 }}
         transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
         className="absolute"
       >
