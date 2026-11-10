@@ -1255,8 +1255,8 @@ export default function CheckoutPage() {
                   className="font-serif text-xl text-gray-900 dark:text-white"
                 >
                   {locale === 'es'
-                    ? 'Este correo ya tiene una cuenta en Amaxing'
-                    : 'This email already has an Amaxing account'}
+                    ? 'Este correo ya tiene una cuenta en Calpulli CDMX'
+                    : 'This email already has a Calpulli CDMX account'}
                 </h2>
                 <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
                   {locale === 'es'
@@ -1343,8 +1343,8 @@ export default function CheckoutPage() {
                       className="mt-2 w-full rounded-xl border border-amber-400/50 bg-amber-400/10 px-4 py-2.5 text-left text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-400/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-amber-200"
                     >
                       {locale === 'es'
-                        ? 'Este correo ya tiene cuenta en Amaxing. ¿Quieres entrar?'
-                        : 'This email already has an Amaxing account. Do you want to log in?'}
+                        ? 'Este correo ya tiene cuenta en Calpulli CDMX. ¿Quieres entrar?'
+                        : 'This email already has a Calpulli CDMX account. Do you want to log in?'}
                     </button>
                   )}
                 </div>
