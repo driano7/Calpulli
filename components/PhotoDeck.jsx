@@ -148,6 +148,7 @@ import Image from '@/components/Image'
 import Link from '@/components/Link'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { BookOpen, Compass, Map as MapIcon, CalendarDays } from 'lucide-react'
+import { Reveal } from '@/components/journeys/Reveal'
 
 const ICONS = {
   journeys: <BookOpen size={17} strokeWidth={2} />,
@@ -286,7 +287,8 @@ export default function PhotoDeck() {
           : 'Toca una tarjeta lateral para traerla al frente'}
       </p>
 
-      <nav className="pd-doorbar" aria-label={isEn ? 'Explore Calpulli' : 'Explora Calpulli'}>
+      <Reveal once={false}>
+        <nav className="pd-doorbar" aria-label={isEn ? 'Explore Calpulli' : 'Explora Calpulli'}>
         {DOORS.map((door) => {
           const [title, sub] = isEn ? door.en : door.es
           return (
@@ -304,7 +306,8 @@ export default function PhotoDeck() {
             </Link>
           )
         })}
-      </nav>
+        </nav>
+      </Reveal>
 
       <style jsx>{`
         .pd-section {

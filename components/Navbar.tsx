@@ -190,10 +190,11 @@ export function Navbar() {
     <>
       {/* Desktop Header */}
       <motion.div
-        style={{
-          backgroundColor,
-          backdropFilter: backdropBlur,
-        }}
+        style={
+          atTop
+            ? { backgroundColor, backdropFilter: backdropBlur }
+            : { backgroundColor: 'rgba(0, 0, 0, 0)', backdropFilter: 'blur(0px)' }
+        }
         className={classNames(
           'pointer-events-none fixed inset-x-0 z-50 flex justify-center px-4 sm:px-6 lg:px-8',
           atTop ? 'top-4' : 'top-2',
@@ -202,32 +203,35 @@ export function Navbar() {
             ? 'pointer-events-auto translate-y-0 opacity-100'
             : 'pointer-events-none -translate-y-8 opacity-0'
         )}
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
       >
         <header
           className={classNames(
-            'pointer-events-auto flex w-full items-center rounded-3xl border text-sm font-semibold shadow-2xl backdrop-blur-md transition-all duration-500',
-            atTop ? 'max-w-[1100px] gap-4 px-5 py-3' : 'max-w-md gap-1.5 px-3 py-1.5',
-            // Xoco style: more transparent, less gray, blur in both themes
-            'border-black/5 bg-white/80 text-zinc-900 dark:border-white/10 dark:bg-black/60 dark:text-white',
-            isVisible
-              ? 'shadow-2xl backdrop-blur-md'
-              : 'border-transparent bg-transparent shadow-none backdrop-blur-none'
+            'pointer-events-auto flex w-full items-center rounded-3xl border text-sm font-semibold transition-all duration-700',
+            // El rectángulo (fondo, borde, sombra) solo existe hasta arriba;
+            // al bajar, el header se disuelve y cada icono flota en su propio
+            // círculo de cristal (regla pedida por Donovan, 2026-11-09).
+            atTop
+              ? 'max-w-[1100px] gap-4 px-5 py-3 border-black/5 bg-white/80 text-zinc-900 shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-black/60 dark:text-white'
+              : 'max-w-md gap-1.5 border-transparent bg-transparent px-3 py-1.5 text-zinc-900 shadow-none backdrop-blur-none dark:text-white'
           )}
         >
           <div className="flex shrink-0 items-center gap-2.5">
             <Link href="/" className="group flex items-center" aria-label="Calpulli CDMX">
               <motion.div
                 initial={
-                  shouldReduceMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }
+                  shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.8, filter: 'blur(6px)' }
                 }
-                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                transition={{ duration: 0.5, delay: 0, ease: 'easeOut' }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26, delay: 0 }}
               >
                 <div
-                  className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full transition-transform group-hover:rotate-6"
+                  className={classNames(
+                    'flex h-9 w-9 items-center justify-center overflow-hidden rounded-full transition-transform group-hover:rotate-6',
+                    atTop ? '' : 'shadow-lg ring-1 ring-black/10 dark:ring-white/20'
+                  )}
                 style={{
                   background:
                     'linear-gradient(135deg, #DE1D8D 0%, #BE1588 25%, #9F0E7F 50%, #7B2BD9 75%, #6A0568 100%)',
@@ -360,10 +364,10 @@ export function Navbar() {
               {/* Language Toggle */}
               <motion.div
                 initial={
-                  shouldReduceMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }
+                  shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.8, filter: 'blur(6px)' }
                 }
-                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                transition={{ duration: 0.5, delay: 0.09, ease: 'easeOut' }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26, delay: 0.09 }}
               >
                 <button
                 type="button"
@@ -375,8 +379,12 @@ export function Navbar() {
                     : 'Cambiar idioma a Español'
                 }
                 className={classNames(
-                  'flex items-center gap-1.5 rounded-full px-2 py-1.5 text-xs font-black uppercase tracking-[0.35em] sm:gap-2 sm:px-4 sm:py-2',
-                  'bg-gray-100/60 text-gray-800 transition-all hover:bg-gray-200 dark:bg-gray-800/60 dark:text-gray-100 dark:hover:bg-gray-700',
+                  atTop
+                    ? 'flex items-center gap-1.5 rounded-full px-2 py-1.5 text-xs font-black uppercase tracking-[0.35em] sm:gap-2 sm:px-4 sm:py-2'
+                    : 'flex h-10 w-10 items-center justify-center rounded-full text-xs font-black uppercase',
+                  atTop
+                    ? 'bg-gray-100/60 text-gray-800 transition-all hover:bg-gray-200 dark:bg-gray-800/60 dark:text-gray-100 dark:hover:bg-gray-700'
+                    : 'border border-black/5 bg-white/70 text-gray-800 shadow-lg backdrop-blur-md transition-all hover:bg-white/90 dark:border-white/10 dark:bg-zinc-900/60 dark:text-gray-100 dark:hover:bg-zinc-900/80',
                   isChanging ? 'pointer-events-none opacity-60' : ''
                 )}
               >
@@ -395,10 +403,10 @@ export function Navbar() {
 
               <motion.div
                 initial={
-                  shouldReduceMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }
+                  shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.8, filter: 'blur(6px)' }
                 }
-                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                transition={{ duration: 0.5, delay: 0.18, ease: 'easeOut' }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26, delay: 0.18 }}
               >
                 <AuthNav compact={!atTop} />
               </motion.div>
@@ -408,10 +416,10 @@ export function Navbar() {
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.92 }}
                 initial={
-                  shouldReduceMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }
+                  shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.8, filter: 'blur(6px)' }
                 }
-                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                transition={{ duration: 0.5, delay: 0.27, ease: 'easeOut' }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26, delay: 0.27 }}
               >
                 <Link
                   href="/bookings"
@@ -419,10 +427,13 @@ export function Navbar() {
                   aria-current={bookingsActive ? 'page' : undefined}
                   title={currentLanguage === 'es' ? 'Mis reservaciones' : 'My bookings'}
                   className={classNames(
-                    'relative flex h-9 w-9 items-center justify-center rounded-full transition-colors',
+                    'relative flex items-center justify-center rounded-full transition-colors',
+                    atTop ? 'h-9 w-9' : 'h-10 w-10',
                     bookingsActive
                       ? 'bg-[#C1440E] text-white shadow-[0_0_0_3px_rgba(193,68,14,0.18)]'
-                      : 'text-zinc-500 hover:bg-[#C1440E]/10 hover:text-[#C1440E] dark:text-zinc-400 dark:hover:bg-[#C1440E]/15 dark:hover:text-[#E06A38]'
+                      : atTop
+                        ? 'text-zinc-500 hover:bg-[#C1440E]/10 hover:text-[#C1440E] dark:text-zinc-400 dark:hover:bg-[#C1440E]/15 dark:hover:text-[#E06A38]'
+                        : 'border border-black/5 bg-white/70 text-zinc-500 shadow-lg backdrop-blur-md hover:bg-white/90 hover:text-[#C1440E] dark:border-white/10 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:bg-zinc-900/80'
                   )}
                 >
                   <motion.span
@@ -449,10 +460,15 @@ export function Navbar() {
               {user && !authLoading && (
                 <motion.div
                   initial={
-                    shouldReduceMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }
+                    shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.8, filter: 'blur(6px)' }
                   }
-                  animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                  transition={{ duration: 0.5, delay: 0.36, ease: 'easeOut' }}
+                  animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 26, delay: 0.36 }}
+                  className={
+                    atTop
+                      ? undefined
+                      : 'flex h-10 w-10 items-center justify-center rounded-full border border-black/5 bg-white/70 shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/60'
+                  }
                 >
                   <CartIcon />
                 </motion.div>
@@ -461,10 +477,15 @@ export function Navbar() {
               {/* Theme Toggle — rightmost icon */}
               <motion.div
                 initial={
-                  shouldReduceMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }
+                  shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.8, filter: 'blur(6px)' }
                 }
-                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                transition={{ duration: 0.5, delay: 0.45, ease: 'easeOut' }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26, delay: 0.45 }}
+                className={
+                  atTop
+                    ? undefined
+                    : 'flex h-10 w-10 items-center justify-center rounded-full border border-black/5 bg-white/70 shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/60'
+                }
               >
                 <ThemeToggle />
               </motion.div>

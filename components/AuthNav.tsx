@@ -19,7 +19,7 @@ export default function AuthNav({ compact = false }) {
         <Link
           href="/profile"
           aria-label="Mi Cuenta"
-          className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-orange-500/10 hover:text-orange-500 dark:text-zinc-300"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-black/5 bg-white/70 text-zinc-500 shadow-lg backdrop-blur-md transition-colors hover:bg-white/90 hover:text-orange-500 dark:border-white/10 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:bg-zinc-900/80"
         >
           <CircleUserRound className="h-6 w-6" />
         </Link>
@@ -59,7 +59,7 @@ export default function AuthNav({ compact = false }) {
       <Link
         href="/register"
         aria-label="Iniciar sesión"
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-orange-500 text-orange-500 transition-colors hover:bg-orange-50"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-orange-500 bg-white/70 text-orange-500 shadow-lg backdrop-blur-md transition-colors hover:bg-white/90 dark:bg-zinc-900/60"
       >
         <CircleUserRound className="h-5 w-5" />
       </Link>
