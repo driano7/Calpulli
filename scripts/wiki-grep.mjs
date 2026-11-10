@@ -6,7 +6,7 @@
  *
  *   node scripts/wiki-grep.mjs "Titulo" "termino 1" "termino 2" ...
  */
-const UA = 'AmaxingResearch/1.0 (educational cultural site; local dev)'
+const UA = 'CalpulliCDMXResearch/1.0 (educational cultural site; local dev)'
 
 const title = process.argv[2]
 const terms = process.argv.slice(3)

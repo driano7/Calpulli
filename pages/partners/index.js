@@ -6,11 +6,11 @@ export default function PartnersHome() {
   return (
     <>
       <PageSEO
-        title="Partner with Amaxing"
+        title="Partner with Calpulli CDMX"
         description="Partner program for hotels and hostels. Guest discount, commission and dashboard."
       />
       <div className="mx-auto max-w-3xl px-6 py-24 text-center">
-        <h1 className="text-4xl font-black text-zinc-900 dark:text-white">Partner with Amaxing</h1>
+        <h1 className="text-4xl font-black text-zinc-900 dark:text-white">Partner with Calpulli CDMX</h1>
         <p className="mt-4 text-zinc-600 dark:text-zinc-300">
           Ofrecemos a tus huéspedes Journeys de la Ciudad de México con descuento y a tu propiedad
           una comisión por reservas elegibles completadas.

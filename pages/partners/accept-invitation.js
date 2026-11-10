@@ -88,7 +88,7 @@ export default function AcceptInvitation() {
     <>
       <PageSEO
         title="Accept invitation — Partner"
-        description="Accept your Amaxing partner invitation."
+        description="Accept your Calpulli CDMX partner invitation."
       />
       <div className="mx-auto max-w-md px-6 py-24">
         <h1 className="text-3xl font-black">Acepta la invitación</h1>

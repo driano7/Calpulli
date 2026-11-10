@@ -36,8 +36,8 @@ export default function PartnersApply() {
   return (
     <>
       <PageSEO
-        title="Apply — Partner with Amaxing"
-        description="Apply for the Amaxing partner program."
+        title="Apply — Partner with Calpulli CDMX"
+        description="Apply for the Calpulli CDMX partner program."
       />
       <div className="mx-auto max-w-xl px-6 py-24">
         <h1 className="text-3xl font-black">Solicita la alianza</h1>

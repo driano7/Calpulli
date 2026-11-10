@@ -1,7 +1,7 @@
 # Calpulli CDMX — Mexico City journeys, maps and local guides
 
 > Calpulli CDMX runs small-group, local-led walking journeys in Mexico City (CDMX):
-> street food, history, neighborhoods and museums. Curated experiences, zero tourist traps.
+> street food, history, neighborhoods and museums. We don't tell you about the city. We take you there.
 > "Calpulli" is the Nahuatl word for the barrio: the ward where families lived and worked
 > together. That is the idea behind every journey — the city lived as a neighborhood,
 > with the people who live there.

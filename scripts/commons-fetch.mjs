@@ -18,7 +18,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-const UA = 'AmaxingJourneyBuilder/1.0 (educational cultural site; local dev)'
+const UA = 'CalpulliCDMXJourneyBuilder/1.0 (educational cultural site; local dev)'
 const API = 'https://commons.wikimedia.org/w/api.php'
 const MANIFEST_PATH = path.resolve('scripts/commons-manifest.json')
 

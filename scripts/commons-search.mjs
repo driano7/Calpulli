@@ -9,7 +9,7 @@
  * candidata para confirmar que de verdad es el lugar indicado y no otro
  * homonimo.
  */
-const UA = 'AmaxingJourneyBuilder/1.0 (educational cultural site; local dev)'
+const UA = 'CalpulliCDMXJourneyBuilder/1.0 (educational cultural site; local dev)'
 const API = 'https://commons.wikimedia.org/w/api.php'
 
 const term = process.argv[2]

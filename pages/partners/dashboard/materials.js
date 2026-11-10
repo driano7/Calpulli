@@ -41,7 +41,7 @@ export default function MaterialsPage() {
         <p className="text-sm text-zinc-500">Cargando…</p>
       )}
       <p className="mt-4 text-xs text-zinc-500">
-        Estos materiales usan tu enlace real y tu descuento configurado por Amaxing. No afirman que
+        Estos materiales usan tu enlace real y tu descuento configurado por Calpulli CDMX. No afirman que
         el hotel opera el Journey ni que incluye transporte.
       </p>
     </DashboardLayout>

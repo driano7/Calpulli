@@ -97,7 +97,7 @@ export default function SettingsPage() {
       </div>
       <p className="mt-3 text-[11px] text-zinc-400">
         Descuento {(partner.guestDiscountPct * 100).toFixed(0)}% · Comisión{' '}
-        {(partner.commissionPct * 100).toFixed(0)}% (fijos de Amaxing) — no editables aquí.
+        {(partner.commissionPct * 100).toFixed(0)}% (fijos de Calpulli CDMX) — no editables aquí.
       </p>
       <button
         type="button"

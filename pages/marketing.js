@@ -195,7 +195,7 @@ export default function MarketingPage() {
   const exportTXT = () => {
     if (!activeTour) return
     const t = activeTour
-    const txt = `AMAXING MAPA DE MARKETING\nTOUR ${t.name}\nTOFU ${t.funnel.tofu}\nMOFU ${t.funnel.mofu}\nBOFU ${t.funnel.bofu}`
+    const txt = `CALPULLI MAPA DE MARKETING\nTOUR ${t.name}\nTOFU ${t.funnel.tofu}\nMOFU ${t.funnel.mofu}\nBOFU ${t.funnel.bofu}`
     const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')

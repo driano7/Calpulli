@@ -54,13 +54,13 @@ export default function PartnersLogin() {
   return (
     <>
       <PageSEO
-        title="Partner login — Amaxing"
-        description="Access your Amaxing partner dashboard."
+        title="Partner login — Calpulli CDMX"
+        description="Access your Calpulli CDMX partner dashboard."
       />
       <div className="mx-auto max-w-md px-6 py-24">
         <h1 className="text-3xl font-black">Partner login</h1>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-          Usa tu cuenta de Amaxing. Solo verás tu propiedad.
+          Usa tu cuenta de Calpulli CDMX. Solo verás tu propiedad.
         </p>
         <form onSubmit={submit} className="mt-6 grid gap-3">
           <input
@@ -89,7 +89,7 @@ export default function PartnersLogin() {
           </button>
         </form>
         <p className="mt-4 text-xs text-zinc-500">
-          ¿No tienes invitación? Habla con tu equipo Amaxing o solicita desde{' '}
+          ¿No tienes invitación? Habla con tu equipo de Calpulli CDMX o solicita desde{' '}
           <Link href="/partners/apply" className="underline">
             /partners/apply
           </Link>
