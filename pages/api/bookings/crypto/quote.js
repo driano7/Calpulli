@@ -13,6 +13,7 @@ import { WALLETS } from '@/lib/crypto/addresses'
 import { isCryptoAsset } from '@/lib/crypto/tokens'
 import { getMxnRate, quoteAmount } from '@/lib/crypto/rates'
 import { createQuote, computeFiatTotal, fingerprintItems } from '@/lib/crypto/quotes'
+import { fetchLnurlPayParams, requestLnInvoice } from '@/lib/crypto/lightning'
 import { resolvePartnerForRequest } from '@/lib/partners'
 
 export const config = { runtime: 'nodejs' }
@@ -36,17 +37,15 @@ export default async function handler(req, res) {
   }
 
   const { network, items, locale } = req.body || {}
-  const asset = isCryptoAsset(req.body?.asset) ? req.body.asset : 'ETH'
+  const isLightning = network === 'LIGHTNING'
+  const asset = isLightning
+    ? 'BTC'
+    : isCryptoAsset(req.body?.asset)
+      ? req.body.asset
+      : 'ETH'
   const en = locale === 'en'
 
-  if (network === 'LIGHTNING') {
-    return res.status(400).json({
-      error: en
-        ? 'Lightning quotes are not available yet.'
-        : 'Lightning aún no emite cotización automática.',
-    })
-  }
-  if (!EVM_NETWORKS.includes(network)) {
+  if (!isLightning && !EVM_NETWORKS.includes(network)) {
     return res.status(400).json({ error: en ? 'Unsupported network' : 'Red no soportada' })
   }
   if (!Array.isArray(items) || items.length === 0) {
@@ -77,6 +76,35 @@ export default async function handler(req, res) {
     }
 
     const q = quoteAmount(fiatTotal, asset, rate)
+
+    // Lightning: el servidor genera el invoice real por el monto cotizado
+    // (LNURL-pay) y guarda su URL de verificación para la confirmación.
+    let lnInvoice = null
+    let lnVerifyUrl = null
+    if (isLightning) {
+      try {
+        const params = await fetchLnurlPayParams(wallet.address)
+        const issued = await requestLnInvoice(params, Number(q.baseUnits))
+        lnInvoice = issued.invoice
+        lnVerifyUrl = issued.verifyUrl
+      } catch (err) {
+        return res.status(502).json({
+          error:
+            err?.message ||
+            (en
+              ? 'The Lightning wallet did not issue an invoice.'
+              : 'La wallet Lightning no emitió el invoice.'),
+        })
+      }
+      if (!lnVerifyUrl) {
+        return res.status(502).json({
+          error: en
+            ? 'The Lightning wallet does not offer automatic settlement verification.'
+            : 'La wallet Lightning no ofrece verificación automática de liquidación.',
+        })
+      }
+    }
+
     const quote = await createQuote({
       network,
       asset,
@@ -87,6 +115,8 @@ export default async function handler(req, res) {
       rateMxn: rate,
       fingerprint: fingerprintItems(items),
       partnerId: partner?.id ? String(partner.id) : null,
+      lnInvoice,
+      lnVerifyUrl,
     })
 
     return res.status(200).json({
@@ -98,6 +128,7 @@ export default async function handler(req, res) {
       fiatTotal,
       fiatCurrency: 'MXN',
       cryptoAmount: quote.cryptoAmount,
+      invoice: lnInvoice || undefined,
       expiresAt: quote.expiresAt,
     })
   } catch (error) {

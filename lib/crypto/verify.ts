@@ -7,6 +7,7 @@
  */
 
 import { TOKEN_CONTRACTS, type CryptoAsset } from './tokens'
+import { checkInvoiceSettled } from './lightning'
 
 export type PaymentStatus = 'WAITING' | 'DETECTED' | 'CONFIRMED' | 'ERROR'
 
@@ -25,6 +26,7 @@ export interface VerifyConfig {
   txHash?: string // customer tx hash
   invoice?: string // lightning invoice
   expected?: ExpectedPayment // cotización del servidor: activo + monto + frescura
+  lnVerifyUrl?: string // LUD-21: URL de verificación del invoice (cotización LN)
 }
 
 const NETWORK_MODE = process.env.NEXT_PUBLIC_CHAIN_MODE === 'MAINNET' ? 'MAINNET' : 'TESTNET'
@@ -389,6 +391,30 @@ export async function verifyPaymentForServer(config: VerifyConfig): Promise<{
   }
 
   if (config.network === 'LIGHTNING') {
+    // Camino real: el invoice lo generó el servidor al cotizar (LNURL-pay) y
+    // su URL de verificación (LUD-21) dice si ya se liquidó.
+    if (config.lnVerifyUrl) {
+      try {
+        const { settled } = await checkInvoiceSettled(config.lnVerifyUrl)
+        return settled
+          ? {
+              confirmed: true,
+              status: 'CONFIRMED' as const,
+              message: 'Pago Lightning confirmado (liquidado)',
+            }
+          : {
+              confirmed: false,
+              status: 'DETECTED' as const,
+              message: 'El pago Lightning aún no se liquida.',
+            }
+      } catch {
+        return {
+          confirmed: false,
+          status: 'ERROR' as const,
+          message: 'No se pudo consultar la liquidación Lightning.',
+        }
+      }
+    }
     const result = await verifyLightning(config.invoice)
     return { confirmed: result.status === 'CONFIRMED', ...result }
   }

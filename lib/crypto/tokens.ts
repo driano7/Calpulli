@@ -4,12 +4,13 @@
  * con el mismo nombre pero otro contrato vale cero para liquidar.
  */
 
-export type CryptoAsset = 'ETH' | 'USDT' | 'USDC'
+export type CryptoAsset = 'ETH' | 'USDT' | 'USDC' | 'BTC'
 
 export const ASSET_DECIMALS: Record<CryptoAsset, number> = {
   ETH: 18,
   USDT: 6,
   USDC: 6,
+  BTC: 8, // la unidad pagable es el satoshi: baseUnits = sats
 }
 
 type EvmNetwork = 'ETHEREUM' | 'BASE' | 'ARBITRUM' | 'OPTIMISM'
@@ -35,5 +36,5 @@ export const TOKEN_CONTRACTS: Record<EvmNetwork, Partial<Record<CryptoAsset, str
 }
 
 export function isCryptoAsset(value: unknown): value is CryptoAsset {
-  return value === 'ETH' || value === 'USDT' || value === 'USDC'
+  return value === 'ETH' || value === 'USDT' || value === 'USDC' || value === 'BTC'
 }

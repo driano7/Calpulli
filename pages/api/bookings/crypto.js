@@ -144,7 +144,8 @@ export default async function handler(req, res) {
   const referenceIsMock = cleanReference.toLowerCase().includes('mock')
   let appliedQuote = null
   let expected
-  if (network !== 'LIGHTNING' && !referenceIsMock) {
+  let lnVerifyUrl
+  if (!referenceIsMock) {
     const quoteId = typeof req.body?.quoteId === 'string' ? req.body.quoteId : null
     if (!quoteId) {
       return res.status(400).json({
@@ -174,12 +175,27 @@ export default async function handler(req, res) {
     if (Math.abs(expectedTotal - appliedQuote.fiatTotal) > 0.01) {
       return res.status(400).json({ error: 'El total no coincide con la cotización.' })
     }
-    expected = {
+    if (network === 'LIGHTNING') {
+      // El monto ya viene fijado en el invoice que el servidor generó al
+      // cotizar; aquí solo se exige que la referencia SEA ese invoice y que
+      // exista su URL de verificación de liquidación.
+      if (!appliedQuote.lnInvoice || cleanReference !== appliedQuote.lnInvoice) {
+        return res.status(400).json({ error: 'El invoice no corresponde a la cotización.' })
+      }
+      if (!appliedQuote.lnVerifyUrl) {
+        return res.status(502).json({
+          error: 'La cotización Lightning no trae verificación de liquidación.',
+        })
+      }
+      lnVerifyUrl = appliedQuote.lnVerifyUrl
+    } else {
+      expected = {
       asset: appliedQuote.asset,
       // 3% de tolerancia: comisiones de retiro de exchanges y redondeos no
       // deben tumbar un pago legítimo; el 97% restante sigue siendo el pago.
       minBaseUnits: ((BigInt(appliedQuote.baseUnits) * 97n) / 100n).toString(),
       notBeforeUnix: Math.floor(Date.parse(appliedQuote.createdAt) / 1000) - 120,
+      }
     }
   }
 
@@ -191,6 +207,7 @@ export default async function handler(req, res) {
       txHash: network === 'LIGHTNING' ? undefined : cleanReference,
       invoice: network === 'LIGHTNING' ? cleanReference : undefined,
       expected,
+      lnVerifyUrl,
     })
   } catch (error) {
     console.error('[crypto.confirm] verificación falló:', error)

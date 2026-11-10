@@ -12,6 +12,7 @@ export interface CryptoQuoteInfo {
   cryptoAmount: string
   asset: string
   fiatTotal: number
+  invoice?: string
 }
 
 interface CryptoPaymentProps {
@@ -206,7 +207,7 @@ export function CryptoPayment({
   // deja de ser un estimado del navegador y queda fijo por 30 minutos.
   const loadQuote = useCallback(
     async (wallet: (typeof WALLETS)[0]) => {
-      if (!requestQuote || wallet.network === 'LIGHTNING' || isTestMode) return
+      if (!requestQuote || isTestMode) return
       setQuoteLoading(true)
       try {
         const q = await requestQuote(wallet.network)
@@ -336,6 +337,27 @@ export function CryptoPayment({
     startPolling(selectedWallet, txHash.trim())
   }
 
+  // Lightning con invoice del servidor: no hay nada que pegar; el servidor
+  // verifica la liquidación (LUD-21) al confirmar.
+  const handleLnVerify = async () => {
+    if (!selectedWallet || !quote?.invoice) return
+    setStatus('DETECTED')
+    setStatusMessage(isEs ? 'Verificando la liquidación…' : 'Verifying settlement…')
+    try {
+      await onConfirmed(quote.invoice, 'LIGHTNING', quote.quoteId)
+      setStatus('CONFIRMED')
+      setStatusMessage(isEs ? 'Pago Lightning confirmado' : 'Lightning payment confirmed')
+    } catch (error: any) {
+      setStatus('ERROR')
+      setStatusMessage(
+        error?.message ||
+          (isEs
+            ? 'Aún no se confirma la liquidación. Espera unos segundos y reintenta.'
+            : 'Settlement not confirmed yet. Wait a few seconds and retry.')
+      )
+    }
+  }
+
   const handleMockFill = () => {
     const mockHash =
       selectedWallet?.network === 'LIGHTNING'
@@ -350,7 +372,7 @@ export function CryptoPayment({
   const copyAddress = async () => {
     if (!selectedWallet) return
     try {
-      await navigator.clipboard.writeText(selectedWallet.address)
+      await navigator.clipboard.writeText(payTarget || selectedWallet.address)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
@@ -408,6 +430,13 @@ export function CryptoPayment({
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
+  // Con cotización Lightning, el QR y el texto son el INVOICE (monto exacto),
+  // no la dirección: pagar la dirección sería pagar un monto cualquiera.
+  const payTarget =
+    selectedWallet?.network === 'LIGHTNING' && quote?.invoice
+      ? quote.invoice
+      : selectedWallet?.address
+
   return (
     <AnimatePresence>
       {open && (
@@ -437,7 +466,11 @@ export function CryptoPayment({
                 </h3>
                 {selectedWallet && quote && (
                   <p className="mt-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                    {isEs ? 'Paga' : 'Pay'} {quote.cryptoAmount} {quote.asset} —{' '}
+                    {isEs ? 'Paga' : 'Pay'}{' '}
+                    {quote.asset === 'BTC'
+                      ? `${Number(quote.cryptoAmount).toLocaleString()} sats`
+                      : `${quote.cryptoAmount} ${quote.asset}`}{' '}
+                    —{' '}
                     {isEs
                       ? 'cotización del servidor, fija por 30 min'
                       : 'server quote, locked for 30 min'}
@@ -539,13 +572,15 @@ export function CryptoPayment({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
-                        selectedWallet.address
+                        payTarget
                       )}`}
                       alt={`QR ${selectedWallet.label}`}
                       className="mx-auto h-52 w-52 rounded-xl bg-white p-2"
                     />
                     <p className="mt-3 break-all font-mono text-xs text-zinc-600 dark:text-gray-300">
-                      {selectedWallet.address}
+                      {payTarget && payTarget.length > 72
+                        ? `${payTarget.slice(0, 72)}…`
+                        : payTarget}
                     </p>
                     <div className="mt-3 flex justify-center gap-2">
                       <button
@@ -565,7 +600,7 @@ export function CryptoPayment({
                         onClick={() => {
                           const a = document.createElement('a')
                           a.href = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(
-                            selectedWallet.address
+                            payTarget
                           )}`
                           a.download = `calpulli-${selectedWallet.network}-qr.png`
                           a.click()
@@ -577,6 +612,23 @@ export function CryptoPayment({
                     </div>
                   </div>
 
+                  {selectedWallet.network === 'LIGHTNING' && quote?.invoice ? (
+                    <div>
+                      <p className="mb-2 text-sm text-zinc-600 dark:text-gray-400">
+                        {isEs
+                          ? 'Paga este invoice con cualquier wallet Lightning y luego verifica la liquidación:'
+                          : 'Pay this invoice with any Lightning wallet, then verify settlement:'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleLnVerify}
+                        disabled={status === 'CONFIRMED'}
+                        className="w-full rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-orange-600 disabled:opacity-50"
+                      >
+                        {isEs ? 'Ya pagué — verificar' : 'I paid — verify'}
+                      </button>
+                    </div>
+                  ) : (
                   <div>
                     <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-gray-300">
                       {L.referenceLabel}
@@ -642,6 +694,7 @@ export function CryptoPayment({
                       </div>
                     )}
                   </div>
+                  )}
 
                   {(statusMessage || status !== 'WAITING') && (
                     <div

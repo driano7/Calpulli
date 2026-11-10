@@ -9,6 +9,7 @@ const COINGECKO_IDS: Record<CryptoAsset, string> = {
   ETH: 'ethereum',
   USDT: 'tether',
   USDC: 'usd-coin',
+  BTC: 'bitcoin',
 }
 
 const CACHE_MS = 60_000
@@ -41,6 +42,10 @@ export function quoteAmount(fiatMxn: number, asset: CryptoAsset, rateMxn: number
   const raw = fiatMxn / rateMxn
   const factor = 10 ** decimals
   const baseUnits = BigInt(Math.ceil(raw * factor)).toString()
-  const cryptoAmount = (Number(baseUnits) / factor).toFixed(asset === 'ETH' ? 8 : 6)
+  // En BTC el monto que el cliente paga se expresa en sats (la unidad base).
+  const cryptoAmount =
+    asset === 'BTC'
+      ? baseUnits
+      : (Number(baseUnits) / factor).toFixed(asset === 'ETH' ? 8 : 6)
   return { rateMxn, cryptoAmount, baseUnits, decimals }
 }

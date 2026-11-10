@@ -36,6 +36,8 @@ export interface CryptoQuote {
   consumedAt: string | null
   txHash: string | null
   createdAt: string
+  lnInvoice: string | null
+  lnVerifyUrl: string | null
 }
 
 let schemaReady: Promise<void> | null = null
@@ -58,10 +60,23 @@ export function ensureCryptoQuoteSchema(): Promise<void> {
           expires_at TEXT NOT NULL,
           consumed_at TEXT,
           tx_hash TEXT,
-          created_at TEXT NOT NULL
+          created_at TEXT NOT NULL,
+          ln_invoice TEXT,
+          ln_verify_url TEXT
         )`,
         args: [],
       })
+      // Columnas Lightning para tablas creadas antes de esta versión.
+      for (const col of ['ln_invoice', 'ln_verify_url']) {
+        try {
+          await turso.execute({
+            sql: `ALTER TABLE crypto_quotes ADD COLUMN ${col} TEXT`,
+            args: [],
+          })
+        } catch {
+          // La columna ya existe: es el caso normal.
+        }
+      }
     })().catch((err) => {
       schemaReady = null
       throw err
@@ -115,6 +130,8 @@ export async function createQuote(data: {
   fingerprint: string
   partnerId: string | null
   ttlMinutes?: number
+  lnInvoice?: string | null
+  lnVerifyUrl?: string | null
 }): Promise<CryptoQuote> {
   await ensureCryptoQuoteSchema()
   const now = new Date()
@@ -134,12 +151,15 @@ export async function createQuote(data: {
     consumedAt: null,
     txHash: null,
     createdAt: now.toISOString(),
+    lnInvoice: data.lnInvoice ?? null,
+    lnVerifyUrl: data.lnVerifyUrl ?? null,
   }
   await turso.execute({
     sql: `INSERT INTO crypto_quotes
             (id, network, asset, wallet, fiat_total, crypto_amount, base_units,
-             rate_mxn, fingerprint, partner_id, expires_at, consumed_at, tx_hash, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?)`,
+             rate_mxn, fingerprint, partner_id, expires_at, consumed_at, tx_hash, created_at,
+             ln_invoice, ln_verify_url)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?, ?)`,
     args: [
       quote.id,
       quote.network,
@@ -153,6 +173,8 @@ export async function createQuote(data: {
       quote.partnerId,
       quote.expiresAt,
       quote.createdAt,
+      quote.lnInvoice,
+      quote.lnVerifyUrl,
     ],
   })
   return quote
@@ -181,6 +203,8 @@ export async function getQuote(id: string): Promise<CryptoQuote | null> {
     consumedAt: row.consumed_at ? String(row.consumed_at) : null,
     txHash: row.tx_hash ? String(row.tx_hash) : null,
     createdAt: String(row.created_at),
+    lnInvoice: row.ln_invoice ? String(row.ln_invoice) : null,
+    lnVerifyUrl: row.ln_verify_url ? String(row.ln_verify_url) : null,
   }
 }
 
