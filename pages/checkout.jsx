@@ -803,22 +803,61 @@ export default function CheckoutPage() {
    * vuelve a verificar el pago, guarda la reserva pagada en Turso y devuelve
    * los tickets reales. Así el ticket no nace de un hash inventado.
    */
+  const buildCryptoItems = useCallback(
+    () =>
+      items.map((item) => ({
+        experienceId: item.experienceId || item.id,
+        date: item.date,
+        time: item.time,
+        peopleCount: Math.max(1, Number(item.peopleCount) || 1),
+        participantNames: participantNames[item.lineId] || [],
+        unitPrice: item.price || 0,
+      })),
+    [items, participantNames]
+  )
+
+  /**
+   * Cotización cripto del servidor: fija activo, monto y wallet por 30 min.
+   * La confirmación exige que el pago cumpla esta cotización.
+   */
+  const requestCryptoQuote = useCallback(
+    async (network) => {
+      const headers = { 'Content-Type': 'application/json' }
+      if (token) headers.Authorization = `Bearer ${token}`
+      const response = await fetch('/api/bookings/crypto/quote', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          network,
+          asset: 'ETH',
+          items: buildCryptoItems(),
+          referralCode: partnerRef || undefined,
+          placement: partnerPlacement || undefined,
+          campaign: partnerCampaign || undefined,
+          partnerSessionId: partnerSessionId || undefined,
+          referralExpiresAt: partnerExpiresAt || undefined,
+          locale,
+        }),
+      })
+      const data = await response.json().catch(() => null)
+      if (!response.ok || !data?.quoteId) {
+        throw new Error(data?.error || 'No pudimos generar la cotización')
+      }
+      return data
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [token, buildCryptoItems, partnerRef, partnerPlacement, partnerCampaign, partnerSessionId, partnerExpiresAt, locale]
+  )
+
   const confirmCryptoPayment = useCallback(
-    async (reference, network) => {
+    async (reference, network, quoteId) => {
       setIsSubmitting(true)
       setError(null)
       try {
         const headers = { 'Content-Type': 'application/json' }
         if (token) headers.Authorization = `Bearer ${token}`
 
-        const cryptoItems = items.map((item) => ({
-          experienceId: item.experienceId || item.id,
-          date: item.date,
-          time: item.time,
-          peopleCount: Math.max(1, Number(item.peopleCount) || 1),
-          participantNames: participantNames[item.lineId] || [],
-          unitPrice: item.price || 0,
-        }))
+        const cryptoItems = buildCryptoItems()
 
         if (!cryptoItems.length) {
           throw new Error(locale === 'es' ? 'Tu carrito está vacío.' : 'Your cart is empty.')
@@ -830,6 +869,7 @@ export default function CheckoutPage() {
           body: JSON.stringify({
             reference,
             network,
+            quoteId: quoteId || undefined,
             items: cryptoItems,
             guestEmail: isGuest || !token ? guestEmail.trim() : undefined,
             participantEmails:
@@ -1184,6 +1224,7 @@ export default function CheckoutPage() {
           currency={locale === 'es' ? 'MXN' : 'USD'}
           onClose={() => setShowCryptoModal(false)}
           onConfirmed={confirmCryptoPayment}
+          requestQuote={requestCryptoQuote}
         />
       </div>
     )
@@ -2130,6 +2171,7 @@ export default function CheckoutPage() {
         currency={locale === 'es' ? 'MXN' : 'USD'}
         onClose={() => setShowCryptoModal(false)}
         onConfirmed={confirmCryptoPayment}
+        requestQuote={requestCryptoQuote}
       />
     </div>
   )
