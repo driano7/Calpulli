@@ -29,4 +29,18 @@ Allow: /
 User-agent: CCBot
 Allow: /
 
-Sitemap: https://calpulli-cdmx.com/sitemap.xml
+# AI search/retrieval crawlers (explícitos; ya cubiertos por el wildcard,
+# se declaran para que la política de descubrimiento sea inequívoca)
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+Sitemap: https://donovan-amx.vercel.app/sitemap.xml
