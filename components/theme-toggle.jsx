@@ -43,14 +43,14 @@ export function ThemeToggle() {
       <motion.div
         initial={{ opacity: isDark ? 0 : 1, rotate: isDark ? -90 : 0 }}
         animate={{ opacity: isDark ? 0 : 1, rotate: isDark ? 0 : -90 }}
-        transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+        transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
       >
         <SunIcon className="h-5 w-5" />
       </motion.div>
       <motion.div
-        initial={{ opacity: isDark ? 1 : 0, rotate: isDark ? 0 : -90 }}
-        animate={{ opacity: isDark ? 1 : 0, rotate: isDark ? -90 : 0 }}
-        transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+        initial={{ opacity: isDark ? 1 : 0, rotate: isDark ? 0 : -45 }}
+        animate={{ opacity: isDark ? 1 : 0, rotate: isDark ? -45 : 0 }}
+        transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
         className="absolute"
       >
         <MoonIcon className="h-5 w-5" />
