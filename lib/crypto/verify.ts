@@ -20,7 +20,7 @@ export interface ExpectedPayment {
 }
 
 export interface VerifyConfig {
-  network: 'ETHEREUM' | 'BASE' | 'ARBITRUM' | 'OPTIMISM' | 'LIGHTNING'
+  network: 'ETHEREUM' | 'BASE' | 'ARBITRUM' | 'OPTIMISM' | 'LIGHTNING' | 'BITCOIN'
   address?: string // business wallet
   expectedWei?: string // expected amount in wei
   txHash?: string // customer tx hash
@@ -31,42 +31,73 @@ export interface VerifyConfig {
 
 const NETWORK_MODE = process.env.NEXT_PUBLIC_CHAIN_MODE === 'MAINNET' ? 'MAINNET' : 'TESTNET'
 
-function explorerConfig(network: 'ETHEREUM' | 'BASE' | 'ARBITRUM' | 'OPTIMISM') {
+/**
+ * Exploradores (migración 2026-11-10): la API V1 de Etherscan se apagó en
+ * agosto de 2025. Ethereum y Arbitrum van por Etherscan V2 (una sola key,
+ * selector chainid, plan gratis). Base y Optimism quedaron de paga en V2,
+ * así que van por Blockscout público: misma API compatible, SIN key.
+ */
+interface ExplorerCfg {
+  baseUrl: string
+  apiKey: string | null
+  chainId: number | null
+}
+
+function explorerConfig(
+  network: 'ETHEREUM' | 'BASE' | 'ARBITRUM' | 'OPTIMISM'
+): ExplorerCfg {
+  const mainnet = NETWORK_MODE === 'MAINNET'
+  // La key puede vivir con el nombre público (la usa también el polling del
+  // navegador) o solo del lado del servidor con el nombre que Donovan ya
+  // usa en sus otros proyectos (ETEHERSCAN_API / ETHERSCAN_API).
+  const etherscanKey =
+    process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY ||
+    process.env.ETEHERSCAN_API ||
+    process.env.ETHERSCAN_API ||
+    null
   if (network === 'BASE') {
     return {
-      baseUrl:
-        NETWORK_MODE === 'TESTNET'
-          ? 'https://api-sepolia.basescan.org/api'
-          : 'https://api.basescan.org/api',
-      apiKey: process.env.NEXT_PUBLIC_BASESCAN_API_KEY || null,
-    }
-  }
-  if (network === 'ARBITRUM') {
-    return {
-      baseUrl:
-        NETWORK_MODE === 'TESTNET'
-          ? 'https://api-sepolia.arbiscan.io/api'
-          : 'https://api.arbiscan.io/api',
-      apiKey: process.env.NEXT_PUBLIC_ARBISCAN_API_KEY || null,
+      baseUrl: mainnet
+        ? 'https://base.blockscout.com/api'
+        : 'https://base-sepolia.blockscout.com/api',
+      apiKey: null,
+      chainId: null,
     }
   }
   if (network === 'OPTIMISM') {
     return {
-      baseUrl:
-        NETWORK_MODE === 'TESTNET'
-          ? 'https://api-sepolia-optimistic.etherscan.io/api'
-          : 'https://api-optimistic.etherscan.io/api',
-      apiKey: process.env.NEXT_PUBLIC_OPTIMISM_API_KEY || null,
+      baseUrl: mainnet
+        ? 'https://optimism.blockscout.com/api'
+        : 'https://optimism-sepolia.blockscout.com/api',
+      apiKey: null,
+      chainId: null,
+    }
+  }
+  if (network === 'ARBITRUM') {
+    return {
+      baseUrl: 'https://api.etherscan.io/v2/api',
+      apiKey: etherscanKey || process.env.NEXT_PUBLIC_ARBISCAN_API_KEY || null,
+      chainId: mainnet ? 42161 : 421614,
     }
   }
   return {
-    baseUrl:
-      NETWORK_MODE === 'TESTNET'
-        ? 'https://api-sepolia.etherscan.io/api'
-        : 'https://api.etherscan.io/api',
-    apiKey: process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || null,
+    baseUrl: 'https://api.etherscan.io/v2/api',
+    apiKey: etherscanKey,
+    chainId: mainnet ? 1 : 11155111,
   }
 }
+
+function explorerParams(cfg: ExplorerCfg, entries: Record<string, string>): URLSearchParams {
+  const params = new URLSearchParams(entries)
+  if (cfg.chainId) params.set('chainid', String(cfg.chainId))
+  if (cfg.apiKey) params.set('apikey', cfg.apiKey)
+  return params
+}
+
+const MEMPOOL_BASE =
+  NETWORK_MODE === 'MAINNET'
+    ? 'https://mempool.space/api'
+    : 'https://mempool.space/testnet/api'
 
 /**
  * Poll once: check current on-chain status.
@@ -100,6 +131,9 @@ export async function verifyPaymentOnce(config: VerifyConfig): Promise<{
     if (config.network === 'LIGHTNING') {
       return await verifyLightning(config.invoice)
     }
+    if (config.network === 'BITCOIN') {
+      return await verifyBtcOnce(config)
+    }
     return await verifyEvm(config)
   } catch {
     return { status: 'ERROR', message: 'No se pudo consultar la red. Intenta de nuevo.' }
@@ -109,22 +143,21 @@ export async function verifyPaymentOnce(config: VerifyConfig): Promise<{
 async function verifyEvm(
   config: VerifyConfig
 ): Promise<{ status: PaymentStatus; message: string }> {
-  const { baseUrl, apiKey } = explorerConfig(
+  const cfg = explorerConfig(
     config.network as 'ETHEREUM' | 'BASE' | 'ARBITRUM' | 'OPTIMISM'
   )
-  if (!baseUrl) {
+  if (!cfg.baseUrl) {
     return { status: 'ERROR', message: 'Red no configurada.' }
   }
 
   // If we have a tx hash, look it up directly
   if (config.txHash) {
-    const params = new URLSearchParams({
+    const params = explorerParams(cfg, {
       module: 'transaction',
       action: 'gettxreceiptstatus',
       txhash: config.txHash,
     })
-    if (apiKey) params.set('apikey', apiKey)
-    const res = await fetch(`${baseUrl}?${params}`)
+    const res = await fetch(`${cfg.baseUrl}?${params}`)
     const data = await res.json()
     if (data?.status === '1' && data.result?.status === '1') {
       return { status: 'CONFIRMED', message: 'Pago confirmado en la blockchain' }
@@ -137,7 +170,7 @@ async function verifyEvm(
     return { status: 'ERROR', message: 'Wallet no configurada.' }
   }
 
-  const params = new URLSearchParams({
+  const params = explorerParams(cfg, {
     module: 'account',
     action: 'txlist',
     address: config.address,
@@ -147,9 +180,8 @@ async function verifyEvm(
     page: '1',
     offset: '10',
   })
-  if (apiKey) params.set('apikey', apiKey)
 
-  const res = await fetch(`${baseUrl}?${params}`)
+  const res = await fetch(`${cfg.baseUrl}?${params}`)
   const data = await res.json()
 
   if (data?.status !== '1' || !Array.isArray(data.result)) {
@@ -165,6 +197,31 @@ async function verifyEvm(
   }
 
   return { status: 'WAITING', message: 'Esperando pago en la red…' }
+}
+
+/** Chequeo ligero del navegador para BTC on-chain (mempool.space, sin key). */
+async function verifyBtcOnce(
+  config: VerifyConfig
+): Promise<{ status: PaymentStatus; message: string }> {
+  if (!config.txHash) {
+    return { status: 'WAITING', message: 'Esperando pago en la red…' }
+  }
+  const res = await fetch(`${MEMPOOL_BASE}/tx/${config.txHash}`)
+  if (res.status === 404) {
+    return { status: 'WAITING', message: 'Esperando pago en la red…' }
+  }
+  const tx: any = await res.json()
+  const arrived =
+    config.address &&
+    Array.isArray(tx?.vout) &&
+    tx.vout.some((o: any) => o.scriptpubkey_address === config.address)
+  if (!arrived) {
+    return { status: 'WAITING', message: 'Esperando pago en la red…' }
+  }
+  if (tx?.status?.confirmed) {
+    return { status: 'CONFIRMED', message: 'Pago confirmado en la blockchain' }
+  }
+  return { status: 'DETECTED', message: 'Pago detectado, esperando confirmación…' }
 }
 
 async function verifyLightning(
@@ -211,55 +268,19 @@ function mockAllowed(): boolean {
   return process.env.CRYPTO_ALLOW_MOCK === 'true' || NETWORK_MODE !== 'MAINNET'
 }
 
-/** Busca el hash entre las transferencias nativas y ERC-20 recibidas. */
-async function hashBelongsToWallet(
-  baseUrl: string,
-  apiKey: string | null,
-  address: string,
-  txHash: string
-): Promise<boolean> {
-  const hash = txHash.toLowerCase()
-  const wallet = address.toLowerCase()
-
-  for (const action of ['txlist', 'tokentx'] as const) {
-    const params = new URLSearchParams({
-      module: 'account',
-      action,
-      address,
-      startblock: '0',
-      endblock: '99999999',
-      sort: 'desc',
-      page: '1',
-      offset: '100',
-    })
-    if (apiKey) params.set('apikey', apiKey)
-
-    try {
-      const data = await (await fetch(`${baseUrl}?${params}`)).json()
-      if (data?.status !== '1' || !Array.isArray(data.result)) continue
-      const match = data.result.some(
-        (tx: any) =>
-          String(tx.hash || '').toLowerCase() === hash &&
-          String(tx.to || '').toLowerCase() === wallet
-      )
-      if (match) return true
-    } catch {
-      // Si un endpoint falla, se intenta el siguiente.
-    }
-  }
-
-  return false
-}
-
 interface HashTransfers {
-  native: { to: string; value: string; timeStamp: number } | null
+  native: {
+    to: string
+    value: string
+    timeStamp: number
+    receiptStatus: string | null
+  } | null
   tokens: { to: string; contract: string; value: string; timeStamp: number }[]
 }
 
 /** Trae las transferencias (nativa y ERC-20) de UN hash hacia la wallet. */
 async function fetchTransfersForHash(
-  baseUrl: string,
-  apiKey: string | null,
+  cfg: ExplorerCfg,
   address: string,
   txHash: string
 ): Promise<HashTransfers> {
@@ -267,7 +288,7 @@ async function fetchTransfersForHash(
   const out: HashTransfers = { native: null, tokens: [] }
 
   for (const action of ['txlist', 'tokentx'] as const) {
-    const params = new URLSearchParams({
+    const params = explorerParams(cfg, {
       module: 'account',
       action,
       address,
@@ -277,10 +298,9 @@ async function fetchTransfersForHash(
       page: '1',
       offset: '100',
     })
-    if (apiKey) params.set('apikey', apiKey)
 
     try {
-      const data = await (await fetch(`${baseUrl}?${params}`)).json()
+      const data = await (await fetch(`${cfg.baseUrl}?${params}`)).json()
       if (data?.status !== '1' || !Array.isArray(data.result)) continue
       for (const tx of data.result) {
         if (String(tx.hash || '').toLowerCase() !== hash) continue
@@ -289,6 +309,8 @@ async function fetchTransfersForHash(
             to: String(tx.to || ''),
             value: String(tx.value || '0'),
             timeStamp: Number(tx.timeStamp) || 0,
+            receiptStatus:
+              tx.txreceipt_status != null ? String(tx.txreceipt_status) : null,
           }
         } else {
           out.tokens.push({
@@ -419,6 +441,10 @@ export async function verifyPaymentForServer(config: VerifyConfig): Promise<{
     return { confirmed: result.status === 'CONFIRMED', ...result }
   }
 
+  if (config.network === 'BITCOIN') {
+    return verifyBtcForServer(config)
+  }
+
   if (!config.address) {
     return { confirmed: false, status: 'ERROR', message: 'Wallet no configurada.' }
   }
@@ -430,18 +456,30 @@ export async function verifyPaymentForServer(config: VerifyConfig): Promise<{
     }
   }
 
-  const { baseUrl, apiKey } = explorerConfig(config.network)
+  const cfg = explorerConfig(
+    config.network as 'ETHEREUM' | 'BASE' | 'ARBITRUM' | 'OPTIMISM'
+  )
 
   try {
-    const receiptParams = new URLSearchParams({
-      module: 'transaction',
-      action: 'gettxreceiptstatus',
-      txhash: config.txHash,
-    })
-    if (apiKey) receiptParams.set('apikey', apiKey)
-    const receipt = await (await fetch(`${baseUrl}?${receiptParams}`)).json()
+    const transfers = await fetchTransfersForHash(cfg, config.address, config.txHash)
 
-    if (!(receipt?.status === '1' && receipt.result?.status === '1')) {
+    // Éxito de la transacción: primero el campo txreceipt_status de la
+    // lista (Blockscout lo trae); si no, el endpoint de recibo (Etherscan).
+    let receiptOk = transfers.native?.receiptStatus === '1'
+    if (!receiptOk) {
+      try {
+        const receiptParams = explorerParams(cfg, {
+          module: 'transaction',
+          action: 'gettxreceiptstatus',
+          txhash: config.txHash,
+        })
+        const receipt = await (await fetch(`${cfg.baseUrl}?${receiptParams}`)).json()
+        receiptOk = receipt?.status === '1' && receipt.result?.status === '1'
+      } catch {
+        // receiptOk se queda con lo que trajo la lista.
+      }
+    }
+    if (!receiptOk) {
       return {
         confirmed: false,
         status: 'DETECTED',
@@ -450,12 +488,6 @@ export async function verifyPaymentForServer(config: VerifyConfig): Promise<{
     }
 
     if (config.expected) {
-      const transfers = await fetchTransfersForHash(
-        baseUrl,
-        apiKey,
-        config.address,
-        config.txHash
-      )
       const mismatch = expectedMismatch(config, transfers)
       if (mismatch) {
         return { confirmed: false, ...mismatch }
@@ -467,8 +499,11 @@ export async function verifyPaymentForServer(config: VerifyConfig): Promise<{
       }
     }
 
-    const received = await hashBelongsToWallet(baseUrl, apiKey, config.address, config.txHash)
-    if (!received) {
+    const wallet = config.address.toLowerCase()
+    const arrived =
+      (transfers.native && transfers.native.to.toLowerCase() === wallet) ||
+      transfers.tokens.some((t) => t.to.toLowerCase() === wallet)
+    if (!arrived) {
       return {
         confirmed: false,
         status: 'DETECTED',
@@ -477,6 +512,80 @@ export async function verifyPaymentForServer(config: VerifyConfig): Promise<{
     }
 
     return { confirmed: true, status: 'CONFIRMED', message: 'Pago confirmado en la blockchain' }
+  } catch {
+    return {
+      confirmed: false,
+      status: 'ERROR',
+      message: 'No se pudo consultar la red. Intenta de nuevo.',
+    }
+  }
+}
+
+const BTC_TXID_RE = /^[a-fA-F0-9]{64}$/
+
+/** BTC on-chain vía mempool.space (sin key). Se exige la primera confirmación. */
+async function verifyBtcForServer(
+  config: VerifyConfig
+): Promise<{ confirmed: boolean; status: PaymentStatus; message: string }> {
+  if (!config.address) {
+    return { confirmed: false, status: 'ERROR', message: 'Wallet no configurada.' }
+  }
+  if (!config.txHash || !BTC_TXID_RE.test(config.txHash)) {
+    return {
+      confirmed: false,
+      status: 'ERROR',
+      message: 'El txid de Bitcoin no es válido.',
+    }
+  }
+  try {
+    const res = await fetch(`${MEMPOOL_BASE}/tx/${config.txHash}`)
+    if (res.status === 404) {
+      return {
+        confirmed: false,
+        status: 'DETECTED',
+        message: 'La transacción aún no aparece en la red.',
+      }
+    }
+    const tx: any = await res.json()
+    const sats = (Array.isArray(tx?.vout) ? tx.vout : [])
+      .filter((o: any) => o.scriptpubkey_address === config.address)
+      .reduce((sum: number, o: any) => sum + (Number(o.value) || 0), 0)
+    if (sats <= 0) {
+      return {
+        confirmed: false,
+        status: 'DETECTED',
+        message: 'La transacción no llegó a la wallet del negocio.',
+      }
+    }
+    if (!tx?.status?.confirmed) {
+      return {
+        confirmed: false,
+        status: 'DETECTED',
+        message: 'Pago detectado, esperando la primera confirmación…',
+      }
+    }
+    if (config.expected) {
+      const blockTime = Number(tx.status.block_time) || 0
+      if (blockTime > 0 && blockTime < config.expected.notBeforeUnix) {
+        return {
+          confirmed: false,
+          status: 'DETECTED',
+          message: 'La transacción es anterior a la cotización; haz un pago nuevo.',
+        }
+      }
+      if (BigInt(sats) < BigInt(config.expected.minBaseUnits)) {
+        return {
+          confirmed: false,
+          status: 'DETECTED',
+          message: 'El monto recibido es menor al de la cotización.',
+        }
+      }
+    }
+    return {
+      confirmed: true,
+      status: 'CONFIRMED',
+      message: 'Pago Bitcoin confirmado en la blockchain',
+    }
   } catch {
     return {
       confirmed: false,

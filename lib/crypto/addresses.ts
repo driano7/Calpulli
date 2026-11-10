@@ -4,7 +4,13 @@
  * Graceful fallbacks for demo mode.
  */
 
-export type NetworkKey = 'ETHEREUM' | 'BASE' | 'ARBITRUM' | 'OPTIMISM' | 'LIGHTNING'
+export type NetworkKey =
+  | 'ETHEREUM'
+  | 'BASE'
+  | 'ARBITRUM'
+  | 'OPTIMISM'
+  | 'LIGHTNING'
+  | 'BITCOIN'
 
 export interface WalletConfig {
   network: NetworkKey
@@ -18,6 +24,9 @@ const EVM_WALLET =
   process.env.NEXT_PUBLIC_CRYPTO_WALLET_EVM || '0xd717d02a2434f8506b14143f60d998337d6f5649'
 const LIGHTNING_WALLET =
   process.env.NEXT_PUBLIC_CRYPTO_WALLET_LIGHTNING || 'calpulli@walletofsatoshi.com'
+// Sin fallback a propósito: una dirección BTC inventada podría ser de
+// alguien más. La red solo aparece cuando la variable está configurada.
+const BTC_WALLET = process.env.NEXT_PUBLIC_CRYPTO_WALLET_BTC || ''
 
 export const WALLETS: WalletConfig[] = [
   {
@@ -55,6 +64,17 @@ export const WALLETS: WalletConfig[] = [
     icon: '⚡',
     hint: 'Pagos instantáneos con Bitcoin, casi sin comisión',
   },
+  ...(BTC_WALLET
+    ? [
+        {
+          network: 'BITCOIN' as const,
+          label: 'Bitcoin (on-chain)',
+          address: BTC_WALLET,
+          icon: '₿',
+          hint: 'BTC directo en la cadena. Requiere 1 confirmación (~10 min).',
+        },
+      ]
+    : []),
 ]
 
 export const MOCK_WALLETS: WalletConfig[] = [
@@ -92,6 +112,13 @@ export const MOCK_WALLETS: WalletConfig[] = [
     address: 'lnbc1mock_calpulli_test_invoice',
     icon: '🧪',
     hint: 'Invoice mock — pega cualquier lnbc mock y se confirma',
+  },
+  {
+    network: 'BITCOIN',
+    label: 'Bitcoin Testnet (MOCK)',
+    address: 'tb1qmockcalpullitestnet',
+    icon: '🧪',
+    hint: 'Dirección mock — cualquier txid con "mock" confirma al instante',
   },
 ]
 

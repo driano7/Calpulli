@@ -297,7 +297,8 @@ export function CryptoPayment({
           address: wallet.network === 'LIGHTNING' ? undefined : wallet.address,
           txHash:
             reference.trim().toLowerCase().startsWith('0x') ||
-            reference.toLowerCase().includes('mock')
+            reference.toLowerCase().includes('mock') ||
+            /^[a-fA-F0-9]{64}$/.test(reference.trim())
               ? reference
               : undefined,
           invoice: wallet.network === 'LIGHTNING' ? reference : undefined,
@@ -484,7 +485,7 @@ export function CryptoPayment({
                 {selectedWallet && !quote && !quoteLoading && cryptoRate && !rateLoading && (
                   <p className="mt-1 text-xs text-zinc-500 dark:text-gray-400">
                     ≈ {(amount / cryptoRate.usdPerCrypto).toFixed(6)}{' '}
-                    {selectedWallet.network === 'LIGHTNING' ? 'BTC' : 'ETH'}·
+                    {selectedWallet.network === 'LIGHTNING' || selectedWallet.network === 'BITCOIN' ? 'BTC' : 'ETH'}·
                     {'tipo de cambio últimos 3 min'}
                   </p>
                 )}
@@ -534,7 +535,11 @@ export function CryptoPayment({
                           setSelectedWallet(wallet)
                           setQuote(null)
                           quoteIdRef.current = undefined
-                          void fetchCryptoRate(wallet.network === 'LIGHTNING' ? 'BTC' : 'ETH')
+                          void fetchCryptoRate(
+                            wallet.network === 'LIGHTNING' || wallet.network === 'BITCOIN'
+                              ? 'BTC'
+                              : 'ETH'
+                          )
                           void loadQuote(wallet)
                         }}
                         className="flex items-center gap-4 rounded-xl border border-zinc-200 p-4 text-left transition-all hover:border-orange-500/50 hover:bg-orange-500/5 dark:border-white/10 dark:hover:border-orange-500/40"

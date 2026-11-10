@@ -40,7 +40,7 @@ import { applyDiscount } from '@/lib/partners/pricing'
 
 export const config = { runtime: 'nodejs' }
 
-const NETWORKS = ['ETHEREUM', 'BASE', 'ARBITRUM', 'OPTIMISM', 'LIGHTNING']
+const NETWORKS = ['ETHEREUM', 'BASE', 'ARBITRUM', 'OPTIMISM', 'LIGHTNING', 'BITCOIN']
 
 function emailOk(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim())

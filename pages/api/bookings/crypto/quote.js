@@ -38,14 +38,15 @@ export default async function handler(req, res) {
 
   const { network, items, locale } = req.body || {}
   const isLightning = network === 'LIGHTNING'
-  const asset = isLightning
+  const isBtcAsset = isLightning || network === 'BITCOIN'
+  const asset = isBtcAsset
     ? 'BTC'
     : isCryptoAsset(req.body?.asset)
       ? req.body.asset
       : 'ETH'
   const en = locale === 'en'
 
-  if (!isLightning && !EVM_NETWORKS.includes(network)) {
+  if (!isLightning && network !== 'BITCOIN' && !EVM_NETWORKS.includes(network)) {
     return res.status(400).json({ error: en ? 'Unsupported network' : 'Red no soportada' })
   }
   if (!Array.isArray(items) || items.length === 0) {
