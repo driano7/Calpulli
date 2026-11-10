@@ -389,7 +389,14 @@ export function Navbar() {
                 )}
               >
                 <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-lg">{currentLanguage === 'es' ? '🇲🇽' : '🇺🇸'}</span>
+                  <motion.span
+                    className="text-lg"
+                    whileHover={{ rotate: [0, -14, 14, -10, 10, 0] }}
+                    whileTap={{ rotate: [0, -14, 14, -10, 10, 0], scale: [1, 1.2, 1] }}
+                    transition={{ duration: 0.45 }}
+                  >
+                    {currentLanguage === 'es' ? '🇲🇽' : '🇺🇸'}
+                  </motion.span>
                   <span
                     className={
                       atTop ? 'text-[0.85rem] font-black uppercase tracking-[0.35em]' : 'hidden'
