@@ -149,7 +149,7 @@ export function ChapterNav({ chapters, accent = '#0E8C7A', title, header }: Chap
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls="journey-chapter-list"
-          className="fixed bottom-[5.5rem] right-4 z-50 flex items-center gap-2 rounded-full px-4 py-3 text-xs font-semibold text-white shadow-lg sm:bottom-5"
+          className="fixed bottom-[8.75rem] right-4 z-50 flex items-center gap-2 rounded-full px-4 py-3 text-xs font-semibold text-white shadow-lg sm:bottom-5"
           style={{ backgroundColor: accent }}
         >
           <span className="tabular-nums">
@@ -161,7 +161,7 @@ export function ChapterNav({ chapters, accent = '#0E8C7A', title, header }: Chap
         {open && (
           <div
             id="journey-chapter-list"
-            className="fixed inset-x-0 bottom-[5.5rem] z-50 max-h-[70vh] overflow-y-auto rounded-t-2xl bg-zinc-900/95 p-5 backdrop-blur sm:bottom-0"
+            className="fixed inset-x-0 bottom-[8.75rem] z-50 max-h-[70vh] overflow-y-auto rounded-t-2xl bg-zinc-900/95 p-5 backdrop-blur sm:bottom-0"
           >
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-semibold text-white">{title}</p>
