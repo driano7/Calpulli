@@ -22,7 +22,18 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { Bot, Send, X, Sparkles, ChevronUp, ChevronDown, MessageCircleQuestion } from 'lucide-react'
+import {
+  Bot,
+  Send,
+  X,
+  Sparkles,
+  ChevronUp,
+  ChevronDown,
+  MessageCircleQuestion,
+  Mic,
+  Square,
+  ArrowUp,
+} from 'lucide-react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { useLanguage } from '@/lib/hooks/useLanguage'
@@ -512,7 +523,12 @@ function QuoteCard({ action, isEs, onBooked }) {
                 <span className="mb-1 block text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
                   {isEs ? 'Fecha del journey' : 'Journey date'}
                 </span>
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className={inputCls}
+                />
               </label>
               <label className="block">
                 <span className="mb-1 block text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
@@ -573,7 +589,9 @@ function QuoteCard({ action, isEs, onBooked }) {
               rel="noopener noreferrer"
               className="mt-2 flex w-full items-center justify-center rounded-full bg-[#25D366]/15 px-4 py-2 text-[13px] font-bold text-[#128C4B] transition-colors hover:bg-[#25D366]/25 dark:text-[#3dd68c]"
             >
-              {isEs ? 'Continuar por WhatsApp con esta cotización' : 'Continue on WhatsApp with this quote'}
+              {isEs
+                ? 'Continuar por WhatsApp con esta cotización'
+                : 'Continue on WhatsApp with this quote'}
             </a>
           )}
         </>
@@ -605,7 +623,9 @@ function AssistantBubble({ content, isStreaming, action, isEs, onBooked }) {
           <RichText text={content} />
         )}
       </motion.div>
-      {!isStreaming && action ? <QuoteCard action={action} isEs={isEs} onBooked={onBooked} /> : null}
+      {!isStreaming && action ? (
+        <QuoteCard action={action} isEs={isEs} onBooked={onBooked} />
+      ) : null}
     </div>
   )
 }
@@ -654,6 +674,25 @@ export default function ChatbotAssistant() {
   const inputRef = useRef(null)
   const abortRef = useRef(null)
   const loadedRef = useRef(false)
+
+  // ── Entrada por voz (dictado) ─────────────────────────────────────
+  // Solo dictado: el visitante habla, el navegador lo pasa a texto y el
+  // bot sigue respondiendo en texto. Se usa la Web Speech API del
+  // navegador (sin costo, sin backend); el botón de micrófono solo
+  // aparece si el navegador lo soporta (detección por capacidad).
+  const [voiceSupported, setVoiceSupported] = useState(false)
+  const [recording, setRecording] = useState(false)
+  const [voiceClosing, setVoiceClosing] = useState(false)
+  const [recSeconds, setRecSeconds] = useState(0)
+  const recogRef = useRef(null)
+  const voiceStreamRef = useRef(null)
+  const voiceCtxRef = useRef(null)
+  const voiceRafRef = useRef(null)
+  const voiceTimerRef = useRef(null)
+  const voiceBaseRef = useRef('')
+  const voiceKeepRef = useRef(false)
+  const waveCanvasRef = useRef(null)
+  const waveSamplesRef = useRef([])
   // Captura de canal: última cotización mostrada, si ya reservó y si la
   // oferta de WhatsApp al salir ya se mostró (una sola vez, sin presionar).
   const lastQuoteRef = useRef(null)
@@ -720,6 +759,33 @@ export default function ChatbotAssistant() {
       return () => clearTimeout(timer)
     }
   }, [open])
+
+  // ¿El navegador soporta dictado por voz y micrófono? (capacidad, no UA)
+  useEffect(() => {
+    try {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+      setVoiceSupported(
+        Boolean(SR && navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+      )
+    } catch {
+      setVoiceSupported(false)
+    }
+  }, [])
+
+  // Al desmontar, libera micrófono y reconocimiento si quedaron activos.
+  useEffect(() => {
+    return () => {
+      try {
+        recogRef.current?.abort()
+      } catch {
+        /* noop */
+      }
+      if (voiceRafRef.current) cancelAnimationFrame(voiceRafRef.current)
+      if (voiceTimerRef.current) clearInterval(voiceTimerRef.current)
+      voiceStreamRef.current?.getTracks?.().forEach((t) => t.stop())
+      voiceCtxRef.current?.close?.().catch(() => {})
+    }
+  }, [])
 
   // El campo crece al escribir: cuando pasa de una línea se expande solo.
   useEffect(() => {
@@ -944,10 +1010,14 @@ export default function ChatbotAssistant() {
       bookedRef.current = true
       const ref = booking?.bookingReference || ''
       const content = isEs
-        ? `✅ ¡Listo! Tu reserva de **${action.title}** quedó apartada con el folio **${ref}**. Pagas ${moneyFmt(
+        ? `✅ ¡Listo! Tu reserva de **${
+            action.title
+          }** quedó apartada con el folio **${ref}**. Pagas ${moneyFmt(
             action.total
           )} en efectivo en el punto de encuentro y te confirmamos los detalles por WhatsApp. ¿Te ayudo con algo más?`
-        : `✅ Done! Your **${action.title}** booking is held under reference **${ref}**. You pay ${moneyFmt(
+        : `✅ Done! Your **${
+            action.title
+          }** booking is held under reference **${ref}**. You pay ${moneyFmt(
             action.total
           )} in cash at the meeting point and we will confirm the details on WhatsApp. Anything else I can help with?`
       setMessages((prev) => [
@@ -967,6 +1037,170 @@ export default function ChatbotAssistant() {
     sendMessage(input)
   }
 
+  // ── Voz: onda en vivo, dictado y cierre con animación ─────────────
+  const recordingActiveRef = useRef(false)
+
+  const stopVoiceTracks = useCallback(() => {
+    if (voiceRafRef.current) cancelAnimationFrame(voiceRafRef.current)
+    voiceRafRef.current = null
+    if (voiceTimerRef.current) clearInterval(voiceTimerRef.current)
+    voiceTimerRef.current = null
+    voiceStreamRef.current?.getTracks?.().forEach((t) => t.stop())
+    voiceStreamRef.current = null
+    if (voiceCtxRef.current) {
+      voiceCtxRef.current.close().catch(() => {})
+      voiceCtxRef.current = null
+    }
+  }, [])
+
+  // Onda estilo Plata: historial de amplitud del micrófono dibujado como
+  // una línea continua que ondula con la intensidad de la voz.
+  const startWave = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      voiceStreamRef.current = stream
+      const Ctx = window.AudioContext || window.webkitAudioContext
+      if (!Ctx) return
+      const ctx = new Ctx()
+      voiceCtxRef.current = ctx
+      const source = ctx.createMediaStreamSource(stream)
+      const analyser = ctx.createAnalyser()
+      analyser.fftSize = 512
+      source.connect(analyser)
+      const data = new Uint8Array(analyser.fftSize)
+      let phase = 0
+      const draw = () => {
+        voiceRafRef.current = requestAnimationFrame(draw)
+        const canvas = waveCanvasRef.current
+        if (!canvas) return
+        const g = canvas.getContext('2d')
+        if (!g) return
+        const w = canvas.width
+        const h = canvas.height
+        analyser.getByteTimeDomainData(data)
+        let peak = 0
+        for (let i = 0; i < data.length; i++) {
+          const v = Math.abs(data[i] - 128) / 128
+          if (v > peak) peak = v
+        }
+        const samples = waveSamplesRef.current
+        samples.push(Math.min(1, peak * 1.6))
+        const maxSamples = 64
+        while (samples.length > maxSamples) samples.shift()
+        phase += 0.22
+        g.clearRect(0, 0, w, h)
+        g.beginPath()
+        g.moveTo(0, h / 2)
+        g.lineTo(w, h / 2)
+        g.strokeStyle = 'rgba(249, 115, 22, 0.15)'
+        g.lineWidth = 2
+        g.stroke()
+        if (samples.length > 1) {
+          g.beginPath()
+          const step = w / (maxSamples - 1)
+          const offsetX = w - (samples.length - 1) * step
+          samples.forEach((s, i) => {
+            const x = offsetX + i * step
+            const y = h / 2 + Math.sin(phase + i * 0.38) * s * h * 0.44
+            if (i === 0) g.moveTo(x, y)
+            else g.lineTo(x, y)
+          })
+          g.strokeStyle = '#f97316'
+          g.lineWidth = 2.5
+          g.lineCap = 'round'
+          g.stroke()
+        }
+      }
+      draw()
+    } catch {
+      /* sin micrófono para la onda; el dictado sigue por su cuenta */
+    }
+  }, [])
+
+  const finishRecording = useCallback(
+    (send) => {
+      recordingActiveRef.current = false
+      try {
+        recogRef.current?.stop()
+      } catch {
+        /* noop */
+      }
+      recogRef.current = null
+      stopVoiceTracks()
+      // La animación de salida que le gustó a Donovan de Plata: la barra
+      // de grabación se difumina (blur + fade) y regresa el campo normal.
+      setVoiceClosing(true)
+      const dictated = input
+      window.setTimeout(() => {
+        setRecording(false)
+        setVoiceClosing(false)
+        setRecSeconds(0)
+        if (send) {
+          if (String(dictated || '').trim()) sendMessage(dictated)
+        } else {
+          setInput(voiceBaseRef.current)
+        }
+      }, 380)
+    },
+    [input, sendMessage, stopVoiceTracks]
+  )
+
+  const startRecording = useCallback(() => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR || recording) return
+    setError('')
+    voiceBaseRef.current = input ? input.replace(/\s+$/, '') : ''
+    waveSamplesRef.current = []
+    setRecSeconds(0)
+    let rec
+    try {
+      rec = new SR()
+    } catch {
+      return
+    }
+    rec.lang = isEs ? 'es-MX' : 'en-US'
+    rec.interimResults = true
+    rec.continuous = true
+    rec.onresult = (ev) => {
+      let transcript = ''
+      for (let i = 0; i < ev.results.length; i++) transcript += ev.results[i][0].transcript
+      const base = voiceBaseRef.current
+      setInput(base ? `${base} ${transcript}` : transcript)
+    }
+    rec.onerror = (ev) => {
+      if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
+        setError(
+          isEs
+            ? 'No pude usar tu micrófono. Revisa el permiso del navegador.'
+            : 'I could not use your microphone. Check the browser permission.'
+        )
+        finishRecording(false)
+      }
+    }
+    rec.onend = () => {
+      // El reconocimiento continuo a veces se corta solo: si la persona
+      // sigue en modo grabación, se reinicia sin perder lo dictado.
+      if (recordingActiveRef.current && recogRef.current === rec) {
+        try {
+          rec.start()
+        } catch {
+          /* noop */
+        }
+      }
+    }
+    recogRef.current = rec
+    recordingActiveRef.current = true
+    try {
+      rec.start()
+    } catch {
+      recordingActiveRef.current = false
+      return
+    }
+    setRecording(true)
+    voiceTimerRef.current = setInterval(() => setRecSeconds((s) => s + 1), 1000)
+    startWave()
+  }, [input, isEs, recording, finishRecording, startWave])
+
   /**
    * Captura de canal, una sola vez: si hay cotización sin reserva y el
    * visitante va a salir (cerrar el panel o empezar otra charla), antes
@@ -978,12 +1212,20 @@ export default function ChatbotAssistant() {
     if (!q || bookedRef.current || captureOfferedRef.current || !q.whatsappUrl) return false
     captureOfferedRef.current = true
     const content = isEs
-      ? `Antes de que te vayas: ¿te mando los detalles por WhatsApp? Tu cotización de **${q.title}** (${moneyFmt(q.unitPrice)} por persona · total: ${moneyFmt(
+      ? `Antes de que te vayas: ¿te mando los detalles por WhatsApp? Tu cotización de **${
+          q.title
+        }** (${moneyFmt(q.unitPrice)} por persona · total: ${moneyFmt(
           q.total
-        )}) ya va escrita en el mensaje y te contesta una persona del equipo: [mandármelo por WhatsApp](${q.whatsappUrl})`
-      : `Before you go: shall I send you the details on WhatsApp? Your **${q.title}** quote (${moneyFmt(q.unitPrice)} per person · total: ${moneyFmt(
+        )}) ya va escrita en el mensaje y te contesta una persona del equipo: [mandármelo por WhatsApp](${
+          q.whatsappUrl
+        })`
+      : `Before you go: shall I send you the details on WhatsApp? Your **${
+          q.title
+        }** quote (${moneyFmt(q.unitPrice)} per person · total: ${moneyFmt(
           q.total
-        )}) is already written into the message and a person from the team will reply: [send it to me on WhatsApp](${q.whatsappUrl})`
+        )}) is already written into the message and a person from the team will reply: [send it to me on WhatsApp](${
+          q.whatsappUrl
+        })`
     setMessages((prev) => [
       ...prev,
       {
@@ -996,6 +1238,7 @@ export default function ChatbotAssistant() {
   }, [isEs])
 
   const handleClose = () => {
+    if (recordingActiveRef.current) finishRecording(false)
     if (offerCaptureIfLeaving()) return
     setOpen(false)
   }
@@ -1224,64 +1467,115 @@ export default function ChatbotAssistant() {
               onSubmit={handleSubmit}
               className="flex shrink-0 items-end gap-2 border-t border-zinc-200/60 px-3 py-2.5 dark:border-zinc-800"
             >
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    if (input.trim() && !loading && !streaming) sendMessage(input)
-                  }
-                }}
-                maxLength={700}
-                autoComplete="off"
-                rows={1}
-                enterKeyHint="send"
-                placeholder={isEs ? 'Pregúntame de CDMX...' : 'Ask me about CDMX...'}
-                disabled={loading || streaming}
-                aria-label={isEs ? 'Escribe tu mensaje' : 'Type your message'}
-                className={`max-h-[180px] min-h-[44px] min-w-0 flex-1 resize-none rounded-3xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition-colors focus:border-orange-400 focus:bg-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-orange-500 dark:focus:bg-zinc-900 ${
-                  inputExpanded ? 'rounded-3xl' : 'rounded-full'
-                }`}
-              />
-              <button
-                type="button"
-                onClick={() => setInputExpanded((v) => !v)}
-                aria-label={
-                  inputExpanded
-                    ? isEs
-                      ? 'Hacer campo pequeño'
-                      : 'Make field smaller'
-                    : isEs
-                    ? 'Hacer campo más grande'
-                    : 'Make field bigger'
-                }
-                title={
-                  inputExpanded
-                    ? isEs
-                      ? 'Más pequeño'
-                      : 'Smaller'
-                    : isEs
-                    ? 'Más grande'
-                    : 'Bigger'
-                }
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-600 transition-colors hover:border-orange-300 hover:text-orange-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-orange-500/40 dark:hover:text-orange-300"
-              >
-                {inputExpanded ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronUp className="h-4 w-4" />
-                )}
-              </button>
-              <button
-                type="submit"
-                disabled={!input.trim() || loading || streaming}
-                aria-label={isEs ? 'Enviar mensaje' : 'Send message'}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-pink-600 text-white shadow-md transition-opacity hover:opacity-90 disabled:opacity-40"
-              >
-                <Send className="h-4 w-4" />
-              </button>
+              {recording ? (
+                <div
+                  className={`flex min-h-[44px] min-w-0 flex-1 items-center gap-2 transition-all duration-300 ${
+                    voiceClosing ? 'scale-[0.98] opacity-0 blur-sm' : 'opacity-100'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => finishRecording(false)}
+                    aria-label={isEs ? 'Descartar grabación' : 'Discard recording'}
+                    title={isEs ? 'Descartar' : 'Discard'}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                  >
+                    <Square className="h-3 w-3 fill-current" />
+                  </button>
+                  <div className="flex min-h-[44px] min-w-0 flex-1 items-center gap-2.5 rounded-full border border-zinc-200 bg-zinc-50 px-3.5 dark:border-zinc-700 dark:bg-zinc-900">
+                    <span className="shrink-0 text-sm tabular-nums text-zinc-700 dark:text-zinc-200">
+                      {`${Math.floor(recSeconds / 60)}:${String(recSeconds % 60).padStart(2, '0')}`}
+                    </span>
+                    <canvas
+                      ref={waveCanvasRef}
+                      width={280}
+                      height={28}
+                      className="h-7 min-w-0 flex-1"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => finishRecording(true)}
+                    aria-label={isEs ? 'Enviar mensaje de voz' : 'Send voice message'}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-pink-600 text-white shadow-md transition-opacity hover:opacity-90"
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        if (input.trim() && !loading && !streaming) sendMessage(input)
+                      }
+                    }}
+                    maxLength={700}
+                    autoComplete="off"
+                    rows={1}
+                    enterKeyHint="send"
+                    placeholder={isEs ? 'Pregúntame de CDMX...' : 'Ask me about CDMX...'}
+                    disabled={loading || streaming}
+                    aria-label={isEs ? 'Escribe tu mensaje' : 'Type your message'}
+                    className={`max-h-[180px] min-h-[44px] min-w-0 flex-1 resize-none rounded-3xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition-colors focus:border-orange-400 focus:bg-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-orange-500 dark:focus:bg-zinc-900 ${
+                      inputExpanded ? 'rounded-3xl' : 'rounded-full'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setInputExpanded((v) => !v)}
+                    aria-label={
+                      inputExpanded
+                        ? isEs
+                          ? 'Hacer campo pequeño'
+                          : 'Make field smaller'
+                        : isEs
+                        ? 'Hacer campo más grande'
+                        : 'Make field bigger'
+                    }
+                    title={
+                      inputExpanded
+                        ? isEs
+                          ? 'Más pequeño'
+                          : 'Smaller'
+                        : isEs
+                        ? 'Más grande'
+                        : 'Bigger'
+                    }
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-600 transition-colors hover:border-orange-300 hover:text-orange-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-orange-500/40 dark:hover:text-orange-300"
+                  >
+                    {inputExpanded ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronUp className="h-4 w-4" />
+                    )}
+                  </button>
+                  {voiceSupported && (
+                    <button
+                      type="button"
+                      onClick={startRecording}
+                      disabled={loading || streaming}
+                      aria-label={isEs ? 'Dictar por voz' : 'Dictate by voice'}
+                      title={isEs ? 'Dictar por voz' : 'Dictate by voice'}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-600 transition-colors hover:border-orange-300 hover:text-orange-600 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-orange-500/40 dark:hover:text-orange-300"
+                    >
+                      <Mic className="h-4 w-4" />
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={!input.trim() || loading || streaming}
+                    aria-label={isEs ? 'Enviar mensaje' : 'Send message'}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-pink-600 text-white shadow-md transition-opacity hover:opacity-90 disabled:opacity-40"
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                </>
+              )}
             </motion.form>
 
             <p className="shrink-0 px-3 pb-2 text-center text-[10px] leading-none text-zinc-400 dark:text-zinc-500">
