@@ -1,6 +1,6 @@
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
 /**
- * Calpulli AI — pages/api/chatbot.js
+ * Ocelote AI — pages/api/chatbot.js
  *
  * Asistente turístico de Calpulli CDMX. Responde dudas sobre CDMX, México,
  * nuestros Journeys, guías, mapas y selección local. Usa Gemini (calpulliChat)
@@ -72,7 +72,7 @@ const LOCALIZED = {
 }
 
 const UNSUPPORTED_LANGUAGE_MSG =
-  '🌎 Sorry, Calpulli AI is only available in English and Spanish.\n\n🇲🇽 Lo sentimos, Calpulli AI solo está disponible en inglés y español.\n\nPlease switch your browser language to English or Spanish to chat with us!\nPor favor cambia el idioma de tu navegador a inglés o español para chatear con nosotros.'
+  '🌎 Sorry, Ocelote AI is only available in English and Spanish.\n\n🇲🇽 Lo sentimos, Ocelote AI solo está disponible en inglés y español.\n\nPlease switch your browser language to English or Spanish to chat with us!\nPor favor cambia el idioma de tu navegador a inglés o español para chatear con nosotros.'
 
 // Temas que no son parte del propósito del sitio. Respuesta breve y giro a turismo.
 const SENSITIVE_PATTERNS = [
@@ -270,7 +270,7 @@ const FAST_PATHS_ES = [
   {
     re: /^(hola|buenas|buen d[íi]a|buenas tardes|buenas noches|hey+|que onda|quiubo|salve)\b/i,
     reply:
-      '¡Quiubo! Soy Calpulli AI 🤖. Te ayudo con Journeys, qué hacer en CDMX, comida, museos y rutas. ¿Qué se te antoja?',
+      '¡Quiubo! Soy Ocelote AI 🤖. Te ayudo con Journeys, qué hacer en CDMX, comida, museos y rutas. ¿Qué se te antoja?',
   },
   {
     re: /^(gracias|muchas gracias|mil gracias|thank)/i,
@@ -286,7 +286,7 @@ const FAST_PATHS_EN = [
   {
     re: /^(hi|hello|hey+|good (morning|afternoon|evening)|howdy)\b/i,
     reply:
-      "Hey! I'm Calpulli AI 🤖. I can help with Journeys, what to do in CDMX, food, museums and routes. What are you in the mood for?",
+      "Hey! I'm Ocelote AI 🤖. I can help with Journeys, what to do in CDMX, food, museums and routes. What are you in the mood for?",
   },
   {
     re: /^(thank|thanks|thx|appreciate)/i,
