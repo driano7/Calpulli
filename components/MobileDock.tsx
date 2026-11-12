@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ComponentType } from 're
 import { useRouter } from 'next/router'
 import classNames from 'classnames'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Footprints, Newspaper, Star, Users, Compass, Bot } from 'lucide-react'
+import { Footprints, BookOpen, Star, Users, MapPinned, Bot } from 'lucide-react'
 import Link from '@/components/Link'
 import WhatsAppIcon from '@/components/social-icons/whatsapp.svg'
 import { useLanguage } from '@/lib/hooks/useLanguage'
@@ -17,8 +17,8 @@ const DOCK_ITEMS = [
     labelKey: 'header.nav.journeys',
     fallback: 'Journeys',
   },
-  { href: '/maps', icon: Compass, labelKey: 'header.nav.maps', fallback: 'Maps' },
-  { href: '/guides', icon: Newspaper, labelKey: 'header.nav.guides', fallback: 'Guides' },
+  { href: '/maps', icon: MapPinned, labelKey: 'header.nav.maps', fallback: 'Maps' },
+  { href: '/guides', icon: BookOpen, labelKey: 'header.nav.guides', fallback: 'Guides' },
   { href: '/local', icon: Star, labelKey: 'header.nav.localPicks', fallback: 'Selección Local' },
   { href: '/about', icon: Users, labelKey: 'header.nav.about', fallback: 'About Us' },
 ]
@@ -133,7 +133,7 @@ export function MobileDock() {
           )
         })}
 
-        {/* Calpulli AI: abre el chat. Va antes de WhatsApp, entre About y WhatsApp. */}
+        {/* Ocelote AI: abre el chat. Va antes de WhatsApp, entre About y WhatsApp. */}
         <motion.div
           initial={reducedMotion ? false : { opacity: 0, x: -18, filter: 'blur(8px)' }}
           animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
@@ -146,9 +146,9 @@ export function MobileDock() {
               window.dispatchEvent(new CustomEvent('open-calpulli-chatbot'))
             }}
             title={
-              lang === 'es' ? 'Calpulli AI — pregúntame de CDMX' : 'Calpulli AI — ask about CDMX'
+              lang === 'es' ? 'Ocelote AI — pregúntame de CDMX' : 'Ocelote AI — ask about CDMX'
             }
-            aria-label={lang === 'es' ? 'Abrir Calpulli AI' : 'Open Calpulli AI'}
+            aria-label={lang === 'es' ? 'Abrir Ocelote AI' : 'Open Ocelote AI'}
             className={classNames(
               DOCK_BUTTON_BASE,
               compact ? 'h-9 w-9' : 'h-10 w-10',

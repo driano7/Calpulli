@@ -2,7 +2,7 @@
 
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
 // Boton flotante de WhatsApp. En desktop/tablet vive arriba del boton de
-// Calpulli AI (esquina inferior derecha, dos iconos). En movil (<640px) no se
+// Ocelote AI (esquina inferior derecha, dos iconos). En movil (<640px) no se
 // muestra: ahi ya esta en el MobileDock. La visibilidad se decide por ANCHO de
 // viewport (breakpoint sm), nunca por user agent: un iPad reporta
 // maxTouchPoints > 1 y con deteccion tactil el boton desaparecia en tablet,

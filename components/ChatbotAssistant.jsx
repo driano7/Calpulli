@@ -2,7 +2,7 @@
 
 // MIT License - Copyright (c) 2024-2026 Donovan Riaño / Calpulli CDMX - See LICENSE
 /**
- * Calpulli AI — components/ChatbotAssistant.jsx
+ * Ocelote AI — components/ChatbotAssistant.jsx
  *
  * Chat flotante con icono de robot.
  *  - Desktop: segundo icono flotante, debajo del botón de WhatsApp.
@@ -28,8 +28,8 @@ import Link from 'next/link'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { useAuth } from '@/lib/hooks/useAuth'
 
-const WELCOME_ES = '¡Quiubo! Soy Calpulli AI 🤖 — dime qué buscas y te guío.'
-const WELCOME_EN = "Hey! I'm Calpulli AI 🤖 — tell me what you need and I'll guide you."
+const WELCOME_ES = '¡Quiubo! Soy Ocelote AI 🤖 — dime qué buscas y te guío.'
+const WELCOME_EN = "Hey! I'm Ocelote AI 🤖 — tell me what you need and I'll guide you."
 
 // Respuestas predefinidas anteriores: ocultas por petición. Se mantienen
 // comentadas en espíritu pero ya no se usan en el panel.
@@ -1042,8 +1042,8 @@ export default function ChatbotAssistant() {
             whileHover={reduced ? undefined : { scale: 1.08 }}
             whileTap={reduced ? undefined : { scale: 0.94 }}
             transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-            aria-label={isEs ? 'Abrir Calpulli AI' : 'Open Calpulli AI'}
-            title={isEs ? 'Calpulli AI — pregúntame de CDMX' : 'Calpulli AI — ask me about CDMX'}
+            aria-label={isEs ? 'Abrir Ocelote AI' : 'Open Ocelote AI'}
+            title={isEs ? 'Ocelote AI — pregúntame de CDMX' : 'Ocelote AI — ask me about CDMX'}
             className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-[100] hidden h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-pink-600 text-white shadow-[0_8px_32px_rgba(222,29,141,0.45)] transition-shadow hover:shadow-[0_10px_40px_rgba(222,29,141,0.65)] sm:right-6 sm:flex"
           >
             {!reduced && (
@@ -1066,7 +1066,7 @@ export default function ChatbotAssistant() {
             key="calpulli-ai-panel"
             role="dialog"
             aria-modal="false"
-            aria-label={isEs ? 'Calpulli AI' : 'Calpulli AI'}
+            aria-label={isEs ? 'Ocelote AI' : 'Ocelote AI'}
             variants={reduced ? undefined : stackVariants}
             initial={reduced ? false : 'hidden'}
             animate="show"
@@ -1086,7 +1086,7 @@ export default function ChatbotAssistant() {
                 </span>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-bold text-zinc-900 dark:text-white">
-                    Calpulli AI
+                    Ocelote AI
                   </p>
                   <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
                     {user ? (
