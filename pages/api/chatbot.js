@@ -39,7 +39,7 @@ const MAX_ANSWER_CHARS = 2000
 const LOCALIZED = {
   es: {
     sensitive:
-      'Ese tema no es propio de lo que hacemos aquí. En Calpulli nos dedicamos a turismo, cultura y experiencias locales en la Ciudad de México. Mejor te ayudo con la ciudad: ¿te late una ruta de comida, de historia o de barrios?',
+      'Ese tema no es propio de lo que hacemos aquí. En Calpulli nos dedicamos a turismo, cultura y experiencias locales en la Ciudad de México. Mejor te ayudo con la ciudad: ¿te gustaría una ruta de comida, de historia o de barrios?',
     offTopic:
       'Eso se sale de nuestro mapa. Aquí solo hablamos de viajes, CDMX y experiencias locales; si me preguntas por la ciudad, seguro te doy una buena recomendación. ¿Qué te gustaría conocer?',
     injection:
@@ -261,8 +261,8 @@ const CUSTOM_JOURNEY_ES =
   /a la medida|journey a la medida|custom journe|custom tour|custom journey|quiero un journey/i
 function customJourneyReply(isEs) {
   return isEs
-    ? '¡Será un placer hacerlo! Para armarte un Journey a la medida, escríbenos por WhatsApp: +52 55 1229 1607. Cuéntanos qué deseas encontrar (colonia, días, presupuesto, qué te late) y te lo armamos.'
-    : 'It will be our pleasure to build it! For a custom Journey, message us on WhatsApp: +52 55 1229 1607. Tell us what you are looking for (neighborhood, days, budget, vibe) and we will craft it.'
+    ? '¡Será un placer hacerlo! Para armarte un Journey a la medida, escríbenos por WhatsApp: +52 55 1229 1607. Cuéntanos qué deseas encontrar (colonia, días, presupuesto, qué te interesa) y te lo armamos.'
+    : 'It will be our pleasure to build it! For a custom Journey, message us on WhatsApp: +52 55 1229 1607. Tell us what you are looking for (neighborhood, days, budget, interests) and we will craft it.'
 }
 
 // ── Respuestas rápidas: sin gastar tokens ni latencia de Gemini ────
@@ -270,11 +270,11 @@ const FAST_PATHS_ES = [
   {
     re: /^(hola|buenas|buen d[íi]a|buenas tardes|buenas noches|hey+|que onda|quiubo|salve)\b/i,
     reply:
-      '¡Quiubo! Soy Ocelote AI 🤖. Te ayudo con Journeys, qué hacer en CDMX, comida, museos y rutas. ¿Qué se te antoja?',
+      'Hola, soy Ocelote AI 🤖, tu guía de Calpulli. Te ayudo con journeys, qué hacer en CDMX, comida, museos y rutas. ¿Qué te gustaría conocer?',
   },
   {
     re: /^(gracias|muchas gracias|mil gracias|thank)/i,
-    reply: '¡De nada! Si quieres, te armo una ruta o te recomiendo un Journey. ¿Te late?',
+    reply: '¡Con gusto! Si quieres, te armo una ruta o te recomiendo un journey.',
   },
   {
     re: /^(ayuda|help|qu[ée] puedes hacer|que sabes|qué sabes)/i,
@@ -286,7 +286,7 @@ const FAST_PATHS_EN = [
   {
     re: /^(hi|hello|hey+|good (morning|afternoon|evening)|howdy)\b/i,
     reply:
-      "Hey! I'm Ocelote AI 🤖. I can help with Journeys, what to do in CDMX, food, museums and routes. What are you in the mood for?",
+      "Hi, I'm Ocelote AI 🤖, your Calpulli guide. I can help with journeys, what to do in CDMX, food, museums and routes. What would you like to explore?",
   },
   {
     re: /^(thank|thanks|thx|appreciate)/i,
