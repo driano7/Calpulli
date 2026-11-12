@@ -39,8 +39,10 @@ import Link from 'next/link'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import { useAuth } from '@/lib/hooks/useAuth'
 
-const WELCOME_ES = '¡Quiubo! Soy Ocelote AI 🤖 — dime qué buscas y te guío.'
-const WELCOME_EN = "Hey! I'm Ocelote AI 🤖 — tell me what you need and I'll guide you."
+const WELCOME_ES =
+  'Hola, soy Ocelote AI 🤖, tu guía de Calpulli. Te ayudo con journeys, qué hacer en CDMX, comida, museos y rutas. ¿Qué te gustaría conocer?'
+const WELCOME_EN =
+  "Hi, I'm Ocelote AI 🤖, your Calpulli guide. I can help with journeys, what to do in CDMX, food, museums and routes. What would you like to explore?"
 
 // Respuestas predefinidas anteriores: ocultas por petición. Se mantienen
 // comentadas en espíritu pero ya no se usan en el panel.
@@ -1092,7 +1094,7 @@ export default function ChatbotAssistant() {
         g.beginPath()
         g.moveTo(0, h / 2)
         g.lineTo(w, h / 2)
-        g.strokeStyle = 'rgba(249, 115, 22, 0.15)'
+        g.strokeStyle = 'rgba(236, 72, 153, 0.15)'
         g.lineWidth = 2
         g.stroke()
         if (samples.length > 1) {
@@ -1105,7 +1107,7 @@ export default function ChatbotAssistant() {
             if (i === 0) g.moveTo(x, y)
             else g.lineTo(x, y)
           })
-          g.strokeStyle = '#f97316'
+          g.strokeStyle = '#ec4899'
           g.lineWidth = 2.5
           g.lineCap = 'round'
           g.stroke()
