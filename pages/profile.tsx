@@ -1256,8 +1256,8 @@ function ChatHistorySection({ isEs }: { isEs: boolean }) {
         <ChatMetricsSection isEs={isEs} />
         <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 text-sm text-zinc-500 dark:border-white/10 dark:bg-zinc-900/50">
           {isEs
-            ? 'Aún no tienes conversaciones guardadas. Abre Calpulli AI desde el botón de robot y tu charla quedará aquí.'
-            : 'No saved conversations yet. Open Calpulli AI from the robot button and your chat will appear here.'}
+            ? 'Aún no tienes conversaciones guardadas. Abre Ocelote AI desde el botón de robot y tu charla quedará aquí.'
+            : 'No saved conversations yet. Open Ocelote AI from the robot button and your chat will appear here.'}
         </div>
       </div>
     )
@@ -1287,7 +1287,7 @@ function ChatHistorySection({ isEs }: { isEs: boolean }) {
                 <p className="whitespace-pre-wrap text-sm text-zinc-800 dark:text-zinc-100">
                   {m.question}
                 </p>
-                <p className="text-xs font-semibold text-zinc-400">Calpulli AI</p>
+                <p className="text-xs font-semibold text-zinc-400">Ocelote AI</p>
                 <p className="whitespace-pre-wrap text-sm text-zinc-600 dark:text-zinc-300">
                   {m.answer}
                 </p>
