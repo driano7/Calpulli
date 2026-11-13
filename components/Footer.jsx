@@ -80,9 +80,9 @@ export default function Footer() {
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-zinc-300 bg-zinc-100/60 px-3 py-2 text-xs font-medium text-zinc-700 transition-colors hover:border-[#DE1D8D]/50 hover:text-[#DE1D8D] dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:border-[#DE1D8D]/60 dark:hover:text-white"
+                className="inline-flex items-center gap-2 rounded-full border border-zinc-300 bg-zinc-100/60 px-3 py-2 text-xs font-medium text-zinc-700 transition-colors hover:border-[#E4007C]/50 hover:text-[#E4007C] dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:border-[#E4007C]/60 dark:hover:text-white"
               >
-                <Icon className="h-3.5 w-3.5 text-[#DE1D8D]" />
+                <Icon className="h-3.5 w-3.5 text-[#E4007C]" />
                 <span className="font-medium">{item.label}</span>
               </a>
             )

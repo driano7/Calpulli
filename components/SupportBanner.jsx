@@ -23,7 +23,7 @@ const DONATION_METHODS = [
     id: 'bank',
     label: null,
     value: siteMetadata.donations?.bank,
-    accent: '#DE1D8D',
+    accent: '#E4007C',
   },
 ].filter((entry) => Boolean(entry.value))
 
@@ -176,7 +176,7 @@ export default function SupportBanner() {
       className="not-prose relative mt-12 overflow-hidden rounded-3xl px-6 py-10 text-white shadow-2xl"
       style={{
         background:
-          'linear-gradient(135deg, #DE1D8D 0%, #BE1588 25%, #9F0E7F 50%, #7B2BD9 75%, #6A0568 100%)',
+          'linear-gradient(135deg, #E4007C 0%, #BE1588 25%, #9F0E7F 50%, #7B2BD9 75%, #6A0568 100%)',
       }}
     >
       <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-8">

@@ -147,7 +147,7 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, toc
                   href={`/blog/${prev.slug}`}
                   style={{
                     background:
-                      'linear-gradient(135deg, #6A0568 0%, #7B2BD9 25%, #9F0E7F 50%, #BE1588 75%, #DE1D8D 100%)',
+                      'linear-gradient(135deg, #6A0568 0%, #7B2BD9 25%, #9F0E7F 50%, #BE1588 75%, #E4007C 100%)',
                   }}
                   className="group flex flex-col rounded-xl p-5 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
                 >
@@ -164,7 +164,7 @@ export default function PostLayout({ frontMatter, authorDetails, next, prev, toc
                   href={`/blog/${next.slug}`}
                   style={{
                     background:
-                      'linear-gradient(135deg, #6A0568 0%, #7B2BD9 25%, #9F0E7F 50%, #BE1588 75%, #DE1D8D 100%)',
+                      'linear-gradient(135deg, #6A0568 0%, #7B2BD9 25%, #9F0E7F 50%, #BE1588 75%, #E4007C 100%)',
                   }}
                   className="group flex flex-col rounded-xl p-5 text-right text-white shadow-lg transition-all duration-300 hover:shadow-xl dark:text-white sm:col-start-2"
                 >

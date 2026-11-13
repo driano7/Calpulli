@@ -22,8 +22,8 @@ type Dot = {
   color: string
 }
 
-// Rosa mexicano de la marca (#DE1D8D)
-const MEXICAN_PINK_RGB = '222, 29, 141'
+// Rosa mexicano de la marca (#E4007C)
+const MEXICAN_PINK_RGB = '228, 0, 124'
 
 function getParticleColor(theme?: string) {
   return theme === 'light' ? '0, 0, 0' : '255, 255, 255'

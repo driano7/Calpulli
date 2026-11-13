@@ -132,7 +132,7 @@ export default function StoryDetail({ story, locale }) {
                 href="/stories"
                 style={{
                   background:
-                    'linear-gradient(135deg, #6A0568 0%, #7B2BD9 25%, #9F0E7F 50%, #BE1588 75%, #DE1D8D 100%)',
+                    'linear-gradient(135deg, #6A0568 0%, #7B2BD9 25%, #9F0E7F 50%, #BE1588 75%, #E4007C 100%)',
                 }}
                 className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-semibold text-white shadow-lg transition-all duration-300 hover:shadow-xl"
               >

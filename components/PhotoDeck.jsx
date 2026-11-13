@@ -425,7 +425,7 @@ export default function PhotoDeck() {
           color: #fff;
           background: linear-gradient(
             135deg,
-            #de1d8d 0%,
+            #e4007c 0%,
             #be1588 25%,
             #9f0e7f 50%,
             #7b2bd9 75%,

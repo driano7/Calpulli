@@ -203,9 +203,9 @@ export function HeroSection() {
                 href="/journeys"
                 style={{
                   background:
-                    'linear-gradient(135deg, #DE1D8D 0%, #BE1588 25%, #9F0E7F 50%, #7B2BD9 75%, #6A0568 100%)',
+                    'linear-gradient(135deg, #E4007C 0%, #BE1588 25%, #9F0E7F 50%, #7B2BD9 75%, #6A0568 100%)',
                 }}
-                className="hover:shadow-[#7B2BD9]/45 group inline-flex items-center gap-2 rounded-full px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#DE1D8D]/30 transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
+                className="hover:shadow-[#7B2BD9]/45 group inline-flex items-center gap-2 rounded-full px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#E4007C]/30 transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
               >
                 <EditorialCrossfade
                   lang={lang}

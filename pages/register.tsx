@@ -444,7 +444,7 @@ export default function Register() {
                   key={n}
                   animate={{
                     width: step === n ? 26 : 8,
-                    backgroundColor: step === n ? '#DE1D8D' : 'rgba(120,113,108,0.35)',
+                    backgroundColor: step === n ? '#E4007C' : 'rgba(120,113,108,0.35)',
                   }}
                   transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   className="h-2 rounded-full"

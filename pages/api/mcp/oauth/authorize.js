@@ -249,10 +249,10 @@ function generateConsentPage({
     .scope-list { background: #f5f5f5; border-radius: 8px; padding: 16px; margin: 16px 0; }
     .scope-item { display: inline-block; background: #e8e8e8; padding: 4px 12px; border-radius: 20px; font-size: 14px; margin: 4px 4px 4px 0; }
     .btn { display: inline-block; width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; text-align: center; }
-    .btn-primary { background: #DE1D8D; color: white; }
+    .btn-primary { background: #E4007C; color: white; }
     .btn-secondary { background: #f5f5f5; color: #666; margin-top: 12px; }
     .client-info { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-    .client-avatar { width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #DE1D8D, #BE1588); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px; }
+    .client-avatar { width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #E4007C, #BE1588); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px; }
   </style>
 </head>
 <body>

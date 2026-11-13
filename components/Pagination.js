@@ -1,7 +1,7 @@
 import Link from '@/components/Link'
 
 const GRADIENT =
-  'linear-gradient(135deg, #6A0568 0%, #7B2BD9 25%, #9F0E7F 50%, #BE1588 75%, #DE1D8D 100%)'
+  'linear-gradient(135deg, #6A0568 0%, #7B2BD9 25%, #9F0E7F 50%, #BE1588 75%, #E4007C 100%)'
 
 export default function Pagination({ totalPages, currentPage }) {
   const prevPage = parseInt(currentPage) - 1 > 0

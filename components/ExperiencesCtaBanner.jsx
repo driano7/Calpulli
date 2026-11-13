@@ -41,7 +41,7 @@ export default function ExperiencesCtaBanner() {
         className="relative overflow-hidden rounded-3xl border border-white/20 p-8 shadow-2xl backdrop-blur-md dark:border-white/10 md:p-10"
         style={{
           background:
-            'linear-gradient(135deg, #2A1A1A 0%, #7B2BD9 25%, #C1440E 50%, #DE1D8D 75%, #1A0A0A 100%)',
+            'linear-gradient(135deg, #2A1A1A 0%, #7B2BD9 25%, #C1440E 50%, #E4007C 75%, #1A0A0A 100%)',
           backgroundSize: '200% 200%',
           animation: 'gradientMove 8s ease infinite',
         }}
@@ -57,10 +57,10 @@ export default function ExperiencesCtaBanner() {
         <div className="bg-black/35 pointer-events-none absolute bottom-1/4 right-1/4 h-full w-[2px] animate-[lineMove_7s_ease-in-out_infinite]" />
 
         {/* Ambient glows: terracotta / rosa / marrón */}
-        <div className="pointer-events-none absolute -right-24 -top-24 h-[700px] w-[700px] animate-pulse rounded-full bg-[#DE1D8D]/25 blur-[200px]" />
+        <div className="pointer-events-none absolute -right-24 -top-24 h-[700px] w-[700px] animate-pulse rounded-full bg-[#E4007C]/25 blur-[200px]" />
         <div className="pointer-events-none absolute -left-24 -bottom-24 h-[700px] w-[700px] animate-[orbit_14s_ease-in-out_infinite] rounded-full bg-[#C1440E]/20 blur-[200px]" />
         <div className="top-1/5 left-1/6 pointer-events-none absolute h-[500px] w-[500px] animate-[float_8s_ease-in-out_infinite] rounded-full bg-[#7B2BD9]/25 blur-[160px]" />
-        <div className="bottom-1/6 right-1/5 animate-[float_10s_ease-in-out_infinite reverse] pointer-events-none absolute h-[500px] w-[500px] rounded-full bg-[#DE1D8D]/20 blur-[160px]" />
+        <div className="bottom-1/6 right-1/5 animate-[float_10s_ease-in-out_infinite reverse] pointer-events-none absolute h-[500px] w-[500px] rounded-full bg-[#E4007C]/20 blur-[160px]" />
         <div className="animate-[orbit_11s_ease-in-out_infinite reverse] pointer-events-none absolute top-1/3 right-1/3 h-[400px] w-[400px] rounded-full bg-[#C1440E]/15 blur-[120px]" />
         <div className="pointer-events-none absolute bottom-1/3 left-1/3 h-[400px] w-[400px] animate-[float_6s_ease-in-out_infinite] rounded-full bg-[#7B2BD9]/15 blur-[120px]" />
 
@@ -134,9 +134,9 @@ export default function ExperiencesCtaBanner() {
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-widest text-white/80 backdrop-blur">
-              <Compass className="h-3.5 w-3.5 text-[#DE1D8D]" />
+              <Compass className="h-3.5 w-3.5 text-[#E4007C]" />
               {content.badge}
-              <Sparkles className="h-3 w-3 text-[#DE1D8D]" />
+              <Sparkles className="h-3 w-3 text-[#E4007C]" />
             </div>
             <h2 className="mb-2 text-2xl font-black leading-tight tracking-tight text-white md:text-3xl">
               {content.title}

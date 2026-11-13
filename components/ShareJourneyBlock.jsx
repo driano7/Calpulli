@@ -14,7 +14,7 @@ import { Check, Share2 } from 'lucide-react'
 import { sharePageOrCopy } from '@/lib/sharePage'
 
 const BRAND_GRADIENT =
-  'linear-gradient(135deg, #DE1D8D 0%, #BE1588 25%, #9F0E7F 50%, #7B2BD9 75%, #6A0568 100%)'
+  'linear-gradient(135deg, #E4007C 0%, #BE1588 25%, #9F0E7F 50%, #7B2BD9 75%, #6A0568 100%)'
 
 const COPY = {
   es: {

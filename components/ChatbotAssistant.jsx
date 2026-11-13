@@ -1128,7 +1128,7 @@ export default function ChatbotAssistant() {
             if (i === 0) g.moveTo(x, y)
             else g.lineTo(x, y)
           })
-          g.strokeStyle = '#ec4899'
+          g.strokeStyle = '#e4007c'
           g.lineWidth = 2.5
           g.lineCap = 'round'
           g.stroke()
@@ -1485,7 +1485,7 @@ export default function ChatbotAssistant() {
             transition={{ type: 'spring', stiffness: 260, damping: 18 }}
             aria-label={isEs ? 'Abrir Ocelote AI' : 'Open Ocelote AI'}
             title={isEs ? 'Ocelote AI — pregúntame de CDMX' : 'Ocelote AI — ask me about CDMX'}
-            className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-[100] hidden h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-pink-600 text-white shadow-[0_8px_32px_rgba(222,29,141,0.45)] transition-shadow hover:shadow-[0_10px_40px_rgba(222,29,141,0.65)] sm:right-6 sm:flex"
+            className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-[100] hidden h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-pink-600 text-white shadow-[0_8px_32px_rgba(228,0,124,0.45)] transition-shadow hover:shadow-[0_10px_40px_rgba(228,0,124,0.65)] sm:right-6 sm:flex"
           >
             {!reduced && (
               <motion.span

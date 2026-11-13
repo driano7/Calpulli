@@ -13,7 +13,7 @@ export const BRAND = {
   descriptionShort: 'Tours auténticos en CDMX',
   tagline: 'El abrazo de la ciudad que amamos',
   color: {
-    primary: '#DE1D8D',
+    primary: '#E4007C',
     secondary: '#BE1588',
     gradient: 'from-orange-400 to-orange-600',
     gradientHover: 'from-orange-500 to-orange-600',

@@ -37,7 +37,7 @@ export function LoginLoadingBar({ label, message }: { label: string; message: st
             initial={{ x: '-100%' }}
             animate={{ x: '0%' }}
             transition={{ duration: 1.5, ease: 'linear', repeat: Infinity, repeatType: 'reverse' }}
-            className="h-full w-full bg-gradient-to-r from-[#DE1D8D] to-[#7B2BD9]"
+            className="h-full w-full bg-gradient-to-r from-[#E4007C] to-[#7B2BD9]"
           />
         </div>
       </div>
