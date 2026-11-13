@@ -678,15 +678,25 @@ export default function ChatbotAssistant() {
   const loadedRef = useRef(false)
 
   // ── Entrada por voz (dictado) ─────────────────────────────────────
-  // Solo dictado: el visitante habla, el navegador lo pasa a texto y el
-  // bot sigue respondiendo en texto. Se usa la Web Speech API del
-  // navegador (sin costo, sin backend); el botón de micrófono solo
-  // aparece si el navegador lo soporta (detección por capacidad).
+  // Solo dictado: el visitante habla, se pasa a texto y el bot sigue
+  // respondiendo en texto. Camino principal: MediaRecorder graba el
+  // audio y /api/transcribe lo transcribe con Groq Whisper en el
+  // servidor (buen español, funciona también en Safari/iPhone, donde
+  // la Web Speech API ni existe). En paralelo, si el navegador tiene
+  // Web Speech API, su dictado da el texto en vivo y queda como
+  // respaldo automático si el endpoint falla o no está configurado.
+  // El botón de micrófono solo aparece si hay algún camino disponible
+  // (detección por capacidad, no por navegador).
   const [voiceSupported, setVoiceSupported] = useState(false)
   const [recording, setRecording] = useState(false)
   const [voiceClosing, setVoiceClosing] = useState(false)
+  const [transcribing, setTranscribing] = useState(false)
   const [recSeconds, setRecSeconds] = useState(0)
   const recogRef = useRef(null)
+  const mediaRecorderRef = useRef(null)
+  const audioChunksRef = useRef([])
+  const recorderMimeRef = useRef('')
+  const recorderStoppedRef = useRef(null)
   const voiceStreamRef = useRef(null)
   const voiceCtxRef = useRef(null)
   const voiceRafRef = useRef(null)
@@ -762,13 +772,15 @@ export default function ChatbotAssistant() {
     }
   }, [open])
 
-  // ¿El navegador soporta dictado por voz y micrófono? (capacidad, no UA)
+  // ¿Hay algún camino de voz? MediaRecorder (Groq) o dictado del
+  // navegador (respaldo). Capacidad, no UA: Safari/iPhone entra por
+  // MediaRecorder aunque no tenga SpeechRecognition.
   useEffect(() => {
     try {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-      setVoiceSupported(
-        Boolean(SR && navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
-      )
+      const hasMic = Boolean(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+      const canRecord = hasMic && typeof window.MediaRecorder !== 'undefined'
+      setVoiceSupported(Boolean(canRecord || (SR && hasMic)))
     } catch {
       setVoiceSupported(false)
     }
@@ -779,6 +791,13 @@ export default function ChatbotAssistant() {
     return () => {
       try {
         recogRef.current?.abort()
+      } catch {
+        /* noop */
+      }
+      try {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+          mediaRecorderRef.current.stop()
+        }
       } catch {
         /* noop */
       }
@@ -1057,9 +1076,11 @@ export default function ChatbotAssistant() {
 
   // Onda estilo Plata: historial de amplitud del micrófono dibujado como
   // una línea continua que ondula con la intensidad de la voz.
-  const startWave = useCallback(async () => {
+  // Acepta el stream ya abierto por la grabadora (un solo permiso de
+  // micrófono); sin argumento, abre el suyo como antes.
+  const startWave = useCallback(async (existingStream) => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const stream = existingStream || (await navigator.mediaDevices.getUserMedia({ audio: true }))
       voiceStreamRef.current = stream
       const Ctx = window.AudioContext || window.webkitAudioContext
       if (!Ctx) return
@@ -1119,8 +1140,26 @@ export default function ChatbotAssistant() {
     }
   }, [])
 
+  // Manda el audio grabado a /api/transcribe (Groq Whisper en el
+  // servidor) y devuelve el texto. Lanza si el endpoint falla o no
+  // está configurado: quien llama decide el respaldo.
+  const transcribeAudio = useCallback(
+    async (blob) => {
+      const res = await fetch(`/api/transcribe?lang=${isEs ? 'es' : 'en'}`, {
+        method: 'POST',
+        headers: { 'Content-Type': blob.type || 'audio/webm' },
+        body: blob,
+      })
+      if (!res.ok) throw new Error(`transcribe ${res.status}`)
+      const data = await res.json().catch(() => ({}))
+      return typeof data.text === 'string' ? data.text.trim() : ''
+    },
+    [isEs]
+  )
+
   const finishRecording = useCallback(
     (send) => {
+      if (!recordingActiveRef.current) return
       recordingActiveRef.current = false
       try {
         recogRef.current?.stop()
@@ -1128,80 +1167,237 @@ export default function ChatbotAssistant() {
         /* noop */
       }
       recogRef.current = null
+      // Detener la grabadora y conservar la promesa del blob final.
+      const recorder = mediaRecorderRef.current
+      mediaRecorderRef.current = null
+      let blobPromise = null
+      if (recorder && recorder.state !== 'inactive') {
+        blobPromise = recorderStoppedRef.current
+        try {
+          recorder.stop()
+        } catch {
+          blobPromise = null
+        }
+      }
+      recorderStoppedRef.current = null
       stopVoiceTracks()
+
       // La animación de salida que le gustó a Donovan de Plata: la barra
       // de grabación se difumina (blur + fade) y regresa el campo normal.
-      setVoiceClosing(true)
-      const dictated = input
-      window.setTimeout(() => {
-        setRecording(false)
-        setVoiceClosing(false)
-        setRecSeconds(0)
-        if (send) {
-          if (String(dictated || '').trim()) sendMessage(dictated)
-        } else {
-          setInput(voiceBaseRef.current)
-        }
-      }, 380)
+      const finishUi = (finalText) => {
+        setVoiceClosing(true)
+        window.setTimeout(() => {
+          setRecording(false)
+          setVoiceClosing(false)
+          setRecSeconds(0)
+          if (send) {
+            const text = String(finalText || '')
+              .trim()
+              .slice(0, 700)
+            if (text) {
+              setInput(text)
+              sendMessage(text)
+            }
+          } else {
+            setInput(voiceBaseRef.current)
+          }
+        }, 380)
+      }
+
+      if (!send || !blobPromise) {
+        // Descartar, o no hubo grabadora (dictado clásico): como antes.
+        finishUi(input)
+        return
+      }
+
+      // Camino Groq: se transcribe en el servidor. Si el endpoint
+      // falla, no está configurado o regresa vacío, el respaldo es lo
+      // que haya alcanzado a dictar el navegador (en Safari no hay
+      // respaldo: ahí sí se avisa).
+      const fallbackText = input
+      setTranscribing(true)
+      blobPromise
+        .then(async (blob) => {
+          let text = ''
+          try {
+            if (blob && blob.size) text = await transcribeAudio(blob)
+          } catch {
+            text = ''
+          }
+          setTranscribing(false)
+          if (!text) {
+            text = fallbackText
+            if (!String(text || '').trim()) {
+              setError(
+                isEs
+                  ? 'No pude transcribir tu voz. Intenta de nuevo.'
+                  : 'I could not transcribe your voice. Please try again.'
+              )
+            }
+          }
+          finishUi(text)
+        })
+        .catch(() => {
+          setTranscribing(false)
+          finishUi(fallbackText)
+        })
     },
-    [input, sendMessage, stopVoiceTracks]
+    [input, isEs, sendMessage, stopVoiceTracks, transcribeAudio]
   )
 
-  const startRecording = useCallback(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR || recording) return
+  // Abre el micrófono UNA vez y arranca MediaRecorder sobre ese
+  // stream (la onda usa el mismo). Devuelve false si no se pudo:
+  // el dictado del navegador sigue como único camino, como antes.
+  const setupRecorder = useCallback(async () => {
+    try {
+      if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia ||
+        typeof window.MediaRecorder === 'undefined'
+      ) {
+        return false
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      voiceStreamRef.current = stream
+      const candidates = ['audio/webm', 'audio/mp4', 'audio/ogg']
+      const mime =
+        candidates.find((m) => {
+          try {
+            return window.MediaRecorder.isTypeSupported(m)
+          } catch {
+            return false
+          }
+        }) || ''
+      const recorder = mime
+        ? new window.MediaRecorder(stream, { mimeType: mime })
+        : new window.MediaRecorder(stream)
+      recorderMimeRef.current = recorder.mimeType || mime || 'audio/webm'
+      audioChunksRef.current = []
+      recorder.ondataavailable = (ev) => {
+        if (ev.data && ev.data.size) audioChunksRef.current.push(ev.data)
+      }
+      recorderStoppedRef.current = new Promise((resolve) => {
+        recorder.onstop = () =>
+          resolve(new Blob(audioChunksRef.current, { type: recorderMimeRef.current }))
+      })
+      mediaRecorderRef.current = recorder
+      recorder.start()
+      startWave(stream)
+      return true
+    } catch {
+      voiceStreamRef.current?.getTracks?.().forEach((t) => t.stop())
+      voiceStreamRef.current = null
+      mediaRecorderRef.current = null
+      return false
+    }
+  }, [startWave])
+
+  const startRecording = useCallback(async () => {
+    if (recording) return
     setError('')
     voiceBaseRef.current = input ? input.replace(/\s+$/, '') : ''
     waveSamplesRef.current = []
     setRecSeconds(0)
-    let rec
-    try {
-      rec = new SR()
-    } catch {
+    recordingActiveRef.current = true
+    setRecording(true)
+    // Tope de 2 min por dictado: cuida la cuota y el tamaño del audio.
+    let secs = 0
+    voiceTimerRef.current = setInterval(() => {
+      secs += 1
+      setRecSeconds(secs)
+      if (secs >= 120) finishRecording(true)
+    }, 1000)
+
+    // Camino principal: grabar para Groq Whisper (incluye la onda).
+    const recorderOk = await setupRecorder()
+    if (!recordingActiveRef.current) {
+      // Se canceló mientras el permiso del micrófono estaba abierto:
+      // apagar la grabadora que alcanzó a arrancar y salir.
+      try {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+          mediaRecorderRef.current.stop()
+        }
+      } catch {
+        /* noop */
+      }
+      mediaRecorderRef.current = null
+      recorderStoppedRef.current = null
+      stopVoiceTracks()
       return
     }
-    rec.lang = isEs ? 'es-MX' : 'en-US'
-    rec.interimResults = true
-    rec.continuous = true
-    rec.onresult = (ev) => {
-      let transcript = ''
-      for (let i = 0; i < ev.results.length; i++) transcript += ev.results[i][0].transcript
-      const base = voiceBaseRef.current
-      setInput(base ? `${base} ${transcript}` : transcript)
-    }
-    rec.onerror = (ev) => {
-      if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
-        setError(
-          isEs
-            ? 'No pude usar tu micrófono. Revisa el permiso del navegador.'
-            : 'I could not use your microphone. Check the browser permission.'
-        )
-        finishRecording(false)
+
+    // En paralelo, el dictado del navegador cuando existe: texto en
+    // vivo y respaldo automático si el endpoint de Groq falla.
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (SR) {
+      let rec
+      try {
+        rec = new SR()
+      } catch {
+        rec = null
       }
-    }
-    rec.onend = () => {
-      // El reconocimiento continuo a veces se corta solo: si la persona
-      // sigue en modo grabación, se reinicia sin perder lo dictado.
-      if (recordingActiveRef.current && recogRef.current === rec) {
+      if (rec) {
+        rec.lang = isEs ? 'es-MX' : 'en-US'
+        rec.interimResults = true
+        rec.continuous = true
+        rec.onresult = (ev) => {
+          let transcript = ''
+          for (let i = 0; i < ev.results.length; i++) transcript += ev.results[i][0].transcript
+          const base = voiceBaseRef.current
+          setInput(base ? `${base} ${transcript}` : transcript)
+        }
+        rec.onerror = (ev) => {
+          if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
+            if (mediaRecorderRef.current) {
+              // La grabadora de Groq sigue viva: el dictado del
+              // navegador era solo respaldo; se apaga sin cancelar.
+              recogRef.current = null
+              return
+            }
+            setError(
+              isEs
+                ? 'No pude usar tu micrófono. Revisa el permiso del navegador.'
+                : 'I could not use your microphone. Check the browser permission.'
+            )
+            finishRecording(false)
+          }
+        }
+        rec.onend = () => {
+          // El reconocimiento continuo a veces se corta solo: si la persona
+          // sigue en modo grabación, se reinicia sin perder lo dictado.
+          if (recordingActiveRef.current && recogRef.current === rec) {
+            try {
+              rec.start()
+            } catch {
+              /* noop */
+            }
+          }
+        }
+        recogRef.current = rec
         try {
           rec.start()
         } catch {
-          /* noop */
+          recogRef.current = null
         }
       }
     }
-    recogRef.current = rec
-    recordingActiveRef.current = true
-    try {
-      rec.start()
-    } catch {
+
+    if (!recorderOk && !recogRef.current) {
+      // Ningún camino de voz funcionó: salir del modo grabación.
       recordingActiveRef.current = false
+      stopVoiceTracks()
+      setRecording(false)
+      setError(
+        isEs
+          ? 'No pude usar tu micrófono. Revisa el permiso del navegador.'
+          : 'I could not use your microphone. Check the browser permission.'
+      )
       return
     }
-    setRecording(true)
-    voiceTimerRef.current = setInterval(() => setRecSeconds((s) => s + 1), 1000)
-    startWave()
-  }, [input, isEs, recording, finishRecording, startWave])
+    // Sin grabadora (navegador viejo): la onda abre su propio stream,
+    // como hacía el dictado clásico.
+    if (!recorderOk) startWave()
+  }, [input, isEs, recording, finishRecording, setupRecorder, startWave, stopVoiceTracks])
 
   /**
    * Captura de canal, una sola vez: si hay cotización sin reserva y el
@@ -1478,9 +1674,10 @@ export default function ChatbotAssistant() {
                   <button
                     type="button"
                     onClick={() => finishRecording(false)}
+                    disabled={transcribing}
                     aria-label={isEs ? 'Descartar grabación' : 'Discard recording'}
                     title={isEs ? 'Descartar' : 'Discard'}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-white transition-colors hover:bg-zinc-700 disabled:opacity-40 dark:bg-zinc-800 dark:hover:bg-zinc-700"
                   >
                     <Square className="h-3 w-3 fill-current" />
                   </button>
@@ -1488,18 +1685,25 @@ export default function ChatbotAssistant() {
                     <span className="shrink-0 text-sm tabular-nums text-zinc-700 dark:text-zinc-200">
                       {`${Math.floor(recSeconds / 60)}:${String(recSeconds % 60).padStart(2, '0')}`}
                     </span>
-                    <canvas
-                      ref={waveCanvasRef}
-                      width={280}
-                      height={28}
-                      className="h-7 min-w-0 flex-1"
-                    />
+                    {transcribing ? (
+                      <span className="min-w-0 flex-1 truncate text-sm text-zinc-500 dark:text-zinc-400">
+                        {isEs ? 'Transcribiendo…' : 'Transcribing…'}
+                      </span>
+                    ) : (
+                      <canvas
+                        ref={waveCanvasRef}
+                        width={280}
+                        height={28}
+                        className="h-7 min-w-0 flex-1"
+                      />
+                    )}
                   </div>
                   <button
                     type="button"
                     onClick={() => finishRecording(true)}
+                    disabled={transcribing}
                     aria-label={isEs ? 'Enviar mensaje de voz' : 'Send voice message'}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-pink-600 text-white shadow-md transition-opacity hover:opacity-90"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-pink-600 text-white shadow-md transition-opacity hover:opacity-90 disabled:opacity-40"
                   >
                     <ArrowUp className="h-4 w-4" />
                   </button>
