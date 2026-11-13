@@ -16,6 +16,7 @@
       "@/layouts/*": ["layouts/*"],
       "@/lib/*": ["lib/*"],
       "@/css/*": ["css/*"],
+      "@/styles/*": ["styles/*"],
       "@/dictionaries/*": ["dictionaries/*"],
       "@/hooks/*": ["hooks/*"],
       "@/scripts/*": ["scripts/*"]

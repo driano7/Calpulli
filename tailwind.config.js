@@ -1,6 +1,35 @@
 const defaultTheme = require('tailwindcss/defaultTheme')
 const colors = require('tailwindcss/colors')
 
+// Rosa mexicano — paleta de marca de Calpulli (Design System, 2026-11-13).
+// UNICA declaracion de estos valores: `orange` la expone completa (50-950)
+// y los alias historicos `primary`, `primary-color` y `primary-color-dark`
+// referencian el subconjunto 100-900, exactamente como estaban declarados
+// antes (ninguna clase cambia su valor resuelto). Ajustar un tono aqui lo
+// ajusta en los cuatro nombres a la vez. Espejo en variables CSS:
+// styles/design-tokens.css (--brand-*). Ver docs/design-system.md.
+const brandPink = {
+  50: '#FCE6F1',
+  100: '#FAC4DE',
+  200: '#F591BE',
+  300: '#EF5E9F',
+  400: '#EA338B',
+  500: '#E4007C',
+  600: '#C5006A',
+  700: '#A30059',
+  800: '#820047',
+  900: '#660037',
+  // 950 llego en Tailwind 3.3; este proyecto corre 3.2.4. Se usa como fondo
+  // de aviso en modo oscuro (pages/profile.tsx). Valor de Tailwind 3.3.
+  950: '#431407',
+}
+
+// Subconjunto 100-900 de la paleta de marca: el alcance exacto que siempre
+// tuvieron los alias `primary*`.
+const brandPinkAlias = Object.fromEntries(
+  Object.entries(brandPink).filter(([step]) => step !== '50' && step !== '950')
+)
+
 module.exports = {
   content: [
     './pages/**/*.{js,ts,jsx,tsx}',
@@ -71,54 +100,12 @@ module.exports = {
         white: '#FAF3EA',
         // Rosa mexicano: orange is remapped to the brand pink palette so all
         // existing orange-* utility classes render as Mexican pink (#E4007C).
-        orange: {
-          50: '#FCE6F1',
-          100: '#FAC4DE',
-          200: '#F591BE',
-          300: '#EF5E9F',
-          400: '#EA338B',
-          500: '#E4007C',
-          600: '#C5006A',
-          700: '#A30059',
-          800: '#820047',
-          900: '#660037',
-          // orange-950 llego en Tailwind 3.3; se usa como fondo de aviso en
-          // modo oscuro (pages/profile.tsx). Valor de Tailwind 3.3.
-          950: '#431407',
-        },
-        primary: {
-          100: '#FAC4DE',
-          200: '#F591BE',
-          300: '#EF5E9F',
-          400: '#EA338B',
-          500: '#E4007C',
-          600: '#C5006A',
-          700: '#A30059',
-          800: '#820047',
-          900: '#660037',
-        },
-        'primary-color': {
-          100: '#FAC4DE',
-          200: '#F591BE',
-          300: '#EF5E9F',
-          400: '#EA338B',
-          500: '#E4007C',
-          600: '#C5006A',
-          700: '#A30059',
-          800: '#820047',
-          900: '#660037',
-        },
-        'primary-color-dark': {
-          100: '#FAC4DE',
-          200: '#F591BE',
-          300: '#EF5E9F',
-          400: '#EA338B',
-          500: '#E4007C',
-          600: '#C5006A',
-          700: '#A30059',
-          800: '#820047',
-          900: '#660037',
-        },
+        // La paleta se declara UNA sola vez arriba (brandPink); los alias
+        // primarios apuntan a ese mismo objeto.
+        orange: brandPink,
+        primary: brandPinkAlias,
+        'primary-color': brandPinkAlias,
+        'primary-color-dark': brandPinkAlias,
         // Acentos del moodboard: talavera, cempasúchil y terracota.
         talavera: {
           50: '#E6F5F2',

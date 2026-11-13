@@ -1,4 +1,5 @@
 import '@/css/tailwind.css'
+import '@/styles/design-tokens.css'
 import '@/css/prism.css'
 import '@/css/extra.css'
 import 'katex/dist/katex.css'

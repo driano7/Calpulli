@@ -1,0 +1,124 @@
+/* ==========================================================================
+   CALPULLI — DESIGN TOKENS
+   Extraídos del código real el 2026-11-13 e INSTALADOS el 2026-11-13
+   (rama feat/design-system-tokens): este archivo se importa en
+   pages/_app.js y es la fuente de verdad en variables CSS del sistema.
+
+   Es ADITIVO: ningún componente consume todavía estas variables, así que
+   el sitio renderiza exactamente igual que antes de instalarlo. Migrar
+   componentes a var(--…) se hace por decisión, superficie por superficie.
+   Los valores de abajo son los que el sitio YA renderiza hoy (ver la
+   evidencia en docs/design-system.md).
+
+   Espejo en Tailwind: tailwind.config.js (la paleta rosa se declara ahí
+   una sola vez como brandPink). Si un valor cambia, se cambia en ambos
+   lugares en el mismo commit.
+   ========================================================================== */
+
+:root {
+  /* --- Marca: rosa mexicano — DECISIÓN CERRADA (Donovan, 2026-11-13):
+         el rosa oficial es #E4007C. En tailwind.config.js vive como
+         orange / primary / primary-color / primary-color-dark, declarado
+         una sola vez (brandPink). --- */
+  --brand-50: #fce6f1;
+  --brand-100: #fac4de;
+  --brand-200: #f591be;
+  --brand-300: #ef5e9f;
+  --brand-400: #ea338b;
+  --brand-500: #e4007c; /* color principal del sitio (clase orange-500) */
+  --brand-600: #c5006a;
+  --brand-700: #a30059;
+  --brand-800: #820047;
+  --brand-900: #660037;
+  --brand-950: #431407;
+
+  /* Rosas alternos en retiro (decisión #1 cerrada): NO son tokens.
+     --brand-alt-wave:  #ec4899;  onda de Ocelote (ChatbotAssistant.jsx)
+     --brand-alt-deck:  #de1d8d;  inicio del gradiente del PhotoDeck
+     Su migración a #E4007C se trabaja en la rama fix/rosa-oficial-e4007c. */
+
+  /* --- Gradientes (hay dos; pendiente elegir el oficial) --- */
+  --gradient-config: linear-gradient(90deg, #f20089, #d100d1, #a100f2, #2d00f7);
+  --gradient-deck: linear-gradient(90deg, #de1d8d, #be1588, #9f0e7f, #7b2bd9, #6a0568);
+
+  /* --- Acentos del moodboard (tailwind.config.js) --- */
+  --accent-talavera-50: #e6f5f2;
+  --accent-talavera-100: #c9ebe5;
+  --accent-talavera-500: #0e8c7a; /* hex hardcodeado más usado del repo: 54 */
+  --accent-talavera-700: #0a6e60;
+  --accent-cempasuchil-100: #fdebd1;
+  --accent-cempasuchil-400: #f7b45f;
+  --accent-cempasuchil-500: #f2a03d;
+  --accent-cempasuchil-700: #d0811f;
+  --accent-terracota-50: #f9ede7;
+  --accent-terracota-100: #f0d5c7;
+  --accent-terracota-500: #c1440e; /* 50 usos hardcodeados */
+  --accent-terracota-700: #9a3207;
+
+  /* --- Jaguar (data/jaguarColor.svg) --- */
+  --jaguar-blue: #0e6c84;
+  --jaguar-blue-light: #489fb7;
+
+  /* --- Superficies y texto --- */
+  --surface-light: #faf3ea; /* "hueso": el config remapea white a este valor */
+  --surface-white: #ffffff; /* blanco puro, 20 usos hardcodeados sin regla */
+  --surface-dark: #2e2e33; /* "grafito" (= zinc-950 y background-color) */
+  --text-warm: #3a2e2a; /* café base de las sombras cálidas */
+  --text-stone-400: #a8a29e;
+  --text-stone-500: #78716c;
+  --text-stone-600: #57534e;
+
+  /* --- Estados y terceros (valores hardcodeados hoy) --- */
+  --state-success: #22c55e;
+  --state-info: #3b82f6;
+  --state-whatsapp: #25d366;
+  /* Pendiente: el #f97316 de los dashboards de socios NO se propone como
+     token hasta decidir si el sistema tiene un naranja (ver documento). */
+
+  /* --- Tipografía (cargadas vía @fontsource en pages/_app.js) --- */
+  --font-text: 'Nunito', ui-sans-serif, system-ui, sans-serif; /* 400/600/700/800 */
+  --font-display: 'Fraunces', ui-serif, Georgia, serif; /* 400/500/600/700 */
+
+  /* Escala real en uso (clases Tailwind, conteos en el documento) */
+  --text-xs: 0.75rem; /* 12px — 485 usos */
+  --text-sm: 0.875rem; /* 14px — 607 usos */
+  --text-base: 1rem; /* 27 */
+  --text-lg: 1.125rem; /* 54 */
+  --text-xl: 1.25rem; /* 63 */
+  --text-2xl: 1.5rem; /* 75 */
+  --text-3xl: 1.875rem; /* 52 */
+  --text-4xl: 2.25rem; /* 36 */
+  --text-5xl: 3rem; /* 27 */
+
+  /* Pesos reales: medium 500 (148) · semibold 600 (402) · bold 700 (336) · black 900 (57) */
+
+  /* --- Radios (clases Tailwind dominantes) --- */
+  --radius-lg: 0.5rem; /* 8px  — 148 usos */
+  --radius-xl: 0.75rem; /* 12px — 315 usos, el radio de tarjeta de facto */
+  --radius-2xl: 1rem; /* 16px — 173 usos */
+  --radius-3xl: 1.5rem; /* 24px — 15 usos (contenedor de la Navbar) */
+  --radius-full: 9999px; /* 275 usos */
+
+  /* --- Sombras custom recurrentes (hoy valores sueltos, sin nombre) --- */
+  --shadow-warm: 0 4px 14px rgba(58, 46, 42, 0.08);
+  --shadow-warm-strong: 0 4px 14px rgba(58, 46, 42, 0.12);
+  --shadow-grafito: 0 4px 14px rgba(46, 46, 51, 0.08);
+  --shadow-brand: 0 6px 18px rgba(181, 0, 106, 0.2); /* rgba de #b5006a */
+
+  /* --- Controles --- */
+  /* Pendiente de decisión: si la altura única de botón es 40px.
+     Evidencia: botón de cerrar de My Bookings (2026-11-13) = 40px;
+     Navbar mezcla 36px (h-9) y 40px (h-10) según scroll. */
+  --control-height: 2.5rem; /* 40px — propuesta */
+  --control-height-sm: 2.25rem; /* 36px — en uso en la Navbar, a decidir */
+
+  /* --- Espaciado ---
+     El sitio usa la escala por defecto de Tailwind (base 4px); el config
+     solo agrega line-height 11–14 (2.75–3.5rem) y opacidades 12/15/55/85.
+     No se proponen tokens de espaciado propios hasta decidirlo. */
+}
+
+/* Acentos por journey (subsistema en uso — lib/journeyTheme.ts):
+   cada journey define --j1 / --j2 en su contenedor y los componentes
+   usan var(--j1), var(--j1-soft), var(--j1-softer), var(--j2-softer).
+   Los valores base salen de la paleta de arriba. Se formaliza por decisión. */
