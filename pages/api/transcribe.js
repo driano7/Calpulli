@@ -10,9 +10,9 @@
  * y devuelve { text }.
  *
  * Proveedor: Groq Whisper (whisper-large-v3) vía su API compatible con
- * OpenAI. La llave se lee de GROQ_API_KEY en CADA request (misma llave
- * que ya usa el fallback de chat en lib/openrouter.js; nunca va al
- * navegador). Sin llave configurada responde 503 { error:
+ * OpenAI. La llave se lee de GROQ_KEY en CADA request (con fallback al
+ * nombre legacy GROQ_API_KEY; misma llave que ya usa el fallback de
+ * chat en lib/openrouter.js; nunca va al navegador). Sin llave configurada responde 503 { error:
  * 'not_configured' } y el frontend cae solo al dictado del navegador.
  *
  * Límites: audio de dictado corto — máx. 10 MB y throttle simple por IP
@@ -89,7 +89,7 @@ export default async function handler(req, res) {
 
   // La llave se lee por request, no al cargar el módulo (lección ya
   // aprendida en lib/openrouter.js con las llaves de Gemini).
-  const apiKey = process.env.GROQ_API_KEY || ''
+  const apiKey = process.env.GROQ_KEY || process.env.GROQ_API_KEY || ''
   if (!apiKey) {
     return res.status(503).json({ error: 'not_configured' })
   }
