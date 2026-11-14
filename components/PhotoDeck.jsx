@@ -289,23 +289,23 @@ export default function PhotoDeck() {
 
       <Reveal once={false}>
         <nav className="pd-doorbar" aria-label={isEn ? 'Explore Calpulli' : 'Explora Calpulli'}>
-        {DOORS.map((door) => {
-          const [title, sub] = isEn ? door.en : door.es
-          return (
-            <Link
-              key={door.href}
-              href={door.href}
-              className={door.main ? 'pd-door pd-door-main' : 'pd-door'}
-            >
-              <span className="pd-ic">{ICONS[door.icon]}</span>
-              <span className="pd-tx">
-                <b>{title}</b>
-                <span>{sub}</span>
-              </span>
-              <span className="pd-ar">→</span>
-            </Link>
-          )
-        })}
+          {DOORS.map((door) => {
+            const [title, sub] = isEn ? door.en : door.es
+            return (
+              <Link
+                key={door.href}
+                href={door.href}
+                className={door.main ? 'pd-door pd-door-main' : 'pd-door'}
+              >
+                <span className="pd-ic">{ICONS[door.icon]}</span>
+                <span className="pd-tx">
+                  <b>{title}</b>
+                  <span>{sub}</span>
+                </span>
+                <span className="pd-ar">→</span>
+              </Link>
+            )
+          })}
         </nav>
       </Reveal>
 
@@ -388,13 +388,17 @@ export default function PhotoDeck() {
           font-weight: 600;
           text-align: left;
         }
+        /* Cuadrícula de puertas: las 4 con exactamente las mismas
+           dimensiones (feedback de Isis, 2026-11-12) y más altas,
+           para que no se sientan apretadas. */
         .pd-doorbar {
-          display: flex;
-          gap: 9px;
-          justify-content: center;
-          flex-wrap: wrap;
-          padding: 12px 14px;
-          margin-top: 20px;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-auto-rows: 1fr;
+          gap: 10px;
+          max-width: 1020px;
+          padding: 14px;
+          margin: 20px auto 0;
           border-top: 1px solid rgba(120, 80, 160, 0.18);
           background: rgba(250, 246, 239, 0.55);
           -webkit-backdrop-filter: blur(16px) saturate(1.4);
@@ -403,15 +407,21 @@ export default function PhotoDeck() {
         :global(.dark) .pd-doorbar {
           background: rgba(18, 7, 31, 0.5);
         }
+        @media (min-width: 1024px) {
+          .pd-doorbar {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+          }
+        }
         :global(.pd-door) {
-          flex: 1 1 150px;
-          max-width: 230px;
           display: flex;
           align-items: center;
-          gap: 9px;
+          gap: 10px;
+          width: 100%;
+          height: 100%;
+          min-height: 92px;
           border: 1.5px solid rgba(120, 80, 160, 0.45);
           border-radius: 999px;
-          padding: 11px 13px;
+          padding: 16px 18px;
           background: rgba(255, 255, 255, 0.55);
           box-shadow: 0 6px 16px rgba(60, 20, 90, 0.1);
           color: inherit;
