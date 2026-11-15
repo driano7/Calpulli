@@ -39,14 +39,14 @@ export default function AuthNav({ compact = false }) {
         </span>
         <Link
           href="/profile"
-          className="text-sm font-semibold text-orange-500 transition-colors hover:text-orange-400"
+          className="flex h-10 items-center text-sm font-semibold text-orange-500 transition-colors hover:text-orange-400"
         >
           Mi Cuenta
         </Link>
         <button
           type="button"
           onClick={() => logout()}
-          className="text-sm text-red-500 hover:text-red-400"
+          className="flex h-10 items-center text-sm text-red-500 hover:text-red-400"
         >
           Cerrar sesión
         </button>
@@ -70,7 +70,7 @@ export default function AuthNav({ compact = false }) {
     <div className="flex items-center gap-2 sm:gap-3">
       <Link
         href="/register"
-        className="group relative inline-flex overflow-hidden rounded-full border border-orange-500 px-3 py-1.5 text-sm font-semibold text-orange-500 transition-colors duration-300 hover:bg-orange-50 hover:text-orange-600 sm:px-4"
+        className="group relative inline-flex h-10 items-center overflow-hidden rounded-full border border-orange-500 px-4 text-sm font-semibold text-orange-500 transition-colors duration-300 hover:bg-orange-50 hover:text-orange-600"
       >
         <span className="absolute inset-0 scale-0 rounded-full bg-current opacity-10 transition-transform duration-300 group-hover:scale-100" />
         <span className="relative">Iniciar sesión</span>
