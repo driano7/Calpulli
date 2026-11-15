@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { motion } from 'framer-motion'
 import Link from '@/components/Link'
 import Image from '@/components/Image'
@@ -13,6 +14,7 @@ import { formatPriceByLocale } from '@/lib/currency'
 import PartnerBanner from '@/components/partners/PartnerBanner'
 
 export default function BookingsPage() {
+  const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
   const { t, currentLanguage } = useLanguage()
   const isEs = currentLanguage === 'es'
@@ -232,6 +234,35 @@ export default function BookingsPage() {
   const displayBookings =
     user || showGuestBookings ? (hasSearched ? searchResults : filteredBookings) : filteredBookings
 
+  // Salida de la sección (feedback de Isis, 2026-11-12): la vista no debe ser
+  // un callejón sin salida. Con historial en la pestaña se vuelve a la
+  // pantalla de origen; en carga directa (sin historial) se sale al inicio.
+  const handleClose = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back()
+    } else {
+      router.push('/')
+    }
+  }
+
+  const closeButton = (
+    <button
+      type="button"
+      onClick={handleClose}
+      aria-label={isEs ? 'Cerrar y volver' : 'Close and go back'}
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-200 text-zinc-500 transition-colors hover:border-orange-500/40 hover:text-orange-500 dark:border-white/10 dark:text-zinc-300 dark:hover:text-orange-400"
+    >
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M6 18L18 6M6 6l12 12"
+        />
+      </svg>
+    </button>
+  )
+
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white dark:bg-zinc-950">
@@ -252,9 +283,12 @@ export default function BookingsPage() {
             className="mx-auto max-w-4xl"
           >
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {t('bookings.title') || 'Mis Reservaciones'}
-              </h2>
+              <div className="flex items-center gap-3">
+                {closeButton}
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {t('bookings.title') || 'Mis Reservaciones'}
+                </h2>
+              </div>
               <Link
                 href="/journeys"
                 className="text-sm font-medium text-orange-500 hover:text-orange-400"
@@ -505,9 +539,12 @@ export default function BookingsPage() {
           className="mx-auto max-w-4xl"
         >
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {t('bookings.title') || 'Mis Reservaciones'}
-            </h2>
+            <div className="flex items-center gap-3">
+              {closeButton}
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {t('bookings.title') || 'Mis Reservaciones'}
+              </h2>
+            </div>
             <Link
               href="/journeys"
               className="text-sm font-medium text-orange-500 hover:text-orange-400"

@@ -211,8 +211,9 @@ export function Navbar() {
           className={classNames(
             'pointer-events-auto flex w-full items-center rounded-3xl border text-sm font-semibold transition-all duration-700',
             // El rectángulo (fondo, borde, sombra) solo existe hasta arriba;
-            // al bajar, el header se disuelve y cada icono flota en su propio
-            // círculo de cristal (regla pedida por Donovan, 2026-11-09).
+            // al bajar, el header se disuelve y los iconos flotan SIN fondo,
+            // transparentes en claro y oscuro (regla de Donovan, 2026-11-14;
+            // antes llevaban círculo de cristal, 2026-11-09).
             atTop
               ? 'max-w-[1100px] gap-4 px-5 py-3 border-black/5 bg-white/80 text-zinc-900 shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-black/60 dark:text-white'
               : 'max-w-md gap-1.5 border-transparent bg-transparent px-3 py-1.5 text-zinc-900 shadow-none backdrop-blur-none dark:text-white'
@@ -229,7 +230,7 @@ export function Navbar() {
               >
                 <div
                   className={classNames(
-                    'flex h-9 w-9 items-center justify-center overflow-hidden rounded-full transition-transform group-hover:rotate-6',
+                    'flex h-10 w-10 items-center justify-center overflow-hidden rounded-full transition-transform group-hover:rotate-6',
                     atTop ? '' : 'shadow-lg ring-1 ring-black/10 dark:ring-white/20'
                   )}
                 style={{
@@ -240,8 +241,8 @@ export function Navbar() {
                   <Image
                     src="/static/images/jaguarBaja.png"
                     alt="Calpulli CDMX"
-                    width={36}
-                    height={36}
+                    width={40}
+                    height={40}
                     className="h-full w-full object-cover"
                   />
                 </div>
@@ -267,7 +268,7 @@ export function Navbar() {
                   key={item.href}
                   href={item.href}
                   className={classNames(
-                    'group relative flex flex-col items-center gap-1 text-sm font-semibold tracking-wide transition duration-300',
+                    'group relative flex h-10 flex-col items-center justify-center gap-1 text-sm font-semibold tracking-wide transition duration-300',
                     'text-zinc-900 hover:text-orange-500 dark:text-white'
                   )}
                   style={{ animationDelay: `${index * 0.05}s` }}
@@ -293,7 +294,7 @@ export function Navbar() {
                 <button
                   type="button"
                   className={classNames(
-                    'group flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold tracking-wide transition duration-300',
+                    'group flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold tracking-wide transition duration-300',
                     'text-zinc-900 hover:text-orange-500 dark:text-white',
                     'bg-zinc-100/50 dark:bg-zinc-800/50'
                   )}
@@ -379,25 +380,17 @@ export function Navbar() {
                     : 'Cambiar idioma a Español'
                 }
                 className={classNames(
-                  atTop
-                    ? 'flex items-center gap-1.5 rounded-full px-2 py-1.5 text-xs font-black uppercase tracking-[0.35em] sm:gap-2 sm:px-4 sm:py-2'
-                    : 'flex h-10 w-10 items-center justify-center rounded-full text-xs font-black uppercase',
-                  atTop
-                    ? 'bg-gray-100/60 text-gray-800 transition-all hover:bg-gray-200 dark:bg-gray-800/60 dark:text-gray-100 dark:hover:bg-gray-700'
-                    : 'border border-black/5 bg-white/70 text-gray-800 shadow-lg backdrop-blur-md transition-all hover:bg-white/90 dark:border-white/10 dark:bg-zinc-900/60 dark:text-gray-100 dark:hover:bg-zinc-900/80',
+                  'flex h-10 items-center justify-center gap-2 rounded-full bg-transparent text-xs font-black uppercase text-gray-800 transition-all hover:bg-black/5 dark:bg-transparent dark:text-gray-100 dark:hover:bg-white/10',
+                  atTop ? 'px-3.5' : 'w-10 px-0',
                   isChanging ? 'pointer-events-none opacity-60' : ''
                 )}
               >
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-lg">{currentLanguage === 'es' ? '🇲🇽' : '🇺🇸'}</span>
-                  <span
-                    className={
-                      atTop ? 'text-[0.85rem] font-black uppercase tracking-[0.35em]' : 'hidden'
-                    }
-                  >
-                    {currentLanguage === 'es' ? 'ES' : 'EN'}
-                  </span>
-                  </div>
+                <span className="text-base leading-none">{currentLanguage === 'es' ? '🇲🇽' : '🇺🇸'}</span>
+                <span
+                  className={atTop ? 'text-[0.8rem] font-black uppercase tracking-[0.25em]' : 'hidden'}
+                >
+                  {currentLanguage === 'es' ? 'ES' : 'EN'}
+                </span>
                 </button>
               </motion.div>
 
@@ -428,12 +421,12 @@ export function Navbar() {
                   title={currentLanguage === 'es' ? 'Mis reservaciones' : 'My bookings'}
                   className={classNames(
                     'relative flex items-center justify-center rounded-full transition-colors',
-                    atTop ? 'h-9 w-9' : 'h-10 w-10',
+                    'h-10 w-10',
                     bookingsActive
                       ? 'bg-[#C1440E] text-white shadow-[0_0_0_3px_rgba(193,68,14,0.18)]'
                       : atTop
                         ? 'text-zinc-500 hover:bg-[#C1440E]/10 hover:text-[#C1440E] dark:text-zinc-400 dark:hover:bg-[#C1440E]/15 dark:hover:text-[#E06A38]'
-                        : 'border border-black/5 bg-white/70 text-zinc-500 shadow-lg backdrop-blur-md hover:bg-white/90 hover:text-[#C1440E] dark:border-white/10 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:bg-zinc-900/80'
+                        : 'bg-transparent text-zinc-500 hover:bg-black/5 hover:text-[#C1440E] dark:bg-transparent dark:text-zinc-300 dark:hover:bg-white/10'
                   )}
                 >
                   <motion.span
@@ -467,7 +460,7 @@ export function Navbar() {
                   className={
                     atTop
                       ? undefined
-                      : 'flex h-10 w-10 items-center justify-center rounded-full border border-black/5 bg-white/70 shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/60'
+                      : 'flex h-10 w-10 items-center justify-center rounded-full bg-transparent'
                   }
                 >
                   <CartIcon />
@@ -484,7 +477,7 @@ export function Navbar() {
                 className={
                   atTop
                     ? undefined
-                    : 'flex h-10 w-10 items-center justify-center rounded-full border border-black/5 bg-white/70 shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/60'
+                    : 'flex h-10 w-10 items-center justify-center rounded-full bg-transparent'
                 }
               >
                 <ThemeToggle />
