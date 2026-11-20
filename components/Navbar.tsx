@@ -8,10 +8,9 @@ import { CartIcon } from './cart/CartIcon'
 import { ReservationIcon } from './reservation/ReservationIcon'
 import { ThemeToggle } from './theme-toggle'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { motion, AnimatePresence, useTransform, useScroll, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useEffect, useState, useCallback } from 'react'
 import classNames from 'classnames'
-import { useTheme } from 'next-themes'
 import { useLanguage } from '@/lib/hooks/useLanguage'
 import {
   Utensils,
@@ -79,11 +78,8 @@ export function Navbar() {
   const [isMobile, setIsMobile] = useState(false)
   const [mobileDelayElapsed, setMobileDelayElapsed] = useState(true)
   const [atTop, setAtTop] = useState(true)
-  const { scrollY } = useScroll()
   const shouldReduceMotion = useReducedMotion()
   const { currentLanguage, setLanguage, isChanging, t } = useLanguage()
-  const { resolvedTheme } = useTheme()
-  const isDarkTheme = resolvedTheme === 'dark'
 
   // Ensure currentLanguage is always a valid string
   const locale =
@@ -176,25 +172,16 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [forceVisible, isMobile, mobileDelayElapsed])
 
-  const backgroundColor = useTransform(
-    scrollY,
-    [0, 50],
-    isDarkTheme
-      ? ['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.6)']
-      : ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.8)']
-  )
-
-  const backdropBlur = useTransform(scrollY, [0, 50], ['blur(0px)', 'blur(12px)'])
+  // Sin fondo en el contenedor: el color animado por scroll/tema dejaba una
+  // franja visible tras los iconos y a veces se quedaba con el tema anterior
+  // (solo se recalculaba al hacer scroll). La pastilla de arriba lleva su
+  // propio fondo por clases (bg-white/80 / dark:bg-black/60) y al bajar todo
+  // es transparente: solo flotan los círculos de cristal (regla de Donovan).
 
   return (
     <>
       {/* Desktop Header */}
       <motion.div
-        style={
-          atTop
-            ? { backgroundColor, backdropFilter: backdropBlur }
-            : { backgroundColor: 'rgba(0, 0, 0, 0)', backdropFilter: 'blur(0px)' }
-        }
         className={classNames(
           'pointer-events-none fixed inset-x-0 z-50 flex justify-center px-4 sm:px-6 lg:px-8',
           atTop ? 'top-4' : 'top-2',
