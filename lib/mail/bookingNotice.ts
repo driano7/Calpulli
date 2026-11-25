@@ -34,8 +34,13 @@ export interface NotifyBookingOptions {
 /** Avisa al cliente según cómo pagó. Si falla el correo, la reserva sigue. */
 export async function notifyBooking(booking: any, options: NotifyBookingOptions): Promise<void> {
   const origin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, '') || ''
-  const digits = (options.customerPhone || '').replace(/\D/g, '')
-  const whatsappUrl = digits.length >= 10 ? `https://wa.me/${digits}` : BRAND.social.whatsapp
+  const whatsappUrl = BRAND.social.whatsapp
+  const rawMeetingPoint = String(
+    booking.meetingPoint || booking.meeting_point || booking.location || ''
+  ).trim()
+  const meetingPoint = rawMeetingPoint
+    ? escapeHtml(rawMeetingPoint)
+    : 'Te lo confirmamos por WhatsApp'
 
   // Los tickets de cada persona, cada uno con su enlace. Al invitado (sin
   // cuenta) el enlace va a la pagina publica del ticket, no a su perfil.
@@ -70,7 +75,7 @@ export async function notifyBooking(booking: any, options: NotifyBookingOptions)
     guests: booking.guests,
     total: booking.totalAmount,
     currency: booking.currency,
-    meetingPoint: 'Te lo confirmamos por WhatsApp',
+    meetingPoint,
     ticketUrl: tickets.length ? ticketUrlFor(tickets[0]) : `${origin}/profile`,
     ticketsList,
     whatsappUrl,
@@ -135,7 +140,7 @@ export async function notifyBooking(booking: any, options: NotifyBookingOptions)
         experienceTitle: escapeHtml(booking.experienceTitle || 'Tu tour'),
         startDate: String(booking.startDate || '').slice(0, 10),
         startTime: booking.time || '10:00',
-        meetingPoint: 'Te lo confirmamos por WhatsApp',
+        meetingPoint,
         ticketUrl: ticketUrlFor(ticket),
         ticketCode: escapeHtml(ticket.ticketCode),
       },

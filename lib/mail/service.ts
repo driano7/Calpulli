@@ -139,13 +139,9 @@ export async function getTemplate(
       key,
       label: meta.label,
       description: meta.description,
-      subject: renderTemplate(resolveLocalized(fallback.subject, locale), { lang: locale }),
-      html: renderTemplate(resolveLocalized(fallback.html, locale), {
-        lang: locale,
-      }),
-      text: renderTemplate(resolveLocalized(fallback.text, locale), {
-        lang: locale,
-      }),
+      subject: resolveLocalized(fallback.subject, locale),
+      html: resolveLocalized(fallback.html, locale),
+      text: resolveLocalized(fallback.text, locale),
       isActive: true,
       updatedAt: null,
     }
@@ -155,12 +151,68 @@ export async function getTemplate(
     key,
     label: row.label || meta?.label || key,
     description: row.description || meta?.description || '',
-    subject: renderTemplate(row.subject, { lang: locale }),
-    html: renderTemplate(row.html, { lang: locale }),
-    text: renderTemplate(row.text, { lang: locale }),
+    subject: row.subject,
+    html: row.html,
+    text: row.text,
     isActive: Number(row.is_active) === 1,
     updatedAt: row.updated_at ?? null,
   }
+}
+
+/** Restaura una plantilla en Turso a su diseño por defecto del código. */
+export async function resetTemplate(
+  key: string,
+  locale: string = 'es',
+  updatedBy: string | null = null
+): Promise<EffectiveTemplate | null> {
+  const meta = TEMPLATE_META.find((t) => t.key === key)
+  const fallback = DEFAULT_TEMPLATES[key]
+  if (!meta || !fallback) return null
+
+  const subject = resolveLocalized(fallback.subject, locale)
+  const html = resolveLocalized(fallback.html, locale)
+  const text = resolveLocalized(fallback.text, locale)
+
+  const existing = await turso.execute({
+    sql: 'SELECT key FROM email_templates WHERE key = ?',
+    args: [key],
+  })
+
+  if (existing.rows[0]) {
+    await turso.execute({
+      sql: `UPDATE email_templates
+            SET subject = ?, html = ?, text = ?, label = ?, description = ?, variables = ?,
+                updated_by = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE key = ?`,
+      args: [
+        subject,
+        html,
+        text,
+        meta.label,
+        meta.description,
+        JSON.stringify(meta.variables),
+        updatedBy,
+        key,
+      ],
+    })
+  } else {
+    await turso.execute({
+      sql: `INSERT INTO email_templates (key, subject, html, text, label, description, variables, updated_by)
+            VALUES (?,?,?,?,?,?,?,?)`,
+      args: [
+        key,
+        subject,
+        html,
+        text,
+        meta.label,
+        meta.description,
+        JSON.stringify(meta.variables),
+        updatedBy,
+      ],
+    })
+  }
+
+  return getTemplate(key, locale)
 }
 
 export async function listTemplates(): Promise<EffectiveTemplate[]> {
@@ -196,54 +248,60 @@ export interface SendOptions {
  * checkout. Todo queda registrado en email_log.
  */
 export async function sendMail(key: string, options: SendOptions): Promise<SendResult> {
-  const locale = options.locale || 'es'
-  const template = await getTemplate(key, locale)
-  if (!template) return { status: 'skipped', reason: `plantilla desconocida: ${key}` }
-  if (!template.isActive) return { status: 'skipped', reason: 'plantilla desactivada' }
-  if (!options.to || !options.to.includes('@')) {
-    return { status: 'skipped', reason: 'destinatario inválido' }
-  }
-
-  const vars = { lang: locale, ...(options.vars ?? {}) }
-  const subject = renderTemplate(template.subject, vars)
-  const html = renderTemplate(template.html, vars)
-  const text = renderTemplate(template.text, vars)
-
   const logId = randomHex()
-
-  // Control de duplicados: si ya enviamos esta misma plantilla a este mismo
-  // correo con éxito en la ventana de tiempo, no reenviamos.
-  const duplicate = await checkDuplicateSend(key, options.to, DUPLICATE_WINDOW_MINUTES)
-  if (duplicate) {
-    await logMail({
-      id: logId,
-      key,
-      to: options.to,
-      userId: options.userId ?? null,
-      subject,
-      status: 'skipped',
-      error: 'duplicate within window',
-    })
-    return { status: 'skipped', reason: 'duplicate within window' }
-  }
-
-  if (!isMailEnabled()) {
-    const reason = !isMailConfigured() ? 'no proveedor configurado' : 'MAIL_ENABLED != true'
-    await logMail({
-      id: logId,
-      key,
-      to: options.to,
-      userId: options.userId ?? null,
-      subject,
-      status: 'skipped',
-      error: reason,
-    })
-    return { status: 'skipped', reason }
-  }
-
-  const config = getMailConfigFromEnv()
+  let renderedSubject = key
 
   try {
+    const locale = options.locale || 'es'
+    const template = await getTemplate(key, locale)
+    if (!template) return { status: 'skipped', reason: `plantilla desconocida: ${key}` }
+    if (!template.isActive) return { status: 'skipped', reason: 'plantilla desactivada' }
+    if (!options.to || !options.to.includes('@')) {
+      return { status: 'skipped', reason: 'destinatario inválido' }
+    }
+
+    const defaultSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || `https://${BRAND.domain}`).replace(
+      /\/+$/,
+      ''
+    )
+    const vars = { lang: locale, siteUrl: defaultSiteUrl, ...(options.vars ?? {}) }
+    const subject = renderTemplate(template.subject, vars)
+    const html = renderTemplate(template.html, vars)
+    const text = renderTemplate(template.text, vars)
+    renderedSubject = subject
+
+    // Control de duplicados: si ya enviamos esta misma plantilla a este mismo
+    // correo con éxito en la ventana de tiempo, no reenviamos.
+    const duplicate = await checkDuplicateSend(key, options.to, DUPLICATE_WINDOW_MINUTES)
+    if (duplicate) {
+      await logMail({
+        id: logId,
+        key,
+        to: options.to,
+        userId: options.userId ?? null,
+        subject,
+        status: 'skipped',
+        error: 'duplicate within window',
+      })
+      return { status: 'skipped', reason: 'duplicate within window' }
+    }
+
+    if (!isMailEnabled()) {
+      const reason = !isMailConfigured() ? 'no proveedor configurado' : 'MAIL_ENABLED != true'
+      await logMail({
+        id: logId,
+        key,
+        to: options.to,
+        userId: options.userId ?? null,
+        subject,
+        status: 'skipped',
+        error: reason,
+      })
+      return { status: 'skipped', reason }
+    }
+
+    const config = getMailConfigFromEnv()
+
     if (config.provider === 'brevo') {
       if (!config.brevo.apiKey || !config.brevo.senderEmail) {
         throw new Error('Brevo no está completamente configurado')
@@ -300,7 +358,7 @@ export async function sendMail(key: string, options: SendOptions): Promise<SendR
       key,
       to: options.to,
       userId: options.userId ?? null,
-      subject,
+      subject: renderedSubject,
       status: 'failed',
       error: message.slice(0, 500),
     })
