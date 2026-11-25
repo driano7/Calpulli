@@ -3,7 +3,18 @@
 // La plantilla vive en la BD; aquí solo se edita y se manda una prueba.
 import { useCallback, useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Send, Save, Eye, Check, AlertCircle, Clock } from 'lucide-react'
+import {
+  Mail,
+  Send,
+  Save,
+  Eye,
+  Check,
+  AlertCircle,
+  Clock,
+  Sun,
+  Moon,
+  RotateCcw,
+} from 'lucide-react'
 
 interface Template {
   key: string
@@ -42,6 +53,7 @@ export function EmailTemplatesPanel({ isEs }: { isEs: boolean }) {
   const [selected, setSelected] = useState<string | null>(null)
   const [draft, setDraft] = useState<Template | null>(null)
   const [preview, setPreview] = useState(false)
+  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>('light')
   const [notice, setNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -54,6 +66,13 @@ export function EmailTemplatesPanel({ isEs }: { isEs: boolean }) {
     save: isEs ? 'Guardar' : 'Save',
     saved: isEs ? 'Guardado' : 'Saved',
     preview: isEs ? 'Vista previa' : 'Preview',
+    lightMode: isEs ? 'Modo claro' : 'Light mode',
+    darkMode: isEs ? 'Modo oscuro' : 'Dark mode',
+    restoreDefault: isEs ? 'Restaurar diseño por defecto' : 'Restore default design',
+    restoreConfirm: isEs
+      ? '¿Restaurar esta plantilla en la base de datos al diseño por defecto del código?'
+      : 'Restore this template in the database to the default code design?',
+    restored: isEs ? 'Diseño restaurado' : 'Default design restored',
     test: isEs ? 'Mandar prueba' : 'Send test',
     noTemplates: isEs ? 'Sin plantillas' : 'No templates',
     log: isEs ? 'Últimos envíos' : 'Recent sends',
@@ -157,36 +176,86 @@ export function EmailTemplatesPanel({ isEs }: { isEs: boolean }) {
   const toggleActive = async () => {
     if (!draft) return
     const token = localStorage.getItem('authToken')
-    const next = !draft.isActive
+    const prev = draft.isActive
+    const next = !prev
     setDraft({ ...draft, isActive: next })
-    await fetch('/api/admin/email-templates', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ key: draft.key, isActive: next }),
-    })
     setTemplates((list) => list.map((t) => (t.key === draft.key ? { ...t, isActive: next } : t)))
+    try {
+      const res = await fetch('/api/admin/email-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ key: draft.key, isActive: next }),
+      })
+      if (!res.ok) {
+        setDraft((d) => (d && d.key === draft.key ? { ...d, isActive: prev } : d))
+        setTemplates((list) =>
+          list.map((t) => (t.key === draft.key ? { ...t, isActive: prev } : t))
+        )
+        setNotice(isEs ? 'Error al actualizar estado' : 'Failed to update status')
+        setTimeout(() => setNotice(null), 2500)
+      }
+    } catch {
+      setDraft((d) => (d && d.key === draft.key ? { ...d, isActive: prev } : d))
+      setTemplates((list) => list.map((t) => (t.key === draft.key ? { ...t, isActive: prev } : t)))
+      setNotice(isEs ? 'Error al actualizar estado' : 'Failed to update status')
+      setTimeout(() => setNotice(null), 2500)
+    }
+  }
+
+  const restoreDefault = async () => {
+    if (!draft) return
+    if (typeof window !== 'undefined' && !window.confirm(labels.restoreConfirm)) return
+    setBusy(true)
+    const token = localStorage.getItem('authToken')
+    try {
+      const res = await fetch('/api/admin/email-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          key: draft.key,
+          action: 'reset',
+          locale: isEs ? 'es' : 'en',
+        }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (res.ok && json.template) {
+        setDraft(json.template)
+        setTemplates((list) => list.map((t) => (t.key === json.template.key ? json.template : t)))
+        setNotice(labels.restored)
+      } else {
+        setNotice(json.error || (isEs ? 'Error al restaurar' : 'Restore failed'))
+      }
+      setTimeout(() => setNotice(null), 3000)
+    } finally {
+      setBusy(false)
+    }
   }
 
   // Muestra las variables con un valor de ejemplo para poder leer el HTML.
-  const renderPreview = (html: string) => {
-    const sample: Record<string, string> = {
+  const renderPreview = (html: string, theme: 'light' | 'dark') => {
+    const sample: Record<string, string | number> = {
+      lang: isEs ? 'es' : 'en',
       firstName: 'Ana',
       siteUrl: 'https://donovan-amx.vercel.app',
       bookingReference: 'CDMX-EJEMPLO',
-      experienceTitle: 'Sabores de Oaxaca',
+      experienceTitle: 'Centro Histórico — El futuro se pintó aquí',
       startDate: '2027-03-15',
       startTime: '10:00',
       guests: 2,
-      total: 130,
+      total: 100,
       currency: 'MXN',
-      meetingPoint: 'Mercado de San Juan',
+      meetingPoint: 'Palacio de Bellas Artes / Eje Central',
       ticketUrl: 'https://donovan-amx.vercel.app/profile',
       whatsappUrl: 'https://wa.me/525512291607',
       referralCode: 'CALP-EJEMPLO',
       resetUrl: 'https://ejemplo.com/reset',
       expiresMinutes: 30,
     }
-    return html.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => sample[k] ?? `{{${k}}}`)
+    const interpolated = html.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k: string) =>
+      sample[k] !== undefined ? String(sample[k]) : `{{${k}}}`
+    )
+    const mediaTarget = theme === 'dark' ? '@media all' : '@media not all'
+    return interpolated.replace(/@media\s*\(\s*prefers-color-scheme\s*:\s*dark\s*\)/gi, mediaTarget)
   }
 
   return (
@@ -278,24 +347,59 @@ export function EmailTemplatesPanel({ isEs }: { isEs: boolean }) {
               </div>
 
               <div>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <label className="text-xs font-semibold text-zinc-600 dark:text-gray-300">
                     HTML
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => setPreview((p) => !p)}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-orange-500"
-                  >
-                    <Eye className="h-3 w-3" />
-                    {labels.preview}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {preview && (
+                      <div className="inline-flex rounded-lg border border-zinc-200 p-0.5 text-[11px] dark:border-white/10">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewTheme('light')}
+                          aria-pressed={previewTheme === 'light'}
+                          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium transition-colors ${
+                            previewTheme === 'light'
+                              ? 'bg-[#FAF3EA] text-[#2E2E33] shadow-sm'
+                              : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400'
+                          }`}
+                        >
+                          <Sun className="h-3 w-3" />
+                          {labels.lightMode}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPreviewTheme('dark')}
+                          aria-pressed={previewTheme === 'dark'}
+                          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium transition-colors ${
+                            previewTheme === 'dark'
+                              ? 'bg-[#2E2E33] text-[#FAF3EA] shadow-sm'
+                              : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400'
+                          }`}
+                        >
+                          <Moon className="h-3 w-3" />
+                          {labels.darkMode}
+                        </button>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setPreview((p) => !p)}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-orange-500"
+                    >
+                      <Eye className="h-3 w-3" />
+                      {labels.preview}
+                    </button>
+                  </div>
                 </div>
                 {preview ? (
                   <iframe
                     title="preview"
-                    srcDoc={renderPreview(draft.html)}
-                    className="mt-1 h-96 w-full rounded-lg border border-zinc-200 bg-white dark:border-white/10"
+                    sandbox=""
+                    srcDoc={renderPreview(draft.html, previewTheme)}
+                    className={`mt-1 h-96 w-full rounded-lg border border-zinc-200 dark:border-white/10 ${
+                      previewTheme === 'dark' ? 'bg-[#1F1F23]' : 'bg-[#FAF3EA]'
+                    }`}
                   />
                 ) : (
                   <textarea
@@ -338,6 +442,15 @@ export function EmailTemplatesPanel({ isEs }: { isEs: boolean }) {
                 >
                   <Send className="h-4 w-4" />
                   {labels.test}
+                </button>
+                <button
+                  type="button"
+                  onClick={restoreDefault}
+                  disabled={busy}
+                  className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 dark:border-white/10 dark:text-zinc-300"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  {labels.restoreDefault}
                 </button>
                 <button
                   type="button"

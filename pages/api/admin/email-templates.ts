@@ -4,7 +4,7 @@
 // POST con action=sends_test -> envía una prueba al admin
 import { getSessionUser } from '@/lib/auth'
 import { turso } from '@/lib/turso'
-import { extractVariables, listTemplates, sendMail } from '@/lib/mail/service'
+import { extractVariables, listTemplates, resetTemplate, sendMail } from '@/lib/mail/service'
 
 export default async function handler(req, res) {
   const header = req.headers.authorization
@@ -36,23 +36,34 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const { key, action } = req.body ?? {}
+      const { key, action, locale } = req.body ?? {}
+
+      if (action === 'reset') {
+        if (!key) return res.status(400).json({ error: 'key requerido' })
+        const template = await resetTemplate(String(key), locale === 'en' ? 'en' : 'es', actor.id)
+        if (!template) return res.status(404).json({ error: 'Plantilla no encontrada' })
+        return res.status(200).json({
+          success: true,
+          template: { ...template, usedVariables: extractVariables(template.html) },
+        })
+      }
 
       if (action === 'send_test') {
         const result = await sendMail(key, {
           to: actor.email,
           userId: actor.id,
+          locale: locale === 'en' ? 'en' : 'es',
           vars: {
             firstName: 'Prueba',
             siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://donovan-amx.vercel.app',
             bookingReference: 'CDMX-TEST01',
-            experienceTitle: 'Tour de ejemplo',
+            experienceTitle: 'Centro Histórico — El futuro se pintó aquí',
             startDate: '15 de septiembre',
             startTime: '10:00',
             guests: 2,
-            total: 130,
+            total: 100,
             currency: 'MXN',
-            meetingPoint: 'Mercado de San Juan',
+            meetingPoint: 'Palacio de Bellas Artes / Eje Central',
             ticketUrl: `${process.env.NEXT_PUBLIC_SITE_URL || ''}/profile`,
             whatsappUrl: 'https://wa.me/525512291607',
             referralCode: 'CALP-TEST',
